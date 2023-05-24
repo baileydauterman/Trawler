@@ -1,11 +1,4 @@
-﻿using System;
-using System.ComponentModel;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Text.Unicode;
-using System.Xml.Linq;
-
-namespace Trawler.Common
+﻿namespace Trawler.Common
 {
     /// <summary>
     /// </summary>
@@ -17,6 +10,12 @@ namespace Trawler.Common
         {
             try
             {
+                // clear file before starting
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
                 File.OpenWrite(path).Close();
             }
             catch
@@ -25,7 +24,7 @@ namespace Trawler.Common
             }
         }
 
-        public string GetConsoleColor(Risk risk)
+        public static string GetConsoleColor(Risk risk)
         {
             return risk switch
             {

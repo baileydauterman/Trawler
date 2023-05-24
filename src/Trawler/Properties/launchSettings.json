@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Trawler": {
+      "commandName": "Project",
+      "commandLineArgs": "-o badOPtions"
+    }
+  }
+}

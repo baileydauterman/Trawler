@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Security.Principal;
+using CommandLine;
 using Trawler.Common;
 using Trawler.Constants;
 
@@ -8,11 +9,14 @@ class Program
 {
     static void Main(string[] args)
     {
+        Parser.Default.ParseArguments<CommandLineOptions>(args)
+            .WithParsed(RunOptions)
+            .WithNotParsed(HandleOptionsError);
+    }
+
+    private static void RunOptions(CommandLineOptions opts)
+    {
         Strings.WriteHeader();
-        ConsoleWriter.WriteInfo("Hello World");
-        ConsoleWriter.WriteWarning("Hello World");
-        ConsoleWriter.WriteError("Hello World");
-        ConsoleWriter.WriteMessage(LogLevel.None, "Hello World");
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -20,17 +24,33 @@ class Program
             return;
         }
 
-        if (!IsAmin())
+        if (!IsAdmin())
         {
             ConsoleWriter.WriteError("Trawler should be run as admin to ensure the best experience");
         }
 
-        var trawlerContext = new TrawlerContext(args[0], args[1]);
+        var trawlerContext = new TrawlerContext(opts);
     }
 
-    private static bool IsAmin()
+    private static void HandleOptionsError(IEnumerable<Error> errs)
     {
-        return (new WindowsPrincipal(WindowsIdentity.GetCurrent()))
-             .IsInRole(WindowsBuiltInRole.Administrator);
+        foreach (var err in errs)
+        {
+            if (err.Tag != ErrorType.BadFormatConversionError)
+            {
+                continue;
+            }
+
+            ConsoleWriter.WriteWarning("Selected unavailable scan option. Available options are:");
+
+            foreach (var opt in Enum.GetValues<ScanOptions>())
+            {
+                ConsoleWriter.WriteInfo($"\t{opt}");
+            }
+        }
     }
+
+
+    private static bool IsAdmin()
+        => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
 }
