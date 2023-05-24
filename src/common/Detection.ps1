@@ -5,6 +5,9 @@ class Detection {
     [string]$Technique
     [object]$Meta
 
+    Detection() {
+    }
+
     Detection(
         [string]$Name,
         [Risk]$Risk,

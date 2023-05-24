@@ -28,3 +28,20 @@ function Get-ValidOutPath {
 
 	return $path
 }
+
+function Validate-Path {
+    [[CmdletBinding()]
+    param (
+        [Parameter()]
+        [string]
+        $Path
+    )]
+    try {
+        [System.IO.File]::OpenWrite($Path).Close()
+        return $true
+    }
+    catch {
+        throw "Unable to write to path: $Path"
+        return $false
+    }
+}

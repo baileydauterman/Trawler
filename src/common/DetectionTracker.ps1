@@ -44,11 +44,13 @@ class DetectionTracker {
     }
 
     [string] GetConsoleColor([Risk]$risk) {
-        [Risk]::VeryLow  { return "Green" }
-        [Risk]::Low      { return "Green" }
-        [Risk]::Medium   { return "Yellow" }
-        [Risk]::High     { return "Red" }
-        [Risk]::VeryHigh { return "Magenta" }
-        Default          { return "Yellow" }
+        switch ($risk) {
+            [Risk]::VeryLow  { return "Green" }
+            [Risk]::Low      { return "Green" }
+            [Risk]::Medium   { return "Yellow" }
+            [Risk]::High     { return "Red" }
+            [Risk]::VeryHigh { return "Magenta" }
+            Default          { return "Yellow" }
+        }
     }
 }
