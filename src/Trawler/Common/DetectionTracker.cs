@@ -24,16 +24,42 @@
             }
         }
 
-        public static string GetConsoleColor(Risk risk)
+        public void Add(Detection detection)
+        {
+            Detections.Add(detection);
+
+        }
+
+        public void WriteDetection(Detection detection)
+        {
+            var previousConsoleColor = Console.ForegroundColor;
+            var prefix = GetMessagePrefix(LogLevel.None);
+
+            Console.ForegroundColor = GetConsoleColor(detection.Risk);
+            ConsoleWriter.Write($"{prefix}Detection: {detection.Name} - Risk: {detection.Risk}");
+            Console.ForegroundColor = previousConsoleColor;
+        }
+
+        public static ConsoleColor GetConsoleColor(Risk risk)
         {
             return risk switch
             {
-                Risk.VeryLow => "Green",
-                Risk.Low => "Green",
-                Risk.Medium => "Yellow",
-                Risk.High => "Red",
-                Risk.VeryHigh => "Magenta",
-                _ => "Yellow",
+                Risk.VeryLow => ConsoleColor.Green,
+                Risk.Low => ConsoleColor.Green,
+                Risk.Medium => ConsoleColor.Yellow,
+                Risk.High => ConsoleColor.Red,
+                Risk.VeryHigh => ConsoleColor.Magenta,
+                _ => ConsoleColor.Yellow,
+            };
+        }
+
+        public static string GetMessagePrefix(LogLevel level)
+        {
+            return level switch
+            {
+                LogLevel.None => "[!] ",
+                LogLevel.Info => "[%] ",
+                _ => string.Empty,
             };
         }
     }

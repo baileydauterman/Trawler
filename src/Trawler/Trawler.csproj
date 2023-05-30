@@ -11,10 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Common\" />
-    <None Remove="Constants\" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="Common\" />
     <Folder Include="Constants\" />
     <Folder Include="Detectors\" />
