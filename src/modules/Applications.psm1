@@ -6,34 +6,30 @@ function Test-ApplicationShims {
 		[TrawlerState]
 		$State
 	)
-	# Supports Dynamic Snapshotting
-	# Supports Drive Retargeting
-	Write-Message "Checking Application Shims"
+
+	$State.WriteMessage("Checking Application Shims")
 	# TODO - Also check HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Custom
 	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB"
-	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		$items.PSObject.Properties | ForEach-Object {
-			Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'AppShims'
-
-			$pass = $false
-			if ($loadsnapshot) {
-				$result = Assert-IsAllowed $allowlist_appshims $_.Value $_.Value
-				if ($result -eq $true) {
-					$pass = $true
-				}
-			}
-			if ($pass -eq $false) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Potential Application Shimming Persistence'
-					Risk      = 'High'
-					Source    = 'Registry'
-					Technique = "T1546.011: Event Triggered Execution: Application Shimming"
-					Meta      = "Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				}
-				Write-Detection $detection
-			}
+	if (-not (Test-Path -Path $path)) {
+		return 
+	}
+	$items = Get-TrawlerItemProperty -Path $path
+	$items.PSObject.Properties | ForEach-Object {
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppShims'), $true)) {
+			continue
 		}
+
+		$State.WriteDetection([TrawlerDetection]::new(
+				'Potential Application Shimming Persistence',
+				[TrawlerRiskPriority]::High,
+				'Registry',
+				"T1546.011: Event Triggered Execution: Application Shimming",
+				[PSCustomObject]@{
+					KeyLocation = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB"
+					EntryName   = $_.Name
+					EntryValue  = $_.Value
+				}
+			))
 	}
 }
 
@@ -75,17 +71,14 @@ function Test-AppPaths {
 			if ($key_basename -ne $value_basename) {
 				contine
 			}
-				
-			$snapShot = [TrawlerSnapShotData]::new($item.Name, $_.Value, 'AppPaths')
-			$State.WriteSnapShotMessage($snapShot)
 
-			if ($State.IsExemptBySnapShot($snapShot)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'AppPaths'), $true)) {
 				continue
 			}
 
 			$State.WriteDetection([TrawlerDetection]::new(
 					'Allowlist Mismatch: Potential App Path Hijacking - Executable Name does not match Registry Key',
-					'Medium',
+					[TrawlerRiskPriority]::Medium,
 					'Registry',
 					"T1546: Event Triggered Execution",
 					[PSCustomObject]@{
@@ -148,46 +141,42 @@ function Test-Startups {
 	$startups = @()
 
 	foreach ($item in $startups) {
-		if ($loadsnapshot -and (Assert-IsAllowed $allowlist_startup_commands $item.Command $item.Command)) {
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $item.Command, 'Startup'), $true)) {
 			continue
 		}
 
-		Write-SnapshotMessage -Key $item.Name -Value $item.Command -Source 'Startup'
-
-		$detection = [PSCustomObject]@{
-			Name      = 'Startup Item Review'
-			Risk      = 'Low'
-			Source    = 'Startup'
-			Technique = "T1037.005: Boot or Logon Initialization Scripts: Startup Items"
-			Meta      = "Location: " + $item.Location + ", Item Name: " + $item.Name + ", Command: " + $item.Command + ", User: " + $item.User
-		}
-
-		Write-Detection $detection
+		$State.WriteDetection([TrawlerDetection]::new(
+				'Startup Item Review',
+				[TrawlerRiskPriority]::Low,
+				'Startup',
+				"T1037.005: Boot or Logon Initialization Scripts: Startup Items",
+				($item | Select-Object Location, Name, Command, User)
+			))
 	}
 
 	foreach ($path_ in $paths) {
-		#Write-Host $path
-		$path = "Registry::$path_"
-		if (Test-Path -Path $path) {
-			$item = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			$item.PSObject.Properties | ForEach-Object {
-				if ($_.Name -ne "(Default)") {
-					if ($loadsnapshot -and ($allowlist_startup_commands.Contains($_.Value))) {
-						continue
-					}
+		$path = $State.PathAsRegistry($path_)
+		if (-not (Test-Path -Path $path)) {
+			continue
+		}
 
-					Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'Startup'
-					
-					$detection = [PSCustomObject]@{
-						Name      = 'Startup Item Review'
-						Risk      = 'Low'
-						Source    = 'Startup'
-						Technique = "T1037.005: Boot or Logon Initialization Scripts: Startup Items"
-						Meta      = "Location: $path_, Item Name: " + $_.Name + ", Command: " + $_.Value
-					}
-					Write-Detection $detection
-				}
+		$item = Get-TrawlerItemProperty -Path $path
+		$item.PSObject.Properties | ForEach-Object {
+			if ($_.Name -eq "(Default)" -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'Startup'), $true)) {
+				continue
 			}
+			
+			$State.WriteDetection([TrawlerDetection]::new(
+					'Startup Item Review',
+					[TrawlerRiskPriority]::Low,
+					'Startup',
+					"T1037.005: Boot or Logon Initialization Scripts: Startup Items",
+					[PSCustomObject]@{
+						Location = $path_
+						ItemName = $_.Name
+						Command  = $_.Value
+					}
+				))
 		}
 	}
 }

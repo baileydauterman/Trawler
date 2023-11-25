@@ -75,7 +75,7 @@ function Test-MicrosoftTelemetryCommands {
 	}
 
 	foreach ($item in Get-TrawlerChildItem -Path $path) {
-		$path = "Registry::" + $item.Name
+		$path = $State.PathAsRegistry($item.Name)
 		$data = Get-TrawlerItemProperty -Path $path
 
 		if ($data.Command -and $data.Command -notin $allowed_telemetry_commands) {
