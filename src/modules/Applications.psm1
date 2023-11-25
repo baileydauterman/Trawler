@@ -100,7 +100,7 @@ function Test-Startups {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking Startup Items"
+	$State.WriteMessage("Checking Startup Items")
 	$paths = @(
 		"$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
 		"$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
@@ -123,8 +123,7 @@ function Test-Startups {
 			}
 		}
 		$startups = @()
-	}
- else {
+	} else {
 		$startups = Get-CimInstance -ClassName Win32_StartupCommand | Select-Object Command, Location, Name, User
 		#$statups = @()
 
