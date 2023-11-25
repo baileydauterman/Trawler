@@ -10,14 +10,14 @@ function Test-AMSIProviders {
 	# TODO - Add Snapshot Skipping
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking AMSI Providers")
-	$allowed_amsi_providers = @(
+	$allowedProviders = @(
 		"{2781761E-28E0-4109-99FE-B9D127C57AFE}"
 	)
 
 	$path = "$regtarget_hklm\SOFTWARE\Microsoft\AMSI\Providers"
 	if (Test-Path -Path $path) {
-		foreach ($item in Get-ChildItem -Path $path -AsRegistry) {
-			if ($item.PSChildName -in $allowed_amsi_providers) {
+		foreach ($item in Get-TrawlerChildItem -Path $path -AsRegistry) {
+			if ($item.PSChildName -in $allowedProviders) {
 				continue
 			}
 

@@ -114,6 +114,9 @@ class TrawlerState {
         $this.Cleanup()
     }
 
+    <#
+    # Executes the given scan options and passes this state into the options
+    #>
     [void] ExecuteScanOptions() {
         foreach ($option in $this.ScanOptions) {
             switch ($option) {
@@ -167,7 +170,7 @@ class TrawlerState {
                 [TrawlerScanOptions]::PrintMonitorDLLs { Test-PrintMonitorDLLs -State $this }
                 [TrawlerScanOptions]::PrintProcessorDLLs { Test-PrintProcessorDLLs -State $this }
                 [TrawlerScanOptions]::Processes { Test-Processes -State $this }
-                [TrawlerScanOptions]::ProcessModules { Test-Process-Modules -State $this }
+                [TrawlerScanOptions]::ProcessModules { Test-ProcessModules -State $this }
                 [TrawlerScanOptions]::RATS { Test-RATS -State $this }
                 [TrawlerScanOptions]::RDPShadowConsent { Test-RDPShadowConsent -State $this }
                 [TrawlerScanOptions]::RDPStartupPrograms { Test-RDPStartupPrograms -State $this }
@@ -353,6 +356,10 @@ class TrawlerState {
     [bool] IsExemptBySnapShot([TrawlerSnapShotData]$data, [switch]$writeSnapShot) {
         if (-not $this.LoadSnapShot) {
             return $false
+        }
+
+        if ($writeSnapShot) {
+            $this.WriteSnapShotMessage($data)
         }
 
         $exemptionsTable = $this.AllowedVulns.($data.Source)

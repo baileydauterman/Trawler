@@ -25,10 +25,10 @@
 		Set to pick specific scanners to run. Multiple can be used when separated by a comma. (Supports tab completion)
 
 	.EXAMPLE
-		.\trawler.ps1 -outpath "C:\detections.csv"
+		Start-Trawler -OutputPath "C:\detections.csv"
 
 	.EXAMPLE
-		.\trawler.ps1 -outpath "C:\detections.csv" -ScanOptions ScheduledTasks, BITS
+		Start-Trawler -OutputPath "C:\detections.csv" -ScanOptions ScheduledTasks, BITS
 	
 	.OUTPUTS
 		None

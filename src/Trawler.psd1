@@ -41,7 +41,6 @@
         "./modules/Services.psm1"
         "./modules/SuspiciousFileLocations.psm1"
         "./modules/Windows.psm1"
-        "./modules/WindowsLoadKey.psm1"
     )
 
     ScriptsToProcess = @(

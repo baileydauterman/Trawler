@@ -12,32 +12,39 @@ function Test-EventViewerMSC {
 		"Registry::$regtarget_hklm`SOFTWARE\Microsoft\Windows NT\CurrentVersion\Event Viewer"
 		"Registry::$regtarget_hklm`SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Event Viewer"
 	)
-	foreach ($path in $paths) {
-		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			$items.PSObject.Properties | ForEach-Object {
-				if ($_.Name -in "MicrosoftRedirectionProgram", "MicrosoftRedirectionProgramCommandLineParameters", "MicrosoftRedirectionURL" -and $_.Value -notin "", "http://go.microsoft.com/fwlink/events.asp") {
-					Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'MSCHijack'
+	$suspiciousEventNames = @(
+		"MicrosoftRedirectionProgram", "MicrosoftRedirectionProgramCommandLineParameters", "MicrosoftRedirectionURL"
+	)
+	$allowedValues = @(
+		"", "http://go.microsoft.com/fwlink/events.asp"
+	)
 
-					$pass = $false
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_MSCHijack $_.Name $_.Value
-						if ($result) {
-							$pass = $true
-						}
-					}
-					if ($pass -eq $false) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Event Viewer MSC Hijack'
-							Risk      = 'High'
-							Source    = 'Registry'
-							Technique = "T1574: Hijack Execution Flow"
-							Meta      = "Key Location: $path, Entry Name: " + $_.Name + " Loaded Value: " + $_.Value
-						}
-						Write-Detection $detection
-					}
-				}
+	foreach ($path in $paths) {
+		if (-not( Test-Path -Path $path)) {
+			continue
+		}
+
+		$items = Get-TrawlerItemProperty -Path $path
+		$items.PSObject.Properties | ForEach-Object {
+			if (-not ($_.Name -in $suspiciousEventNames -and $_.Value -notin $allowedValues)) {
+				continue 
 			}
+
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, "MSCHijack"), $true)) {
+				continue
+			}
+
+			$State.WriteDetection([TrawlerDetection]::new(
+					'Event Viewer MSC Hijack',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						EntryName   = $_.Name
+						LoadedValue = $_.Value
+					}
+				))
 		}
 	}
 }
@@ -49,9 +56,8 @@ function Test-MicrosoftTelemetryCommands {
 		[TrawlerState]
 		$State
 	)
-	# Supports Dynamic Snapshotting
-	# Supports Drive Retargeting
-	Write-Message "Checking Microsoft TelemetryController"
+
+	$State.WriteMessage("Checking Microsoft TelemetryController")
 	# Microsoft Telemetry Commands
 	$allowed_telemetry_commands = @(
 		"$env:systemroot\system32\CompatTelRunner.exe -m:appraiser.dll -f:DoScheduledTelemetryRun"
@@ -64,34 +70,29 @@ function Test-MicrosoftTelemetryCommands {
 
 	)
 	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\TelemetryController"
-	if (Test-Path -Path $path) {
-		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			if ($data.Command -ne $null) {
-				if ($data.Command -notin $allowed_telemetry_commands) {
-					Write-SnapshotMessage -Key $item.Name -Value $data.Command -Source 'TelemetryCommands'
+	if (-not (Test-Path -Path $path)) {
+		return 
+	}
 
-					$pass = $false
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_telemetry $item.Name $data.Command
-						if ($result) {
-							$pass = $true
-						}
-					}
-					if ($pass -eq $false) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Non-Standard Microsoft Telemetry Command'
-							Risk      = 'High'
-							Source    = 'Registry'
-							Technique = "T1112: Modify Registry"
-							Meta      = "Registry Path: " + $item.Name + ", Command: " + $data.Command
-						}
-						Write-Detection $detection
-					}
-				}
+	foreach ($item in Get-TrawlerChildItem -Path $path) {
+		$path = "Registry::" + $item.Name
+		$data = Get-TrawlerItemProperty -Path $path
+
+		if ($data.Command -and $data.Command -notin $allowed_telemetry_commands) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Command, 'TelemetryCommands'), $true)) {
+				continue
 			}
+
+			$State.WriteDetection([TrawlerDetection]::new(
+					'Non-Standard Microsoft Telemetry Command',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1112: Modify Registry",
+					[PSCustomObject]@{
+						RegistryPath = $item.Name
+						Command      = $data.Command
+					}
+				))
 		}
 	}
 }
@@ -107,35 +108,28 @@ function Test-RemoteUACSetting {
 	# Supports Drive Retargeting
 	Write-Message "Checking RemoteUAC Setting"
 	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
-	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		$items.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'LocalAccountTokenFilterPolicy') {
-				Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'RemoteUAC'
-
-				if ($loadsnapshot) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Allowlist Mismatch: UAC Remote Sessions'
-						Risk      = 'High'
-						Source    = 'Registry'
-						Technique = "T1112: Modify Registry"
-						Meta      = "Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					}
-					$result = Assert-IsAllowed $allowtable_remoteuac $_.Name $_.Value $detection
-					if ($result -eq $true) {
-						return
-					}
-				}
+	if (-not (Test-Path -Path $path)) {
+		return 
+	}
+	$items = Get-TrawlerItemProperty -Path $path
+	$items.PSObject.Properties | ForEach-Object {
+		if ($_.Name -eq 'LocalAccountTokenFilterPolicy') {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'RemoteUAC'), $true)) {
+				continue
 			}
-			if ($_.Name -eq 'LocalAccountTokenFilterPolicy' -and $_.Value -eq 1) {
-				$detection = [PSCustomObject]@{
-					Name      = 'UAC Disabled for Remote Sessions'
-					Risk      = 'High'
-					Source    = 'Registry'
-					Technique = "T1112: Modify Registry"
-					Meta      = "Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				}
-				Write-Detection $detection
+
+			if ($_.Value -eq 1) {
+				$State.WriteDetection([TrawlerDetection]::new(
+						'UAC Disabled for Remote Sessions',
+						[TrawlerRiskPriority]::High,
+						'Registry',
+						"T1112: Modify Registry",
+						[PSCustomObject]@{
+							KeyLocation = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+							EntryName   = $_.Name
+							EntryValue  = $_.Value
+						}
+					))
 			}
 		}
 	}
@@ -221,7 +215,7 @@ function Test-ScreenSaverEXE {
 		}
 	}
 }
-function Test-Process-Modules {
+function Test-ProcessModules {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
