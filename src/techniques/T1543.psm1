@@ -1,4 +1,3 @@
-
 function Test-Services {
 	[CmdletBinding()]
 	param (
@@ -1156,6 +1155,9 @@ function Test-Services {
 	}
 }
 
+
+
+
 function Test-ServicesByRegex {
 	# TODO - Check FailureCommand for abnormal entries
 	# Supports Drive Retargeting
@@ -2239,5 +2241,4 @@ function Test-ServicesByRegex {
 			}
 		}
 	}
-
 }

@@ -1,35 +1,3 @@
-function Test-OfficeAI {
-	[CmdletBinding()]
-	param (
-		[Parameter()]
-		[TrawlerState]
-		$State
-	)
-	# Supports Drive Retargeting
-	# https://twitter.com/Laughing_Mantis/status/1645268114966470662
-	Write-Message "Checking Office AI.exe Presence"
-	$basepath = "$env_homedrive\Program Files\Microsoft Office\root\Office*"
-	if (Test-Path $basepath) {
-		$path = "$env_homedrive\Program Files\Microsoft Office\root"
-		$dirs = Get-ChildItem -Path $path -Directory -Filter "Office*" -ErrorAction SilentlyContinue
-		foreach ($dir in $dirs) {
-			$ai = $dir.FullName + "\ai.exe"
-			if (Test-Path $ai) {
-				$item = Get-Item -Path $ai -ErrorAction SilentlyContinue | Select-Object *
-				$detection = [PSCustomObject]@{
-					Name      = 'AI.exe in Office Directory'
-					Risk      = 'Medium'
-					Source    = 'Windows Context Menu'
-					Technique = "T1546: Event Triggered Execution"
-					Meta      = "File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
-				}
-				Write-Detection $detection
-			}
-		}
-	}
-}
-
-
 function Test-OfficeGlobalDotName {
 	[CmdletBinding()]
 	param (
