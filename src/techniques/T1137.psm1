@@ -1,3 +1,17 @@
+function Test-T1137 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-OfficeGlobalDotName $State
+	Test-OfficeTest $State
+	Test-OutlookStartup $State
+	Test-OfficeTrustedLocations $State
+}
+
 function Test-OfficeGlobalDotName {
 	[CmdletBinding()]
 	param (
@@ -40,7 +54,6 @@ function Test-OfficeGlobalDotName {
 		}
 	}
 }
-
 
 function Test-OfficeTest {
 	[CmdletBinding()]

@@ -66,7 +66,10 @@ function Start-Trawler {
         $TargetDrive,
         [Parameter(HelpMessage = "Allows for targeting certain scanners and ignoring others. Use 'All' to run all scanners.")]
         [TrawlerScanOptions]
-        $ScanOptions = [TrawlerScanOptions]::All
+        $ScanOptions = [TrawlerScanOptions]::None,
+        [Parameter(HelpMessage = "Allows user to pick which techniques to target. Use 'All' to target all techniques. Cannot be used with ScanOptions enabled")]
+        [SupportedTrawlerTechinques]
+        $TechniqueOptions = [SupportedTrawlerTechinques]::None
     )
 
     # Initial state setup
@@ -77,6 +80,7 @@ function Start-Trawler {
     $trawlerState.SnapShotPath = $SnapShotPath
     $trawlerState.TargetDrive = $TargetDrive
     $trawlerState.ScanOptions = $ScanOptions
+    $trawlerState.TechniqueOptions = $TechniqueOptions
 
     # Run the trawler program
     $trawlerState.Run()

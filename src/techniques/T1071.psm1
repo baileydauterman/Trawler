@@ -1,3 +1,14 @@
+function Test-T1071 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-Connections $State
+}
+
 function Test-Connections {
 	[CmdletBinding()]
 	param (

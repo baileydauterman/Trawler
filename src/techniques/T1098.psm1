@@ -1,3 +1,14 @@
+function Test-T1098 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-RDPShadowConsent $State
+}
+
 function Test-RDPShadowConsent {
 	[CmdletBinding()]
 	param (

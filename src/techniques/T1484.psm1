@@ -1,3 +1,13 @@
+function Test-T1484 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-GPOExtensions $State
+}
 
 function Test-GPOExtensions {
 	[CmdletBinding()]

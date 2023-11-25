@@ -267,6 +267,10 @@ function Test-TerminalProfiles {
 	}
 }
 
+<#
+# Start T1037.001
+#>
+
 function Test-UserInitMPRScripts {
 	[CmdletBinding()]
 	param (

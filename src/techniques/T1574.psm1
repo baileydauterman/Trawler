@@ -1,3 +1,31 @@
+function Test-T1574 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-MSDTCDll $State
+	Test-PeerDistExtensionDll $State
+	Test-InternetSettingsLUIDll $State
+	Test-BIDDll $State
+	Test-WindowsUpdateTestDlls $State
+	Test-MiniDumpAuxiliaryDLLs $State
+	Test-ExplorerHelperUtilities $State
+	Test-ProcessModules $State
+	Test-WindowsUnsignedFiles $State
+	Test-ErrorHandlerCMD $State
+	Test-KnownManagedDebuggers $State
+	Test-Wow64LayerAbuse $State
+	Test-SEMgrWallet $State
+	Test-WERRuntimeExceptionHandlers $State
+	Test-TerminalServicesInitialProgram $State
+	Test-EventViewerMSC $State
+	Test-RDPStartupPrograms $State
+	Test-PATHHijacks $State
+	Test-ServiceHijacks $State
+}
 function Test-MSDTCDll {
 	[CmdletBinding()]
 	param (
@@ -280,7 +308,6 @@ function Test-ExplorerHelperUtilities {
 		}
 	}
 }
-
 
 function Test-ProcessModules {
 	[CmdletBinding()]
@@ -789,7 +816,7 @@ function Test-RDPStartupPrograms {
 # Start T1574.007
 #>
 
-function Test-PATH-Hijacks {
+function Test-PATHHijacks {
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -860,7 +887,7 @@ function Test-PATH-Hijacks {
 # Start T1574.009
 #>
 
-function Test-Service-Hijacks {
+function Test-ServiceHijacks {
     [CmdletBinding()]
     param (
         [Parameter()]

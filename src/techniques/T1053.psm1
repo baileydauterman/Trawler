@@ -1,3 +1,14 @@
+function Test-T1053 {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+    Test-ScheduledTasks $State
+}
+
 function Test-ScheduledTasks {
     [CmdletBinding()]
     param (

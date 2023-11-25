@@ -1,3 +1,14 @@
+function Test-T1505 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-TerminalServicesDLL $State
+}
+
 function Test-TerminalServicesDLL {
 	[CmdletBinding()]
 	param (

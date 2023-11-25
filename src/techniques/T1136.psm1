@@ -1,3 +1,13 @@
+function Test-T1136 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-Users $State
+}
 function Test-Users {
 	[CmdletBinding()]
 	param (

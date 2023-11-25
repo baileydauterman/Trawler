@@ -1,3 +1,19 @@
+function Test-T1547 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-LSA $State
+	Test-TimeProviderDLLs $State
+	Test-WinlogonHelperDLLs $State
+	Test-LNK $State
+	Test-PrintProcessorDLLs $State
+	Test-ActiveSetup $State
+}
+
 <#
 # Start T1547.002
 #>
@@ -273,10 +289,6 @@ function Test-WinlogonHelperDLLs {
 		}
 	}
 }
-
-<#
-# Start T1547.005
-#>
 
 <#
 # Start T1547.009

@@ -1,7 +1,8 @@
 enum TrawlerScanOptions {
     <# Specify a list of distinct values #>
-    ActiveSetup
+    None
     All
+    ActiveSetup
     AMSIProviders
     AppCertDLLs
     AppInitDLLs
@@ -95,6 +96,30 @@ enum TrawlerRiskPriority {
     VeryHigh
 }
 
+enum SupportedTrawlerTechinques {
+    None
+    All
+    NoTechnique
+    T1037
+    T1053
+    T1055
+    T1059
+    T1071
+    T1098
+    T1112
+    T1136
+    T1137
+    T1197
+    T1219
+    T1484
+    T1505
+    T1543
+    T1546
+    T1547
+    T1553
+    T1574
+}
+
 class TrawlerState {
     <# Define the class. Try constructors, properties, or methods. #>
     [string]$OutputPath = "$PSScriptRoot\trawler_detections.csv"
@@ -104,12 +129,14 @@ class TrawlerState {
     [string]$LoadSnapShot
     [string]$TargetDrive
     [TrawlerScanOptions[]]$ScanOptions
+    [SupportedTrawlerTechinques[]]$TechniqueOptions
 
     [void] Run() {
         $this.Logo()
         $this.ValidatePaths()
         $this.RetargetDrives()
         $this.ExecuteScanOptions()
+        $this.ExecuteTechniqueOptions()
         $this.WriteDetectionMetrics()
         $this.Cleanup()
     }
@@ -118,6 +145,10 @@ class TrawlerState {
     # Executes the given scan options and passes this state into the options
     #>
     [void] ExecuteScanOptions() {
+        if (($this.ScanOptions | Select-Object -First 1) -eq [TrawlerScanOptions]::None) {
+            return
+        }
+
         foreach ($option in $this.ScanOptions) {
             switch ($option) {
                 [TrawlerScanOptions]::ActiveSetup { Test-ActiveSetup -State $this }
@@ -208,6 +239,10 @@ class TrawlerState {
         }
     }
 
+    [void] ExecuteTechniqueOptions() {
+
+    }
+
     [void] ValidatePaths() {
         if (ValidatePath($this.OutputPath)) {
             $this.WriteMessage("Detection Output Path: $($this.OutputPath)")
@@ -241,7 +276,8 @@ class TrawlerState {
     [void] LoadSnapShot() {
         if ($this.LoadSnapShot -and $this.CreateSnapShot) {
             Write-Host "[!] Cannot load and save snapshot simultaneously!" -ForegroundColor "Red"
-        } elseif ($this.LoadSnapShot){
+        }
+        elseif ($this.LoadSnapShot) {
             $this.TryReadSnapShot()
         }
     }

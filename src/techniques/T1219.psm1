@@ -1,3 +1,13 @@
+function Test-T1219 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-RATS $State
+}
 
 function Test-RATS {
 	[CmdletBinding()]

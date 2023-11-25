@@ -1,3 +1,14 @@
+function Test-T1553 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-TrustProviderDLL $State
+	Test-SuspiciousCertificates $State
+}
 function Test-TrustProviderDLL {
 	[CmdletBinding()]
 	param (

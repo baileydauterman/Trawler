@@ -6,6 +6,37 @@ function Test-T1546 {
         $State
     )
 
+	Test-AppPaths $State
+	Test-CommandAutoRunProcessors $State
+	Test-ContextMenu $State
+	Test-DiskCleanupHandlers $State
+	Test-DebuggerHijacks $State
+	Test-DisableLowILProcessIsolation $State
+	Test-Narrator $State
+	Test-NotepadPlusPlusPlugins $State
+	Test-OfficeAI $State
+	Test-UninstallStrings $State
+	Test-PolicyManager $State
+	Test-WindowsLoadKey $State
+	Test-AutoDialDLL $State
+	Test-HTMLHelpDLL $State
+	Test-AssociationHijack $State
+	Test-ScreenSaverEXE $State
+	Test-WMIConsumers $State
+	Test-NetSHDLLs $State
+	Test-UtilmanHijack $State
+	Test-SethcHijack $State
+	Test-ModifiedWindowsAccessibilityFeature $State
+	Test-AppCertDLLs $State
+	Test-AppInitDLLs $State
+	Test-ApplicationShims $State
+	Test-IFEO $State
+	Test-RegistryChecks $State
+	Test-SilentProcessExitMonitoring $State
+	Test-PowerShellProfiles $State
+	Test-WellKnownCOM $State
+	Test-ComHijacks $State
+	Test-FolderOpen $State
 }
 
 function Test-AppPaths {
@@ -970,7 +1001,7 @@ function Test-HTMLHelpDLL {
 # Start T1546.001
 #>
 
-function Test-Association-Hijack {
+function Test-AssociationHijack {
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -1871,6 +1902,7 @@ function Test-ComHijacks {
         }
     }
 }
+
 function Test-WellKnownCOM {
 	[CmdletBinding()]
 	param (

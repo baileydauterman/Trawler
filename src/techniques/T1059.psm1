@@ -1,3 +1,14 @@
+function Test-T1059 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-Processes $State
+}
+
 function Test-Processes {
 	[CmdletBinding()]
 	param (

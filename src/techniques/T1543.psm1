@@ -1,3 +1,14 @@
+function Test-T1543 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-Services $State
+	Test-ServicesByRegex $State
+}
 function Test-Services {
 	[CmdletBinding()]
 	param (
@@ -1154,9 +1165,6 @@ function Test-Services {
 		}
 	}
 }
-
-
-
 
 function Test-ServicesByRegex {
 	# TODO - Check FailureCommand for abnormal entries

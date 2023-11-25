@@ -39,7 +39,7 @@
     )
 
     ScriptsToProcess = @(
-        './TrawlerState.ps1'
+        './TrawlerState.ps1' # adds necessary classes to memory
     )
 }
 

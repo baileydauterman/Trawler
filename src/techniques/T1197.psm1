@@ -1,3 +1,14 @@
+function Test-T19997 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-BITS $State
+}
+
 function Test-BITS {
 	[CmdletBinding()]
 	param (

@@ -1,3 +1,14 @@
+function Test-T1055 {
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [TrawlerState]
+        $State
+    )
+
+	Test-DNSServerLevelPluginDLL $State
+}
+
 <#
 # Start TT1055.001
 #>
