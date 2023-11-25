@@ -105,6 +105,148 @@ class TrawlerState {
     [string]$TargetDrive
     [TrawlerScanOptions[]]$ScanOptions
 
+    [void] Run() {
+        $this.Logo()
+        $this.ValidatePaths()
+        $this.RetargetDrives()
+        $this.ExecuteScanOptions()
+        $this.WriteDetectionMetrics()
+        $this.Cleanup()
+    }
+
+    [void] ExecuteScanOptions() {
+        foreach ($option in $this.ScanOptions) {
+            switch ($option) {
+                [TrawlerScanOptions]::ActiveSetup { Test-ActiveSetup -State $this }
+                [TrawlerScanOptions]::AMSIProviders { Test-AMSIProviders -State $this }
+                [TrawlerScanOptions]::AppCertDLLs { Test-AppCertDLLs -State $this }
+                [TrawlerScanOptions]::AppInitDLLs { Test-AppInitDLLs -State $this }
+                [TrawlerScanOptions]::ApplicationShims { Test-ApplicationShims -State $this }
+                [TrawlerScanOptions]::AppPaths { Test-AppPaths -State $this }
+                [TrawlerScanOptions]::AssociationHijack { Test-Association-Hijack -State $this }
+                [TrawlerScanOptions]::AutoDialDLL { Test-AutoDialDLL -State $this }
+                [TrawlerScanOptions]::BIDDll { Test-BIDDll -State $this }
+                [TrawlerScanOptions]::BITS { Test-BITS -State $this }
+                [TrawlerScanOptions]::BootVerificationProgram { Test-BootVerificationProgram -State $this }
+                [TrawlerScanOptions]::COMHijacks { Test-COM-Hijacks -State $this }
+                [TrawlerScanOptions]::CommandAutoRunProcessors { Test-CommandAutoRunProcessors -State $this }
+                [TrawlerScanOptions]::Connections { Test-Connections -State $this }
+                [TrawlerScanOptions]::ContextMenu { Test-ContextMenu -State $this }
+                [TrawlerScanOptions]::DebuggerHijacks { Test-Debugger-Hijacks -State $this }
+                [TrawlerScanOptions]::DNSServerLevelPluginDLL { Test-DNSServerLevelPluginDLL -State $this }
+                [TrawlerScanOptions]::DisableLowIL { Test-DisableLowILProcessIsolation -State $this }
+                [TrawlerScanOptions]::DiskCleanupHandlers { Test-DiskCleanupHandlers -State $this }
+                [TrawlerScanOptions]::eRegChecks { Test-Registry-Checks -State $this }
+                [TrawlerScanOptions]::ErrorHandlerCMD { Test-ErrorHandlerCMD -State $this }
+                [TrawlerScanOptions]::ExplorerHelperUtilities { Test-ExplorerHelperUtilities -State $this }
+                [TrawlerScanOptions]::FolderOpen { Test-FolderOpen -State $this }
+                [TrawlerScanOptions]::GPOExtensions { Test-GPOExtensions -State $this }
+                [TrawlerScanOptions]::GPOScripts { Test-GPO-Scripts -State $this }
+                [TrawlerScanOptions]::HTMLHelpDLL { Test-HTMLHelpDLL -State $this }
+                [TrawlerScanOptions]::IFEO { Test-IFEO -State $this }
+                [TrawlerScanOptions]::InternetSettingsLUIDll { Test-InternetSettingsLUIDll -State $this }
+                [TrawlerScanOptions]::KnownManagedDebuggers { Test-KnownManagedDebuggers -State $this }
+                [TrawlerScanOptions]::LNK { Test-LNK -State $this }
+                [TrawlerScanOptions]::LSA { Test-LSA -State $this }
+                [TrawlerScanOptions]::MicrosoftTelemetryCommands { Test-MicrosoftTelemetryCommands -State $this }
+                [TrawlerScanOptions]::ModifiedWindowsAccessibilityFeature { Test-Modified-Windows-Accessibility-Feature -State $this }
+                [TrawlerScanOptions]::MSDTCDll { Test-MSDTCDll -State $this }
+                [TrawlerScanOptions]::Narrator { Test-Narrator -State $this }
+                [TrawlerScanOptions]::NaturalLanguageDevelopmentDLLs { Test-NaturalLanguageDevelopmentDLLs -State $this }
+                [TrawlerScanOptions]::NetSHDLLs { Test-NetSHDLLs -State $this }
+                [TrawlerScanOptions]::NotepadPPPlugins { Test-Notepad++-Plugins -State $this }
+                [TrawlerScanOptions]::OfficeAI { Test-OfficeAI -State $this }
+                [TrawlerScanOptions]::OfficeGlobalDotName { Test-OfficeGlobalDotName -State $this }
+                [TrawlerScanOptions]::Officetest { Test-Officetest -State $this }
+                [TrawlerScanOptions]::OfficeTrustedLocations { Test-Office-Trusted-Locations -State $this }
+                [TrawlerScanOptions]::OutlookStartup { Test-Outlook-Startup -State $this }
+                [TrawlerScanOptions]::PATHHijacks { Test-PATH-Hijacks -State $this }
+                [TrawlerScanOptions]::PeerDistExtensionDll { Test-PeerDistExtensionDll -State $this }
+                [TrawlerScanOptions]::PolicyManager { Test-PolicyManager -State $this }
+                [TrawlerScanOptions]::PowerShellProfiles { Test-PowerShell-Profiles -State $this }
+                [TrawlerScanOptions]::PrintMonitorDLLs { Test-PrintMonitorDLLs -State $this }
+                [TrawlerScanOptions]::PrintProcessorDLLs { Test-PrintProcessorDLLs -State $this }
+                [TrawlerScanOptions]::Processes { Test-Processes -State $this }
+                [TrawlerScanOptions]::ProcessModules { Test-Process-Modules -State $this }
+                [TrawlerScanOptions]::RATS { Test-RATS -State $this }
+                [TrawlerScanOptions]::RDPShadowConsent { Test-RDPShadowConsent -State $this }
+                [TrawlerScanOptions]::RDPStartupPrograms { Test-RDPStartupPrograms -State $this }
+                [TrawlerScanOptions]::RemoteUACSetting { Test-RemoteUACSetting -State $this }
+                [TrawlerScanOptions]::ScheduledTasks { Test-ScheduledTasks -State $this }
+                [TrawlerScanOptions]::ScreenSaverEXE { Test-ScreenSaverEXE -State $this }
+                [TrawlerScanOptions]::SEMgrWallet { Test-SEMgrWallet -State $this }
+                [TrawlerScanOptions]::ServiceHijacks { Test-Service-Hijacks -State $this }
+                [TrawlerScanOptions]::Services { Test-Services -State $this }
+                [TrawlerScanOptions]::SethcHijack { Test-SethcHijack -State $this }
+                [TrawlerScanOptions]::SilentProcessExitMonitoring { Test-SilentProcessExitMonitoring -State $this }
+                [TrawlerScanOptions]::Startups { Test-Startups -State $this }
+                [TrawlerScanOptions]::SuspiciousCertificates { Test-Suspicious-Certificates -State $this }
+                [TrawlerScanOptions]::SuspiciousFileLocation { Test-Suspicious-File-Locations -State $this }
+                [TrawlerScanOptions]::TerminalProfiles { Test-TerminalProfiles -State $this }
+                [TrawlerScanOptions]::TerminalServicesDLL { Test-TerminalServicesDLL -State $this }
+                [TrawlerScanOptions]::TerminalServicesInitialProgram { Test-TerminalServicesInitialProgram -State $this }
+                [TrawlerScanOptions]::TimeProviderDLLs { Test-TimeProviderDLLs -State $this }
+                [TrawlerScanOptions]::TrustProviderDLL { Test-TrustProviderDLL -State $this }
+                [TrawlerScanOptions]::UninstallStrings { Test-UninstallStrings -State $this }
+                [TrawlerScanOptions]::UserInitMPRScripts { Test-UserInitMPRScripts -State $this }
+                [TrawlerScanOptions]::Users { Test-Users -State $this }
+                [TrawlerScanOptions]::UtilmanHijack { Test-UtilmanHijack -State $this }
+                [TrawlerScanOptions]::WellKnownCOM { Test-WellKnownCOM -State $this }
+                [TrawlerScanOptions]::WERRuntimeExceptionHandlers { Test-WERRuntimeExceptionHandlers -State $this }
+                [TrawlerScanOptions]::WindowsLoadKey { Test-WindowsLoadKey -State $this }
+                [TrawlerScanOptions]::WindowsUnsignedFiles { Test-Windows-Unsigned-Files -State $this }
+                [TrawlerScanOptions]::WindowsUpdateTestDlls { Test-WindowsUpdateTestDlls -State $this }
+                [TrawlerScanOptions]::WinlogonHelperDLLs { Test-WinlogonHelperDLLs -State $this }
+                [TrawlerScanOptions]::WMIConsumers { Test-WMIConsumers -State $this }
+                [TrawlerScanOptions]::Wow64LayerAbuse { Test-Wow64LayerAbuse -State $this }
+                # [TrawlerScanOptions]::RegistryChecks {Test-Registry-Checks}
+                # [TrawlerScanOptions]::SCMDACL {Test-SCM-DACL}
+            }
+        }
+    }
+
+    [void] ValidatePaths() {
+        if (ValidatePath($this.OutputPath)) {
+            $this.WriteMessage("Detection Output Path: $($this.OutputPath)")
+            $this.OutputWritable = $true
+        }
+        else {
+            $this.WriteMessage("Unable to write to provided output path: $($this.OutputPath)")
+            exit
+        }
+
+        if (ValidatePath($this.SnapShotPath)) {
+            $this.WriteMessage("SnapShot Output Path: $($this.OutputPath)")
+            $this.OutputWritable = $true
+        }
+        else {
+            $this.WriteMessage("Unable to write to provided SnapShot path: $($this.OutputPath)")
+            exit
+        }
+    }
+
+    [bool] ValidatePath([string]$path) {
+        if (Test-Path -Path $path -PathType Container) {
+            Write-Error "The provided path is a folder, not a file. Please provide a file path."
+            return $false
+        }
+
+        [System.IO.File]::OpenWrite($path).Close()
+        return $true
+    }
+
+    [void] LoadSnapShot() {
+        if ($this.LoadSnapShot -and $this.CreateSnapShot) {
+            Write-Host "[!] Cannot load and save snapshot simultaneously!" -ForegroundColor "Red"
+        } elseif ($this.LoadSnapShot){
+            $this.TryReadSnapShot()
+        }
+    }
+
+    [void] Cleanup() {
+        $this.UnloadHive()
+    }
+
     [void] RetargetDrives() {
         $this.WriteMessage("Setting up Registry Variables")
 
