@@ -32,10 +32,15 @@ function Start-Trawler {
     $trawlerState.SnapShotPath = $SnapShotPath
     $trawlerState.TargetDrive = $TargetDrive
     $trawlerState.ScanOptions = $ScanOptions
+    $trawlerState.WriteLogo()
+
+    if ($trawlerState.TargetDrive) {
+        $trawlerState.RetargetDrives()
+    }
 
     New-ExecuteScanOptions -State $State
 
-    return $trawlerState
+    $trawlerState.WriteDetectionMetrics()
 }
 
 function New-ExecuteScanOptions {

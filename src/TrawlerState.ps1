@@ -105,15 +105,110 @@ class TrawlerState {
     [string]$TargetDrive
     [TrawlerScanOptions[]]$ScanOptions
 
-    TrawlerState() {
+    [void] RetargetDrives() {
+        $this.WriteMessage("Setting up Registry Variables")
 
+        if ($this.TargetDrive -and ($this.TargetDrive -match "^[A-Za-z]{1}:$")) {
+            $this.WriteMessage("[!] Attempting move Target Drive to $($this.TargetDrive)")
+
+            if (-not (Get-ChildItem $this.TargetDrive -Directory -Filter "Windows")) {
+                Write-Warning "[!] Could not find Windows Directory in Specified Target Path ($($this.TargetDrive))!"
+                $this.WriteMessage("Make sure to specify ROOT directory containing imaged data (eg. 'F:')")
+                exit
+            }
+
+            $this.DriveTargets.HomeDrive = $this.TargetDrive
+            $this.DriveTargets.AssumedHomeDrive = "C:"
+            $this.ProgramData = $this.ToTargetDrivePath(@("ProgramData"))
+
+            foreach ($hive in $this.DriveTargets.TargetHives) {
+                $hivePath = $this.ToTargetDrivePath(@("Windows", "System32", "Config", $hive))
+
+                if (Test-Path -Path $hivePath) {
+                    $this.LoadHive("ANALYSIS_$hive", $hivePath, "HKEY_LOCAL_MACHINE")
+                }
+            }
+
+            $userPath = $this.ToTargetDrivePath(@("Users"))
+            if (Test-Path $userPath) {
+                foreach ($user in Get-ChildItem $userPath -Directory) {
+                    $ntUserPath = $this.ToTargetDrivePath(@("Users", $user.Name, "NTUSER.DAT"))
+                    $classPath = $this.ToTargetDrivePath(@("Users", $user.Name, "AppData", "Local", "Microsoft", "Windows", "UsrClass.DAT"))
+
+                    if (Test-Path $ntUserPath) {
+                        $hivePath = "ANALYSIS_$($user.Name)"
+                        $this.LoadHive($hivePath, $ntUserPath, "HKEY_USERS")
+                        $this.DriveTargets.HkcuList += "HKEY_USERS\$hivePath"
+                    }
+
+                    if (Test-Path $classPath) {
+                        $hivePath = "ANALYSIS_$($user.Name)_Classes"
+                        $this.LoadHive($hivePath, $ntUserPath, "HKEY_USERS")
+                        $this.DriveTargets.HkcuList += "HKEY_USERS\$hivePath"
+                    }
+                }
+            }
+            else {
+                Write-Warning "[!] Could not find '$($this.DriveTargets.HomeDrive)\Users'!"
+            }
+
+            $this.DriveTargets.Hklm = "HKEY_LOCAL_MACHINE\ANALYSIS_"
+            $this.DriveTargets.Hkcu = "HKEY_CURRENT_USER\"
+            # Need to avoid using HKCR as it will be unavailable on dead drives
+            $this.DriveTargets.Hkcr = "HKEY_CLASSES_ROOT\"
+            $this.DriveTargets.CurrentControlSet = "ControlSet001"
+        }
+        else {
+            foreach ($item in Get-TrawlerChildItem -Path $this.PathAsRegistry("HKEY_USERS")) {
+                if ($item.Name -match ".*_Classes") {
+                    $this.DriveTargets.HkcuClassList += $item.Name
+                }
+                else {
+                    $this.DriveTargets.HkcuList += $item.Name
+                }
+            }
+
+            $this.DriveTargets.HomeDrive = $env:homedrive
+            $this.DriveTargets.AssumedHomeDrive = $env:homedrive
+            $this.DriveTargets.ProgramData = $env:programdata
+            $this.DriveTargets.Hklm = "HKEY_LOCAL_MACHINE\"
+            $this.DriveTargets.Hkcu = "HKEY_CURRENT_USER\"
+            # Need to avoid using HKCR as it will be unavailable on dead drives
+            $this.DriveTargets.Hkcr = "HKEY_CLASSES_ROOT\"
+            $this.DriveTargets.CurrentControlSet = "CurrentControlSet"
+        }
+    }
+
+    <#
+    # Converts the given path segments into a proper file path starting with the target drive path.
+    #>
+    [string] ToTargetDrivePath([string[]]$pathSegments) {
+        return [System.IO.Path]::Combine($this.DriveTargets.HomeDrive, $pathSegments)
+    }
+
+    [void] LoadHive([string]$hiveName, [string]$hivePath, [string]$hiveRoot) {
+        $this.WriteMessage("Loading Registry Hive File: $hivePath at location: $hiveRoot\$hiveName")
+        New-PSDrive -PSProvider Registry -Name $hiveName -Root $hiveRoot | Out-Null
+        $fullPath = "$hiveRoot\$hiveName"
+        reg load $fullPath "$hivePath" | Out-Null
+        $this.LoadedHives.Add($fullPath, $hiveName)
+    }
+
+    [void] UnloadHive() {
+        foreach ($hive in $this.LoadedHives) {
+            if (Test-Path -Path $this.PathAsRegistry($hive.Key)) {
+                $this.WriteMessage("Unloading $(hive.Key)")
+                [gc]::collect()
+                reg unload $hive.Key | Out-Null
+            }
+        }
     }
 
     <#
     # Check is a given snapshot exemption table contains the key value pair for the given snapshot.
     # Returns true if the key and value exist in the table, otherwise, returns false
     #>
-    [bool] IsExemptBySnapShot([TrawlerSnapShotData]$data) {
+    [bool] IsExemptBySnapShot([TrawlerSnapShotData]$data, [switch]$writeSnapShot) {
         if (-not $this.LoadSnapShot) {
             return $false
         }
@@ -219,6 +314,9 @@ class TrawlerState {
         Write-Warning "`tInformation is valuable so please try to provide as much as possible"
     }
 
+    <#
+    # Convert a given path to a registry
+    #>
     [string] PathAsRegistry([string]$path) {
         return "Registry::$path"
     }
@@ -251,6 +349,23 @@ class TrawlerState {
     $OutputWritable = (Test-Path $this.OutputPath)
     $SnapShotWritable = (Test-Path $this.SnapShotPath)
     $AllowedVulns
+    $DriveTargets = [PSCustomObject]@{
+        HomeDrive         = ""
+        AssumedHomeDrive  = "C:"
+        ProgramData       = ""
+        TargetHives       = @(
+            "SOFTWARE"
+            "SYSTEM"
+        )
+        UserHives         = @()
+        HkcuList          = @()
+        HkcuClassList     = @()
+        Hklm              = ""
+        Hkcu              = ""
+        Hkcr              = ""
+        CurrentControlSet = ""
+    }
+    $LoadedHives = @{}
 
     $SuspiciousProcessPaths = @(
         ".*\\users\\administrator\\.*",
@@ -376,7 +491,7 @@ class TrawlerDetection {
     [string]$Technique
     [object]$Metadata
 
-    TrawlerDetection([string]$name, [TrawlerRiskPriority]$risk, [string]$source, [string]$technique,[object]$metadata) {
+    TrawlerDetection([string]$name, [TrawlerRiskPriority]$risk, [string]$source, [string]$technique, [object]$metadata) {
         $this.Name = $name
         $this.Risk = $risk
         $this.Source = $source

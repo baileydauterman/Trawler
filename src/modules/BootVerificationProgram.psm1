@@ -1,27 +1,39 @@
 function Test-BootVerificationProgram {
-	# Supports Dynamic Snapshotting
-	# Supports Drive Retargeting
-	Write-Message "Checking BootVerificationProgram"
-	$path = "Registry::$regtarget_hklm`SYSTEM\CurrentControlSet\Control\BootVerificationProgram"
-	if (Test-Path -Path $path) {
-		$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		if ($data.ImagePath -ne $null) {
-			Write-SnapshotMessage -Key "ImagePath" -Value $data.ImagePath -Source 'BootVerificationProgram'
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 
-			if ($loadsnapshot) {
-				$result = Check-AllowList $allowlist_bootverificationprogram "ImagePath" $data.ImagePath
-				if ($result) {
-					continue
-				}
-			}
-			$detection = [PSCustomObject]@{
-				Name      = 'BootVerificationProgram will launch associated program as a service on startup.'
-				Risk      = 'High'
-				Source    = 'Registry'
-				Technique = "T1112: Modify Registry"
-				Meta      = "Registry Path: " + $path + ", Program: " + $data.ImagePath
-			}
-			Write-Detection $detection
+	$State.WriteMessage("Checking BootVerificationProgram")
+	$path = "Registry::$regtarget_hklm`SYSTEM\CurrentControlSet\Control\BootVerificationProgram"
+	if (-not (Test-Path -Path $path)) {
+		return
+	}
+	
+	$data = Get-TrawlerItemProperty -Path $path
+
+	if ($data.ImagePath) {
+		$snapShotData = [TrawlerSnapShotData]::new(
+			"ImagePath",
+			$data.ImagePath,
+			'BootVerificationProgram'
+		)
+
+		if ($State.IsExemptBySnapShot($snapShotData, $true)) {
+			return
 		}
+
+		$State.WriteDetection(
+			'BootVerificationProgram will launch associated program as a service on startup.',
+			[TrawlerRiskPriority]::High,
+			'Registry',
+			"T1112: Modify Registry",
+			[PSCustomObject]@{
+				RegistryPath = $path
+				Program = $data.ImagePath
+			}
+		)
 	}
 }
