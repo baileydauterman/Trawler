@@ -131,7 +131,14 @@ function Assert-TaskMatchesRegex {
     }
 }
 
-function Check-ScheduledTasks {
+function Test-ScheduledTasks {
+    [CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
+    
     # Supports Dynamic Snapshotting for Executable Paths
     # Can possibly support drive-retargeting by parsing Task XML
     # Working on this with regex from Task Files

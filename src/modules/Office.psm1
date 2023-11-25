@@ -1,4 +1,10 @@
 function Test-OfficeAI {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	# https://twitter.com/Laughing_Mantis/status/1645268114966470662
 	Write-Message "Checking Office AI.exe Presence"
@@ -24,7 +30,13 @@ function Test-OfficeAI {
 }
 
 
-function Check-OfficeGlobalDotName {
+function Test-OfficeGlobalDotName {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Office GlobalDotName usage"
@@ -62,7 +74,13 @@ function Check-OfficeGlobalDotName {
 }
 
 
-function Check-Officetest {
+function Test-OfficeTest {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	Write-Message "Checking Office test usage"
 	$basepath = "Registry::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf"
@@ -98,7 +116,13 @@ function Check-Officetest {
 	}
 }
 
-function Check-Outlook-Startup {
+function Test-OutlookStartup {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Outlook Macros"
@@ -145,7 +169,13 @@ function Check-Outlook-Startup {
 	}
 }
 
-function Check-Office-Trusted-Locations {
+function Test-OfficeTrustedLocations {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Mostly supports drive retargeting
 	# https://github.com/PowerShell/PowerShell/issues/16812

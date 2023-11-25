@@ -1,5 +1,11 @@
 
 function Test-CommandAutoRunProcessors {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Command AutoRun Processors"

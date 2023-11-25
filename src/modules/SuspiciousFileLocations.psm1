@@ -1,4 +1,11 @@
-function Check-Suspicious-File-Locations {
+function Test-SuspiciousFileLocations {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
+
 	Write-Message "Checking Suspicious File Locations"
 	$suspicious_extensions = @('*.exe', '*.bat', '*.ps1', '*.hta', '*.vb', '*.vba', '*.vbs', '*.zip', '*.gz', '*.7z', '*.dll', '*.scr', '*.cmd', '*.com', '*.ws', '*.wsf', '*.scf', '*.scr', '*.pif')
 	$recursive_paths_to_check = @(

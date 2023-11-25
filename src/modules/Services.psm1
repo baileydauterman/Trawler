@@ -1,5 +1,11 @@
 
-function Check-Services {
+function Test-Services {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Support Drive Retargeting
 	Write-Message "Checking Windows Services"
@@ -1150,7 +1156,7 @@ function Check-Services {
 	}
 }
 
-function Service-Reg-Checks {
+function Test-ServicesByRegex {
 	# TODO - Check FailureCommand for abnormal entries
 	# Supports Drive Retargeting
 	# Support Dynamic Snapshotting

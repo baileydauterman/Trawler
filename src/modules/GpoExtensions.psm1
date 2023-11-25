@@ -1,5 +1,11 @@
 
 function Test-GPOExtensions {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking GPO Extension DLLs"

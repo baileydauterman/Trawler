@@ -1,4 +1,10 @@
-function Check-RDPStartupPrograms {
+function Test-RDPStartupPrograms {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking RDP Startup Programs"
@@ -39,7 +45,13 @@ function Check-RDPStartupPrograms {
 	}
 }
 
-function Check-RDPShadowConsent {
+function Test-RDPShadowConsent {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking RDP Shadow Consent"

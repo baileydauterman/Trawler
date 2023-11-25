@@ -1,5 +1,11 @@
 
-function Check-IFEO {
+function Test-IFEO {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Image File Execution Options"

@@ -1,16 +1,10 @@
 function Test-ComHijacks {
     [CmdletBinding()]
-    param (
-        [Parameter()]
-        [string]
-        $Path,
-        [Parameter()]
-        [PSCustomObject]
-        $ComTables,
-        [Parameter()]
-        [PSCustomObject]
-        $TrawlerState
-    )
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 
     if (-not (Test-Path -Path $Path)) {
         return $null
@@ -67,7 +61,13 @@ function Test-ComHijacks {
 }
 
 
-function Check-WellKnownCOM {
+function Test-WellKnownCOM {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	# TODO - Add the same HKLM Check
 	Write-Message "Checking well-known COM hijacks"
@@ -148,7 +148,13 @@ function Find-ValueInHashTable {
 }
 
 <# REWRITE THE BELOW INTO THE TEST-COMHIJACKS CMD #>
-function Check-COM-Hijacks {
+function Test-COM-Hijacks {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking COM Classes"

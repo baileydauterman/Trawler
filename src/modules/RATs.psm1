@@ -1,5 +1,11 @@
 
 function Test-RATS {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	# Supports Dynamic Snapshotting
 

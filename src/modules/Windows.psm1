@@ -1,4 +1,10 @@
-function Check-EventViewerMSC {
+function Test-EventViewerMSC {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Event Viewer MSC"
@@ -36,7 +42,13 @@ function Check-EventViewerMSC {
 	}
 }
 
-function Check-MicrosoftTelemetryCommands {
+function Test-MicrosoftTelemetryCommands {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Microsoft TelemetryController"
@@ -84,7 +96,13 @@ function Check-MicrosoftTelemetryCommands {
 	}
 }
 
-function Check-RemoteUACSetting {
+function Test-RemoteUACSetting {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking RemoteUAC Setting"
@@ -123,7 +141,13 @@ function Check-RemoteUACSetting {
 	}
 }
 
-function Check-ExplorerHelperUtilities {
+function Test-ExplorerHelperUtilities {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Explorer Helper exes"
@@ -168,7 +192,13 @@ function Check-ExplorerHelperUtilities {
 	}
 }
 
-function Check-ScreenSaverEXE {
+function Test-ScreenSaverEXE {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	Write-Message "Checking ScreenSaver exe"
 	$basepath = "Registry::HKEY_CURRENT_USER\Control Panel\Desktop"
@@ -191,7 +221,13 @@ function Check-ScreenSaverEXE {
 		}
 	}
 }
-function Check-Process-Modules {
+function Test-Process-Modules {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Does not support Drive Retargeting
 	if ($drivechange) {
@@ -265,7 +301,13 @@ function Check-Process-Modules {
 	}
 }
 
-function Check-Windows-Unsigned-Files {
+function Test-WindowsUnsignedFiles {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting - Not actually sure if this will work though
 	Write-Message "Checking Unsigned Files"
@@ -304,7 +346,13 @@ function Check-Windows-Unsigned-Files {
 	}
 }
 
-function Check-Suspicious-Certificates {
+function Test-SuspiciousCertificates {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Can maybe support drive retargeting
 	if ($drivechange) {
@@ -499,7 +547,13 @@ function Check-Suspicious-Certificates {
 	}
 }
 
-function Check-GPO-Scripts {
+function Test-GPOScripts {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking GPO Scripts"
@@ -612,7 +666,13 @@ function Check-GPO-Scripts {
 
 }
 
-function Check-BITS {
+function Test-BITS {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Maybe with Drive Retargeting
 	# C:\ProgramData\Microsoft\Network\Downloader
@@ -657,7 +717,13 @@ function Check-BITS {
 	}
 }
 
-function Check-Modified-Windows-Accessibility-Feature {
+function Test-ModifiedWindowsAccessibilityFeature {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# TODO - Consider allow-listing here
 	# Supports Drive Retargeting
 	Write-Message "Checking Accessibility Binaries"
@@ -688,7 +754,13 @@ function Check-Modified-Windows-Accessibility-Feature {
 	}
 }
 
-function Check-PowerShell-Profiles {
+function Test-PowerShellProfiles {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# PowerShell profiles may be abused by adversaries for persistence.
 	# Supports Drive Retargeting
 	# TODO - Add check for 'suspicious' content
@@ -771,7 +843,13 @@ function Check-PowerShell-Profiles {
 
 
 
-function Check-Registry-Checks {
+function Test-RegistryChecks {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# DEPRECATED FUNCTION
 	#TODO - Inspect File Command Extensions to hunt for anomalies
 	# https://attack.mitre.org/techniques/T1546/001/
@@ -798,7 +876,7 @@ function Check-Registry-Checks {
 								Meta      = "Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
 							}
 							#Write-Detection $detection
-							# This is now handled by Check-COM-Hijacks along with HKLM and HKCR checks (which should be identical)
+							# This is now handled by Test-COM-Hijacks along with HKLM and HKCR checks (which should be identical)
 						}
 					}
 				}
@@ -809,7 +887,13 @@ function Check-Registry-Checks {
 
 }
 
-function Check-Users {
+function Test-Users {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Can possibly support drive retargeting by reading SAM/SYSTEM Hives if intact
 	# https://habr.com/en/articles/441410/
@@ -845,7 +929,13 @@ function Check-Users {
     
 }
 
-function Check-Processes {
+function Test-Processes {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Does not support drive retargeting
 	# TODO - Check for processes spawned from netsh.dll
@@ -902,7 +992,13 @@ function Check-Processes {
 	}
 }
 
-function Check-WMIConsumers {
+function Test-WMIConsumers {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Drive Retargeting..maybe
 	# https://netsecninja.github.io/dfir-notes/wmi-forensics/
@@ -962,7 +1058,13 @@ function Check-WMIConsumers {
 		}
 	}
 }
-function Check-LNK {
+function Test-LNK {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# TODO - Maybe, Snapshots
 	# Supports Drive Retargeting
 	Write-Message "Checking LNK Targets"
@@ -1017,7 +1119,13 @@ function Check-LNK {
 	}
 }
 
-function Check-TerminalProfiles {
+function Test-TerminalProfiles {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	# TODO - Snapshot/Allowlist specific exes
 	Write-Message "Checking Terminal Profiles"
@@ -1059,7 +1167,13 @@ function Check-TerminalProfiles {
 	}
 }
 
-function Check-ErrorHandlerCMD {
+function Test-ErrorHandlerCMD {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Support Drive Retargeting
 	Write-Message "Checking ErrorHandler.cmd"
 	$path = "$env_homedrive\windows\Setup\Scripts\ErrorHandler.cmd"
@@ -1097,7 +1211,13 @@ function Check-ErrorHandlerCMD {
 	}
 }
 
-function Check-KnownManagedDebuggers {
+function Test-KnownManagedDebuggers {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Can support drive retargeting
 	Write-Message "Checking Known Managed Debuggers"
@@ -1140,7 +1260,13 @@ function Check-KnownManagedDebuggers {
 	}
 }
 
-function Check-Wow64LayerAbuse {
+function Test-Wow64LayerAbuse {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking WOW64 Compatibility DLLs"
@@ -1173,7 +1299,13 @@ function Check-Wow64LayerAbuse {
 	}
 }
 
-function Check-ActiveSetup {
+function Test-ActiveSetup {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Active Setup Stubs"
@@ -1227,7 +1359,13 @@ function Check-ActiveSetup {
 	}
 }
 
-function Check-UninstallStrings {
+function Test-UninstallStrings {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Uninstall Strings"
@@ -1302,7 +1440,13 @@ function Check-UninstallStrings {
 	}
 }
 
-function Check-PolicyManager {
+function Test-PolicyManager {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking PolicyManager DLLs"
@@ -1377,7 +1521,13 @@ function Check-PolicyManager {
 	}
 }
 
-function Check-SEMgrWallet {
+function Test-SEMgrWallet {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# TODO - Implement snapshot skipping
 	# Supports Drive Retargeting
 	Write-Message "Checking SEMgr Wallet DLLs"
@@ -1401,7 +1551,13 @@ function Check-SEMgrWallet {
 	}
 }
 
-function Check-WERRuntimeExceptionHandlers {
+function Test-WERRuntimeExceptionHandlers {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Error Reporting Handler DLLs"
@@ -1458,7 +1614,13 @@ function Check-WERRuntimeExceptionHandlers {
 	}
 }
 
-function Check-SilentProcessExitMonitoring {
+function Test-SilentProcessExitMonitoring {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking SilentProcessExit Monitoring"
@@ -1502,7 +1664,13 @@ function Check-SilentProcessExitMonitoring {
 	}
 }
 
-function Check-LSA {
+function Test-LSA {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking LSA DLLs"
@@ -1673,7 +1841,13 @@ function Check-LSA {
 	}
 }
 
-function Check-TerminalServicesInitialProgram {
+function Test-TerminalServicesInitialProgram {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Terminal Services Initial Programs"
@@ -1722,7 +1896,13 @@ function Check-TerminalServicesInitialProgram {
 	}
 }
 
-function Check-UserInitMPRScripts {
+function Test-UserInitMPRScripts {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking UserInitMPRLogonScript"
@@ -1747,6 +1927,39 @@ function Check-UserInitMPRScripts {
 						Source    = 'Registry'
 						Technique = "T1037.001: Boot or Logon Initialization Scripts: Logon Script (Windows)"
 						Meta      = "Key Location: HKCU\Environment, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
+					}
+					Write-Detection $detection
+				}
+			}
+		}
+	}
+}
+
+function Test-WindowsLoadKey {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
+	# TODO - Add Snapshot Skipping
+	# Supports Drive Retargeting
+	Write-Message "Checking Windows Load"
+	$basepath = "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
+	foreach ($p in $regtarget_hkcu_list) {
+		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
+		if (Test-Path -Path "Registry::$path") {
+			$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$item.PSObject.Properties | ForEach-Object {
+				if ($_.Name -in 'Load') {
+					Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'WindowsLoad'
+
+					$detection = [PSCustomObject]@{
+						Name      = 'Potential Windows Load Hijacking'
+						Risk      = 'High'
+						Source    = 'Registry'
+						Technique = "T1546: Event Triggered Execution"
+						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 					}
 					Write-Detection $detection
 				}

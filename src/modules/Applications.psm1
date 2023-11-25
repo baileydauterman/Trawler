@@ -1,5 +1,11 @@
 
 function Test-ApplicationShims {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Application Shims"
@@ -93,6 +99,12 @@ function Test-AppPaths {
 }
 
 function Test-Startups {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Startup Items"

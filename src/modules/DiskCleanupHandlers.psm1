@@ -1,4 +1,10 @@
 function Test-DiskCleanupHandlers {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Retargeting/Snapshot
 	Write-Message "Checking DiskCleanupHandlers"
 	$default_cleanup_handlers = @(

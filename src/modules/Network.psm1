@@ -1,4 +1,10 @@
-function Check-Connections {
+function Test-Connections {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Does not support drive-retargeting
 	if ($drivechange) {

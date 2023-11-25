@@ -1,4 +1,10 @@
 function Test-NotepadPlusPlusPlugins {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# https://pentestlab.blog/2022/02/14/persistence-notepad-plugins/
 	# Supports Drive Retargeting
 	Write-Message "Checking Notepad++ Plugins"

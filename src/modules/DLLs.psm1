@@ -1,5 +1,11 @@
 
-function Check-AppCertDLLs {
+function Test-AppCertDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking AppCert DLLs"
@@ -34,7 +40,13 @@ function Check-AppCertDLLs {
 }
 
 
-function Check-AppInitDLLs {
+function Test-AppInitDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking AppInit DLLs"
@@ -97,6 +109,12 @@ function Check-AppInitDLLs {
 
 
 function Test-AutoDialDLL {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	Write-Message "Checking Autodial DLL"
 	$path = "Registry::$regtarget_hklm`SYSTEM\CurrentControlSet\Services\WinSock2\Parameters"
@@ -118,6 +136,12 @@ function Test-AutoDialDLL {
 }
 
 function Test-HTMLHelpDLL {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	Write-Message "Checking HTML Help (.chm) DLL"
 	$basepath = "HKEY_CURRENT_USER\Software\Microsoft\HtmlHelp Author"
@@ -142,6 +166,12 @@ function Test-HTMLHelpDLL {
 }
 
 function Test-MSDTCDll {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# https://pentestlab.blog/2020/03/04/persistence-dll-hijacking/
 	Write-Message "Checking MSDTC DLL Hijack"
 	$matches = @{
@@ -174,6 +204,12 @@ function Test-MSDTCDll {
 
 
 function Test-NaturalLanguageDevelopmentDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking NaturalLanguageDevelopment DLLs"
@@ -213,7 +249,13 @@ function Test-NaturalLanguageDevelopmentDLLs {
 }
 
 
-function Check-TerminalServicesDLL {
+function Test-TerminalServicesDLL {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	Write-Message "Checking TerminalServices DLL"
 	$path = "Registry::$regtarget_hklm`SYSTEM\CurrentControlSet\Services\TermService\Parameters"
@@ -236,6 +278,12 @@ function Check-TerminalServicesDLL {
 
 
 function Test-TrustProviderDLL {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	Write-Message "Checking Trust Provider"
 	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}"
@@ -267,7 +315,13 @@ function Test-TrustProviderDLL {
 }
 
 
-function Check-NetSHDLLs {
+function Test-NetSHDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking NetSH DLLs"
@@ -324,7 +378,13 @@ function Check-NetSHDLLs {
 	}
 }
 
-function Check-PeerDistExtensionDll {
+function Test-PeerDistExtensionDll {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Targeting
 	Write-Message "Checking PeerDistExtension DLL"
 	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Windows NT\CurrentVersion\PeerDist\Extension"
@@ -346,7 +406,13 @@ function Check-PeerDistExtensionDll {
 	}
 }
 
-function Check-InternetSettingsLUIDll {
+function Test-InternetSettingsLUIDll {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Drive Retargeting
 	Write-Message "Checking InternetSettings DLL"
 	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\LUI"
@@ -368,7 +434,13 @@ function Check-InternetSettingsLUIDll {
 	}
 }
 
-function Check-BIDDll {
+function Test-BIDDll {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Can support drive retargeting
 	Write-Message "Checking BID DLL"
@@ -418,7 +490,7 @@ function Check-BIDDll {
 	}
 }
 
-function Check-WindowsUpdateTestDlls {
+function Test-WindowsUpdateTestDlls {
 	# Supports Dynamic Snapshotting
 	# Can support drive retargeting
 	Write-Message "Checking Windows Update Test"
@@ -451,7 +523,13 @@ function Check-WindowsUpdateTestDlls {
 	}
 }
 
-function Check-MiniDumpAuxiliaryDLLs {
+function Test-MiniDumpAuxiliaryDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Can support drive retargeting
 	Write-Message "Checking MiniDumpAuxiliary DLLs"
@@ -496,7 +574,7 @@ function Check-MiniDumpAuxiliaryDLLs {
 }
 
 
-function Check-WinlogonHelperDLLs {
+function Test-WinlogonHelperDLLs {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Winlogon Helper DLLs"
@@ -536,7 +614,13 @@ function Check-WinlogonHelperDLLs {
 	}
 }
 
-function Check-PrintMonitorDLLs {
+function Test-PrintMonitorDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking PrintMonitor DLLs"
@@ -586,7 +670,13 @@ function Check-PrintMonitorDLLs {
 	}
 }
 
-function Check-DNSServerLevelPluginDLL {
+function Test-DNSServerLevelPluginDLL {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking DNSServerLevelPlugin DLL"
@@ -616,7 +706,13 @@ function Check-DNSServerLevelPluginDLL {
 	}
 }
 
-function Check-TimeProviderDLLs {
+function Test-TimeProviderDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking Time Provider DLLs"
@@ -657,7 +753,13 @@ function Check-TimeProviderDLLs {
 	}
 }
 
-function Check-PrintProcessorDLLs {
+function Test-PrintProcessorDLLs {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking PrintProcessor DLLs"

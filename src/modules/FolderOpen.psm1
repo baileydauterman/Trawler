@@ -1,5 +1,11 @@
 
-function Check-FolderOpen {
+function Test-FolderOpen {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	Write-Message "Checking FolderOpen Command"
