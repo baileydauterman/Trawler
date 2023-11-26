@@ -170,7 +170,7 @@ function Test-PrintMonitorDLLs {
 		"usbmon.dll",
 		"WSDMon.dll" # Server 2016
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Print\Monitors"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Print\Monitors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {

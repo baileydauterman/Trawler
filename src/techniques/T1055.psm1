@@ -23,7 +23,7 @@ function Test-DNSServerLevelPluginDLL {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking DNSServerLevelPlugin DLL")
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Services\DNS\Parameters"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services\DNS\Parameters"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {

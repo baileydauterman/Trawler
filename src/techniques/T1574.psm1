@@ -671,7 +671,7 @@ function Test-TerminalServicesInitialProgram {
 	$State.WriteMessage("Checking Terminal Services Initial Programs")
 	$paths = @(
 		"Registry::$($State.DriveTargets.Hklm)SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-		"Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Terminal Server\WinStations\RDP-Tcp"
+		"Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Terminal Server\WinStations\RDP-Tcp"
 	)
 	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
 	foreach ($p in $regtarget_hkcu_list) {
@@ -778,7 +778,7 @@ function Test-RDPStartupPrograms {
 	$allowed_rdp_startups = @(
 		"rdpclip"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Terminal Server\Wds\rdpwd"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Terminal Server\Wds\rdpwd"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -835,7 +835,7 @@ function Test-PATHHijacks {
     foreach ($bin in $system32_bins) {
         $sys32_bins.Add($bin.Name) | Out-Null
     }
-    $path_reg = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Session Manager\Environment"
+    $path_reg = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Session Manager\Environment"
     if (Test-Path -Path $path_reg) {
         $items = Get-ItemProperty -Path $path_reg | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
         $items.PSObject.Properties | ForEach-Object {
@@ -897,7 +897,7 @@ function Test-ServiceHijacks {
     $State.WriteMessage("Checking Un-Quoted Services")
     # Supports Drive Retargeting, assumes homedrive is C:
     #$services = Get-CimInstance -ClassName Win32_Service  | Select-Object Name, PathName, StartMode, Caption, DisplayName, InstallDate, ProcessId, State
-    $service_path = "$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Services"
+    $service_path = "$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services"
     $service_list = New-Object -TypeName "System.Collections.ArrayList"
     if (Test-Path -Path "Registry::$service_path") {
         $items = Get-ChildItem -Path "Registry::$service_path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider

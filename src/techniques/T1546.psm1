@@ -1468,7 +1468,7 @@ function Test-AppCertDLLs {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking AppCert DLLs")
 	$standard_appcert_dlls = @()
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Session Manager\AppCertDlls"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Session Manager\AppCertDlls"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {

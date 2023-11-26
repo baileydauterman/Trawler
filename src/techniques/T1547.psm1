@@ -47,7 +47,7 @@ function Test-LSA {
 		"wsauth",
 		"wsauth" #vmware
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Lsa"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -99,7 +99,7 @@ function Test-LSA {
 			}
 		}
 	}
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Lsa\OSConfig"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa\OSConfig"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -128,7 +128,7 @@ function Test-LSA {
 			}
 		}
 	}
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\LsaExtensionConfig\LsaSrv"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\LsaExtensionConfig\LsaSrv"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -164,7 +164,7 @@ function Test-LSA {
 		"rassfm", # Windows Server 2019 AWS Lightsail
 		"scecli" # Windows 10/Server
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Lsa"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -213,7 +213,7 @@ function Test-TimeProviderDLLs {
 		"$env:homedrive\Windows\System32\w32time.dll",
 		"$env:homedrive\Windows\System32\vmictimeprovider.dll"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Services\W32Time\TimeProviders"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services\W32Time\TimeProviders"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -372,7 +372,7 @@ function Test-PrintProcessorDLLs {
 	$standard_print_processors = @(
 		"winprint.dll"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -407,7 +407,7 @@ function Test-PrintProcessorDLLs {
 			}
 		}
 	}
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
