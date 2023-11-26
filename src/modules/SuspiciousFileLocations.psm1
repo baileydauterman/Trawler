@@ -1,14 +1,3 @@
-function Test-NoTechnique {
-	[CmdletBinding()]
-	param (
-		[Parameter()]
-		[TrawlerState]
-		$State
-	)
-
-	Test-SuspiciousFileLocations $State
-}
-
 function Test-SuspiciousFileLocations {
 	[CmdletBinding()]
 	param (

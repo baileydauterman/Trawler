@@ -1,15 +1,15 @@
 function Test-T1037 {
-    [CmdletBinding()]
+	[CmdletBinding()]
 	param (
 		[Parameter()]
 		[TrawlerState]
 		$State
 	)
     
-    Test-Startups $State
-    Test-GPOScripts $State
-    Test-TerminalProfiles $State
-    Test-UserInitMPRScripts $State
+	Test-Startups $State
+	Test-GPOScripts $State
+	Test-TerminalProfiles $State
+	Test-UserInitMPRScripts $State
 }
 
 function Test-Startups {
@@ -23,11 +23,11 @@ function Test-Startups {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Startup Items")
 	$paths = @(
-		"$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-		"$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
-		"$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
-		"$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx"
-		"$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices"
+		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
+		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx"
+		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices"
 		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
 		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
 		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
@@ -44,7 +44,8 @@ function Test-Startups {
 			}
 		}
 		$startups = @()
-	} else {
+	}
+ else {
 		$startups = Get-CimInstance -ClassName Win32_StartupCommand | Select-Object Command, Location, Name, User
 		#$statups = @()
 
@@ -110,58 +111,54 @@ function Test-GPOScripts {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking GPO Scripts"
-	$base_key = "$regtarget_hklm`SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\State\Machine\Scripts"
-	$script_paths = New-Object -TypeName "System.Collections.ArrayList"
-	$homedrive = $env_homedrive
+	$State.WriteMessage("Checking GPO Scripts")
+
 	$paths = @(
-		"$homedrive\Windows\System32\GroupPolicy\Machine\Scripts\psscripts.ini",
-		"$homedrive\Windows\System32\GroupPolicy\Machine\Scripts\scripts.ini",
-		"$homedrive\Windows\System32\GroupPolicy\User\Scripts\psscripts.ini",
-		"$homedrive\Windows\System32\GroupPolicy\User\Scripts\scripts.ini"
+		$State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "Machine", "Scripts", "psscripts.ini"))
+		$State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "Machine", "Scripts", "scripts.ini")),
+		$State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "User", "Scripts", "psscripts.ini")),
+		$State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "User", "Scripts", "scripts.ini"))
 	)
+
 	$path_lookup = @{
-		Startup  = "$homedrive\Windows\System32\GroupPolicy\Machine\Scripts\Startup\"
-		Shutdown = "$homedrive\Windows\System32\GroupPolicy\Machine\Scripts\Shutdown\"
-		Logoff   = "$homedrive\Windows\System32\GroupPolicy\User\Scripts\Logoff\"
-		Logon    = "$homedrive\Windows\System32\GroupPolicy\User\Scripts\Logon\"
+		Startup  = $State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "Machine", "Scripts", "Startup"))
+		Shutdown = $State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "Machine", "Scripts", "Shutdown"))
+		Logoff   = $State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "User", "Scripts", "Logoff"))
+		Logon    = $State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "User", "Scripts", "Logon"))
 	}
 
 	foreach ($path in $paths) {
 		# Skip non-existent files
-		if ((Test-Path $path) -eq $false) {
+		if (-not (Test-Path $path)) {
 			return
 		}
+
 		$content = Get-Content $path
 		$script_type = ""
 		foreach ($line in $content) {
 			if ($line.Trim() -eq "") {
 				continue
 			}
-			if ($line -eq "[Shutdown]") {
-				$script_type = "Shutdown"
+
+			switch ($line) {
+				"[Shutdown]" { $script_type = "Shutdown" }
+				"[Startup]" { $script_type = "Startup" }
+				"[Logon]" { $script_type = "Logon" }
+				"[Logoff]" { $script_type = "Logoff" }
+				Default {}
 			}
-			elseif ($line -eq "[Startup]") {
-				$script_type = "Startup"
+
+			switch -Regex ($line) {
+				"\d{1,9}CmdLine=" { $cmdline = $line.Split("=", 2)[1] }
+				"\d{1,9}Parameters=" { $params = $line.Split("=", 2)[1] }
 			}
-			elseif ($line -eq "[Logon]") {
-				$script_type = "Logon"
-			}
-			elseif ($line -eq "[Logoff]") {
-				$script_type = "Logoff"
-			}
-			elseif ($line -match "\d{1,9}CmdLine=") {
-				$cmdline = $line.Split("=", 2)[1]
-			}
-			elseif ($line -match "\d{1,9}Parameters=") {
-				$params = $line.Split("=", 2)[1]
-			}
-			if ($params -ne $null) {
+
+			if ($params) {
 				# Last line in each script descriptor is the Parameters
 				if ($script_type -eq "Shutdown" -or $script_type -eq "Startup") {
 					$desc = "Machine $script_type Script"
 				}
-				elseif ($script_type -eq "Logon" -or $script_paths -eq "Logoff") {
+				elseif ($script_type -eq "Logon" -or $script_type -eq "Logoff") {
 					$desc = "User $script_type Script"
 				}
 
@@ -170,47 +167,48 @@ function Test-GPOScripts {
 					$script_location = $path_lookup[$script_type] + $cmdline
 				}
 
-				Write-SnapshotMessage -Key $script_location -Value $script_location -Source 'GPOScripts'
-
-				$pass = $false
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_gposcripts $script_location $script_location
-					if ($result) {
-						$cmdline = $null
-						$params = $null
-						continue
-					}
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($script_location, $script_location, 'GPOScripts'), $true)) {
+					$cmdline = $null
+					$params = $null
+					continue
 				}
+
 				# TODO - Figure out ERROR
 				$script_content_detection = $false
 				try {
-					$script_content = Get-Content $script_location
-					foreach ($line_ in $script_content) {
-						if ($line_ -match $suspicious_terms -and $script_content_detection -eq $false) {
-							$detection = [PSCustomObject]@{
-								Name      = 'Suspicious Content in ' + $desc
-								Risk      = 'High'
-								Source    = 'Windows GPO Scripts'
-								Technique = "T1037: Boot or Logon Initialization Scripts"
-								Meta      = "File: " + $script_location + ", Arguments: " + $params + ", Suspicious Line: " + $line_
-							}
-							Write-Detection $detection
+					foreach ($line_ in Get-Content $script_location) {
+						if ($line_ -match $State.SuspiciousTerms -and $script_content_detection -eq $false) {
+							$State.WriteDetection([TrawlerDetection]::new(
+									"Suspicious Content in $desc",
+									[TrawlerRiskPriority]::High,
+									'Windows GPO Scripts',
+									"T1037: Boot or Logon Initialization Scripts",
+									[PSCustomObject]@{
+										File           = $script_location
+										Arguments      = $params
+										SuspiciousLine = $line_
+									}
+								))
 							$script_content_detection = $true
 						}
 					}
 				}
 				catch {
 				}
-				if ($script_content_detection -eq $false) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Review: ' + $desc
-						Risk      = 'Medium'
-						Source    = 'Windows GPO Scripts'
-						Technique = "T1037: Boot or Logon Initialization Scripts"
-						Meta      = "File: " + $script_location + ", Arguments: " + $params
-					}
-					Write-Detection $detection
+				# no suspicious lines but should still be investigated
+				if (-not $script_content_detection) {
+					$State.WriteDetection([TrawlerDetection]::new(
+							"Review: $desc",
+							[TrawlerRiskPriority]::Medium,
+							'Windows GPO Scripts',
+							"T1037: Boot or Logon Initialization Scripts",
+							[PSCustomObject]@{
+								File      = $script_location
+								Arguments = $params
+							}
+						))
 				}
+
 				$cmdline = $null
 				$params = $null
 			}
@@ -226,40 +224,51 @@ function Test-TerminalProfiles {
 		[TrawlerState]
 		$State
 	)
-	# Supports Drive Retargeting
-	# TODO - Snapshot/Allowlist specific exes
-	Write-Message "Checking Terminal Profiles"
-	$profile_names = Get-ChildItem "$env_homedrive\Users" -Attributes Directory | Select-Object *
-	$base_path = "$env_homedrive\Users\_USER_\AppData\Local\Packages\"
-	foreach ($user in $profile_names) {
-		$new_path = $base_path.replace("_USER_", $user.Name)
-		$new_path += "Microsoft.WindowsTerminal*"
-		$terminalDirs = Get-ChildItem $new_path -ErrorAction SilentlyContinue
+
+	$State.WriteMessage("Checking Terminal Profiles")
+
+	$base_path = $State.ToTargetDrivePath(@("Users", "_USER_", "AppData", "Local", "Packages"))
+
+	foreach ($user in Get-ChildItem ($State.ToTargetDrivePath("Users")) -Directory) {
+		$userPath = $base_path.replace("_USER_", $user.Name)
+		$terminalDirs = Get-ChildItem $userPath -Filter "Microsoft.WindowsTerminal*" -ErrorAction SilentlyContinue
 		foreach ($dir in $terminalDirs) {
-			if (Test-Path "$dir\LocalState\settings.json") {
-				$settings_data = Get-Content -Raw "$dir\LocalState\settings.json" | ConvertFrom-Json
-				if ($settings_data.startOnUserLogin -eq $null -or $settings_data.startOnUserLogin -ne $true) {
-					continue
-				}
-				$defaultGUID = $settings_data.defaultProfile
-				foreach ($profile_list in $settings_data.profiles) {
-					foreach ($profile in $profile_list.List) {
-						if ($profile.guid -eq $defaultGUID) {
-							if ($profile.commandline) {
-								$exe = $profile.commandline
-							}
-							else {
-								$exe = $profile.name
-							}
-							$detection = [PSCustomObject]@{
-								Name      = 'Windows Terminal launching command on login'
-								Risk      = 'Medium'
-								Source    = 'Terminal'
-								Technique = "T1037: Boot or Logon Initialization Scripts"
-								Meta      = "File: $dir\LocalState\settings.json, Command: " + $exe
-							}
-							Write-Detection $detection
+			if (-not (Test-Path "$dir\LocalState\settings.json")) {
+				continue
+			}
+
+			$terminalSettings = Get-Content -Raw "$dir\LocalState\settings.json" | ConvertFrom-Json
+			if ($terminalSettings.startOnUserLogin -or $terminalSettings.startOnUserLogin -ne $true) {
+				continue
+			}
+
+			$defaultGUID = $terminalSettings.defaultProfile
+			foreach ($profile_list in $terminalSettings.profiles) {
+				foreach ($profile in $profile_list.List) {
+					if ($profile.guid -eq $defaultGUID) {
+						if ($profile.commandline) {
+							$exe = $profile.commandline
 						}
+						else {
+							$exe = $profile.name
+						}
+
+						$userTerminalSettings ="$dir\LocalState\settings.json"
+
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($userTerminalSettings, $exe, "TerminalUserProfile"), $true)) {
+							continue
+						}
+
+						$State.WriteDetection([TrawlerDetection]::new(
+								'Windows Terminal launching command on login',
+								'Medium',
+								'Terminal',
+								"T1037: Boot or Logon Initialization Scripts",
+								[PSCustomObject]@{
+									File    = $userTerminalSettings
+									Command = $exe
+								}
+							))
 					}
 				}
 			}
@@ -280,7 +289,7 @@ function Test-UserInitMPRScripts {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking UserInitMPRLogonScript"
+	$State.WriteMessage("Checking UserInitMPRLogonScript")
 	$basepath = "Registry::HKEY_CURRENT_USER\Environment"
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)

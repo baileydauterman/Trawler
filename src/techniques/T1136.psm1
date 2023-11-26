@@ -8,6 +8,7 @@ function Test-T1136 {
 
 	Test-Users $State
 }
+
 function Test-Users {
 	[CmdletBinding()]
 	param (
@@ -19,11 +20,11 @@ function Test-Users {
 	# Can possibly support drive retargeting by reading SAM/SYSTEM Hives if intact
 	# https://habr.com/en/articles/441410/
 	if ($drivechange) {
-		Write-Message "Skipping User Analysis - No Drive Retargeting [yet]"
+		$State.WriteMessage("Skipping User Analysis - No Drive Retargeting [yet]")
 		return
 	}
 
-	Write-Message "Checking Local Administrators"
+	$State.WriteMessage("Checking Local Administrators")
 
 	# TODO - Catch error with outdated powershell versions that do not support Get-LocalGroupMember and use alternative gather mechanism
 	# Find all local administrators and their last logon time as well as if they are enabled.

@@ -20,11 +20,11 @@ function Test-Processes {
 	# Does not support drive retargeting
 	# TODO - Check for processes spawned from netsh.dll
 	if ($drivechange) {
-		Write-Message "Skipping Process Analysis - No Drive Retargeting"
+		$State.WriteMessage("Skipping Process Analysis - No Drive Retargeting")
 		return
 	}
 
-	Write-Message "Checking Running Processes"
+	$State.WriteMessage("Checking Running Processes")
 	$processes = Get-CimInstance -ClassName Win32_Process | Select-Object ProcessName, CreationDate, CommandLine, ExecutablePath, ParentProcessId, ProcessId
 	foreach ($process in $processes) {
 		Write-SnapshotMessage -Key $process.ProcessName -Value $process.ExecutablePath -Source "Processes"

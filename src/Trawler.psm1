@@ -68,8 +68,8 @@ function Start-Trawler {
         [TrawlerScanOptions]
         $ScanOptions = [TrawlerScanOptions]::None,
         [Parameter(HelpMessage = "Allows user to pick which techniques to target. Use 'All' to target all techniques. Cannot be used with ScanOptions enabled")]
-        [SupportedTrawlerTechinques]
-        $TechniqueOptions = [SupportedTrawlerTechinques]::None
+        [TrawlerTechniques]
+        $TechniqueOptions = [TrawlerTechniques]::None
     )
 
     # Initial state setup

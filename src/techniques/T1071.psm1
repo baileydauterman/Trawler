@@ -19,10 +19,10 @@ function Test-Connections {
 	# Supports Dynamic Snapshotting
 	# Does not support drive-retargeting
 	if ($drivechange) {
-		Write-Message "Skipping Network Connections - No Drive Retargeting"
+		$State.WriteMessage("Skipping Network Connections - No Drive Retargeting")
 		return
 	}
-	Write-Message "Checking Network Connections"
+	$State.WriteMessage("Checking Network Connections")
 	$tcp_connections = Get-NetTCPConnection | Select-Object State, LocalAddress, LocalPort, OwningProcess, RemoteAddress, RemotePort
 	$suspicious_ports = @(20, 21, 22, 23, 25, 137, 139, 445, 3389, 443)
 	$allow_listed_process_names = @(

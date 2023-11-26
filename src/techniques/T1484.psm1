@@ -18,7 +18,7 @@ function Test-GPOExtensions {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking GPO Extension DLLs"
+	$State.WriteMessage("Checking GPO Extension DLLs")
 	$homedrive = $env:HOMEDRIVE
 	$gpo_dll_allowlist = @(
 		"$homedrive\Windows\System32\TsUsbRedirectionGroupPolicyExtension.dll"
@@ -50,7 +50,7 @@ function Test-GPOExtensions {
 		"wlgpclnt.dll"
 	)
 
-	$path = "$regtarget_hklm`SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GPExtensions"
+	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GPExtensions"
 	if (Test-Path -Path "Registry::$path") {
 		$items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {

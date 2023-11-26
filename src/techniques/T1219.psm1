@@ -77,7 +77,7 @@ function Test-RATS {
 	##### Remote Utilities
 	##### RemoteToPC
 	##### LogMeIn
-	Write-Message "Checking Common RAT Artifacts"
+	$State.WriteMessage("Checking Common RAT Artifacts")
 
 	$application_logpaths = @{
 		"Action1"                           = ""

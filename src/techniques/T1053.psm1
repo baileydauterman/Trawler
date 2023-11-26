@@ -155,7 +155,7 @@ function Test-ScheduledTasks {
     # Working on this with regex from Task Files
     # ^ Mostly working now
     # TODO - Add Argument Comparison Checks
-    Write-Message "Checking Scheduled Tasks"
+    $State.WriteMessage("Checking Scheduled Tasks")
 
     $task_base_path = "$env_homedrive\Windows\System32\Tasks"
     $tasks = New-Object -TypeName "System.Collections.ArrayList"
@@ -251,7 +251,7 @@ function Test-ScheduledTasks {
         }
     }
     else {
-        Write-Message "Could not find Scheduled Task Path: $task_base_path"
+        $State.WriteMessage("Could not find Scheduled Task Path: $task_base_path")
         return
     }
 

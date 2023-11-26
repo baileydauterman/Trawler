@@ -18,8 +18,8 @@ function Test-RDPShadowConsent {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking RDP Shadow Consent"
-	$path = "Registry::$regtarget_hklm`SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+	$State.WriteMessage("Checking RDP Shadow Consent")
+	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {

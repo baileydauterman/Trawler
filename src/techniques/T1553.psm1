@@ -17,8 +17,8 @@ function Test-TrustProviderDLL {
 		$State
 	)
 	# Supports Drive Retargeting
-	Write-Message "Checking Trust Provider"
-	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}"
+	$State.WriteMessage("Checking Trust Provider")
+	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -56,11 +56,11 @@ function Test-SuspiciousCertificates {
 	# Supports Dynamic Snapshotting
 	# Can maybe support drive retargeting
 	if ($drivechange) {
-		Write-Message "Skipping Certificate Analysis - No Drive Retargeting [yet]"
+		$State.WriteMessage("Skipping Certificate Analysis - No Drive Retargeting [yet]")
 		return
 	}
 	# https://www.michev.info/blog/post/1435/windows-certificate-stores#:~:text=Under%20file%3A%5C%25APPDATA%25%5C,find%20all%20your%20personal%20certificates.
-	Write-Message "Checking Certificates"
+	$State.WriteMessage("Checking Certificates")
 	$certs = Get-ChildItem -path cert:\ -Recurse | Select-Object *
 	# PSPath,DnsNameList,SendAsTrustedIssuer,PolicyId,Archived,FriendlyName,IssuerName,NotAfter,NotBefore,HasPrivateKey,SerialNumber,SubjectName,Version,Issuer,Subject
 	$wellknown_ca = @(

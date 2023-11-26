@@ -21,10 +21,10 @@ function Test-BITS {
 	# C:\ProgramData\Microsoft\Network\Downloader
 	# https://www.giac.org/paper/gcih/28198/bits-forensics/130713#:~:text=These%20files%20are%20named%20%E2%80%9Cqmgr0,Microsoft%5CNetwork%5CDownloader%E2%80%9D.
 	if ($drivechange) {
-		Write-Message "Skipping BITS Analysis - No Drive Retargeting [yet]"
+		$State.WriteMessage("Skipping BITS Analysis - No Drive Retargeting [yet]")
 		return
 	}
-	Write-Message "Checking BITS Jobs"
+	$State.WriteMessage("Checking BITS Jobs")
 	$bits = Get-BitsTransfer -AllUsers | Select-Object *
 	foreach ($item in $bits) {
 		if ($item.NotifyCmdLine -ne $null) {

@@ -96,7 +96,7 @@ enum TrawlerRiskPriority {
     VeryHigh
 }
 
-enum SupportedTrawlerTechinques {
+enum TrawlerTechniques {
     None
     All
     NoTechnique
@@ -129,7 +129,7 @@ class TrawlerState {
     [string]$LoadSnapShot
     [string]$TargetDrive
     [TrawlerScanOptions[]]$ScanOptions
-    [SupportedTrawlerTechinques[]]$TechniqueOptions
+    [TrawlerTechniques[]]$TechniqueOptions
 
     [void] Run() {
         $this.Logo()
@@ -145,8 +145,13 @@ class TrawlerState {
     # Executes the given scan options and passes this state into the options
     #>
     [void] ExecuteScanOptions() {
-        if (($this.ScanOptions | Select-Object -First 1) -eq [TrawlerScanOptions]::None) {
+        if ([TrawlerScanOptions]::None -in $this.ScanOptions) {
             return
+        }
+
+        if ([TrawlerScanOptions]::All -in $this.ScanOptions) {
+            # will skip none and all because they are not cases in the switch statement
+            $this.ScanOptions = [TrawlerScanOptions].GetEnumValues()
         }
 
         foreach ($option in $this.ScanOptions) {
@@ -239,10 +244,47 @@ class TrawlerState {
         }
     }
 
+    <#
+    # Execute the given techniques
+    #>
     [void] ExecuteTechniqueOptions() {
+        if ([TrawlerTechniques]::None -in $this.TechniqueOptions) {
+            return
+        }
 
+        if ([TrawlerTechniques]::All -in $this.TechniqueOptions) {
+            # will skip none and all because they are not cases in the switch statement
+            $this.TechniqueOptions = [TrawlerTechniques].GetEnumValues()
+        }
+
+        foreach ($option in $this.TechniqueOptions) {
+            switch ($option) {
+                [TrawlerTechniques]::NoTechnique { Test-NoTechnique - State $this }
+                [TrawlerTechniques]::T1037 { Test-T1037 -State $this }
+                [TrawlerTechniques]::T1053 { Test-T1053 -State $this }
+                [TrawlerTechniques]::T1055 { Test-T1055 -State $this }
+                [TrawlerTechniques]::T1059 { Test-T1059 -State $this }
+                [TrawlerTechniques]::T1071 { Test-T1071 -State $this }
+                [TrawlerTechniques]::T1098 { Test-T1098 -State $this }
+                [TrawlerTechniques]::T1112 { Test-T1112 -State $this }
+                [TrawlerTechniques]::T1136 { Test-T1136 -State $this }
+                [TrawlerTechniques]::T1137 { Test-T1137 -State $this }
+                [TrawlerTechniques]::T1197 { Test-T1197 -State $this }
+                [TrawlerTechniques]::T1219 { Test-T1219 -State $this }
+                [TrawlerTechniques]::T1484 { Test-T1484 -State $this }
+                [TrawlerTechniques]::T1505 { Test-T1505 -State $this }
+                [TrawlerTechniques]::T1543 { Test-T1543 -State $this }
+                [TrawlerTechniques]::T1546 { Test-T1546 -State $this }
+                [TrawlerTechniques]::T1547 { Test-T1547 -State $this }
+                [TrawlerTechniques]::T1553 { Test-T1553 -State $this }
+                [TrawlerTechniques]::T1574 { Test-T1574 -State $this }
+            }
+        }
     }
 
+    <#
+    # Validate the output and snapshot paths. Will exit on failure to validate
+    #>
     [void] ValidatePaths() {
         if (ValidatePath($this.OutputPath)) {
             $this.WriteMessage("Detection Output Path: $($this.OutputPath)")
@@ -273,6 +315,9 @@ class TrawlerState {
         return $true
     }
 
+    <#
+    # Loads the snapshot data into the allow vulnerabilities
+    #>
     [void] LoadSnapShot() {
         if ($this.LoadSnapShot -and $this.CreateSnapShot) {
             Write-Host "[!] Cannot load and save snapshot simultaneously!" -ForegroundColor "Red"
@@ -282,10 +327,16 @@ class TrawlerState {
         }
     }
 
+    <#
+    # Offload loaded hives
+    #>
     [void] Cleanup() {
         $this.UnloadHive()
     }
 
+    <#
+    # Retarget drives
+    #>
     [void] RetargetDrives() {
         $this.WriteMessage("Setting up Registry Variables")
 
@@ -416,8 +467,7 @@ class TrawlerState {
             return $false
         }
 
-        $csv_data = Import-CSV $this.LoadSnapShot
-        $this.AllowedVulns = $csv_data
+        $this.AllowedVulns = Import-Csv $this.LoadSnapShot
         return $true
     }
 
@@ -451,11 +501,11 @@ class TrawlerState {
     #>
     [void] WriteDetectionMetrics() {
         Write-Host "[!] ### Detection Metadata ###" -ForeGroundColor White
-        Write-Message "Total Detections: $($this.Detections.Count)"
+        $this.WriteMessage("Total Detections: $($this.Detections.Count)")
 
         foreach ($str in ($this.Detections | Group-Object Risk | Select-Object Name, Count | Out-String).Split([System.Environment]::NewLine)) {
             if (-not ([System.String]::IsNullOrWhiteSpace($str))) {
-                Write-Message $str
+                $this.WriteMessage($str)
             }
         }
     }

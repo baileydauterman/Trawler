@@ -17,8 +17,8 @@ function Test-TerminalServicesDLL {
 		$State
 	)
 	# Supports Drive Retargeting
-	Write-Message "Checking TerminalServices DLL"
-	$path = "Registry::$regtarget_hklm`SYSTEM\CurrentControlSet\Services\TermService\Parameters"
+	$State.WriteMessage("Checking TerminalServices DLL")
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\CurrentControlSet\Services\TermService\Parameters"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {

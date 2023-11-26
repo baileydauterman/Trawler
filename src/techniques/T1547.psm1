@@ -27,7 +27,7 @@ function Test-LSA {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking LSA DLLs"
+	$State.WriteMessage("Checking LSA DLLs")
 	# LSA Security Package Review
 	# TODO - Check DLL Modification/Creation times
 	$common_ssp_dlls = @(
@@ -47,7 +47,7 @@ function Test-LSA {
 		"wsauth",
 		"wsauth" #vmware
 	)
-	$path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Control\Lsa"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -99,7 +99,7 @@ function Test-LSA {
 			}
 		}
 	}
-	$path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Control\Lsa\OSConfig"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Lsa\OSConfig"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -128,7 +128,7 @@ function Test-LSA {
 			}
 		}
 	}
-	$path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Control\LsaExtensionConfig\LsaSrv"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\LsaExtensionConfig\LsaSrv"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -164,7 +164,7 @@ function Test-LSA {
 		"rassfm", # Windows Server 2019 AWS Lightsail
 		"scecli" # Windows 10/Server
 	)
-	$path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Control\Lsa"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -208,12 +208,12 @@ function Test-TimeProviderDLLs {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking Time Provider DLLs"
+	$State.WriteMessage("Checking Time Provider DLLs")
 	$standard_timeprovider_dll = @(
 		"$env:homedrive\Windows\System32\w32time.dll",
 		"$env:homedrive\Windows\System32\vmictimeprovider.dll"
 	)
-	$path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Services\W32Time\TimeProviders"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Services\W32Time\TimeProviders"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -253,7 +253,7 @@ function Test-TimeProviderDLLs {
 function Test-WinlogonHelperDLLs {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking Winlogon Helper DLLs"
+	$State.WriteMessage("Checking Winlogon Helper DLLs")
 	$standard_winlogon_helper_dlls = @(
 		"C:\Windows\System32\userinit.exe,"
 		"explorer.exe"
@@ -261,7 +261,7 @@ function Test-WinlogonHelperDLLs {
 		"ShellAppRuntime.exe"
 		"mpnotify.exe"
 	)
-	$path = "Registry::$regtarget_hklm`Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
+	$path = "Registry::$($State.DriveTargets.Hklm)Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -303,7 +303,7 @@ function Test-LNK {
 	)
 	# TODO - Maybe, Snapshots
 	# Supports Drive Retargeting
-	Write-Message "Checking LNK Targets"
+	$State.WriteMessage("Checking LNK Targets")
 	$current_date = Get-Date
 	$WScript = New-Object -ComObject WScript.Shell
 	$profile_names = Get-ChildItem "$env_homedrive\Users" -Attributes Directory | Select-Object *
@@ -368,11 +368,11 @@ function Test-PrintProcessorDLLs {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking PrintProcessor DLLs"
+	$State.WriteMessage("Checking PrintProcessor DLLs")
 	$standard_print_processors = @(
 		"winprint.dll"
 	)
-	$path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Control\Print\Environments\Windows x64\Print Processors"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -407,7 +407,7 @@ function Test-PrintProcessorDLLs {
 			}
 		}
 	}
-	$path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Control\Print\Environments\Windows x64\Print Processors"
+	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$(State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -450,7 +450,7 @@ function Test-ActiveSetup {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking Active Setup Stubs"
+	$State.WriteMessage("Checking Active Setup Stubs")
 	# T1547.014 - Boot or Logon Autostart Execution: Active Setup
 	$standard_stubpaths = @(
 		"/UserInstall",
@@ -468,7 +468,7 @@ function Test-ActiveSetup {
 		"$env_assumedhomedrive\Windows\system32\regsvr32.exe /s /n /i:/UserInstall C:\Windows\system32\themeui.dll"
 		"$env_assumedhomedrive\Windows\system32\unregmp2.exe /FirstLogon /Shortcuts /RegBrowsers /ResetMUI"
 	)
-	$path = "Registry::$regtarget_hklm`SOFTWARE\Microsoft\Active Setup\Installed Components"
+	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Active Setup\Installed Components"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {

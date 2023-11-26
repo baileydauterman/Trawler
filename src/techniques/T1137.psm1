@@ -21,7 +21,7 @@ function Test-OfficeGlobalDotName {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking Office GlobalDotName usage"
+	$State.WriteMessage("Checking Office GlobalDotName usage")
 	# TODO - Cleanup Path Referencing, Add more versions?
 	$office_versions = @(14, 15, 16)
 	foreach ($version in $office_versions) {
@@ -63,7 +63,7 @@ function Test-OfficeTest {
 		$State
 	)
 	# Supports Drive Retargeting
-	Write-Message "Checking Office test usage"
+	$State.WriteMessage("Checking Office test usage")
 	$basepath = "Registry::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf"
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
@@ -81,7 +81,7 @@ function Test-OfficeTest {
 			}
 		}
 	}
-	$path = "Registry::$regtarget_hklm`Software\Microsoft\Office test\Special\Perf"
+	$path = "Registry::$($State.DriveTargets.Hklm)Software\Microsoft\Office test\Special\Perf"
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
@@ -106,7 +106,7 @@ function Test-OutlookStartup {
 	)
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
-	Write-Message "Checking Outlook Macros"
+	$State.WriteMessage("Checking Outlook Macros")
 	# allowlist_officeaddins
 	$profile_names = Get-ChildItem "$env_homedrive\Users" -Attributes Directory | Select-Object *
 	foreach ($user in $profile_names) {
@@ -160,7 +160,7 @@ function Test-OfficeTrustedLocations {
 	# Supports Dynamic Snapshotting
 	# Mostly supports drive retargeting
 	# https://github.com/PowerShell/PowerShell/issues/16812
-	Write-Message "Checking Office Trusted Locations"
+	$State.WriteMessage("Checking Office Trusted Locations")
 	#TODO - Add 'abnormal trusted location' detection
 	$profile_names = Get-ChildItem "$env_homedrive\Users" -Attributes Directory | Select-Object *
 	$actual_current_user = $env:USERNAME
