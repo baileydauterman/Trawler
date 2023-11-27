@@ -1,17 +1,17 @@
 function Test-T1112 {
-    [CmdletBinding()]
+	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory)]
 		[TrawlerState]
 		$State
 	)
 
-    Test-AMSIProviders $State
-    Test-BootVerificationProgram $State
-    Test-NaturalLanguageDevelopmentDLLs $State
-    Test-MicrosoftTelemetryCommands $State
-    Test-PrintMonitorDLLs $State
-    Test-RemoteUACSetting $State
+	Test-AMSIProviders $State
+	Test-BootVerificationProgram $State
+	Test-NaturalLanguageDevelopmentDLLs $State
+	Test-MicrosoftTelemetryCommands $State
+	Test-PrintMonitorDLLs $State
+	Test-RemoteUACSetting $State
 }
 
 function Test-AMSIProviders {
@@ -51,16 +51,16 @@ function Test-AMSIProviders {
 
 				$State.WriteSnapShotMessage($property.Name, $property.Value, "AMSI")
 				$State.WriteDetection([TrawlerDetection]::new(
-					'Non-Standard AMSI Provider DLL',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1112: Modify Registry",
-					[PSCustomObject]@{
-						KeyLocation = $path
-						EntryName = $_.Name
-						EntryValue = $_.Value
-					}
-				))	
+						'Non-Standard AMSI Provider DLL',
+						[TrawlerRiskPriority]::High,
+						'Registry',
+						"T1112: Modify Registry",
+						[PSCustomObject]@{
+							KeyLocation = $path
+							EntryName   = $_.Name
+							EntryValue  = $_.Value
+						}
+					))	
 			}
 		}
 	}
@@ -100,7 +100,7 @@ function Test-BootVerificationProgram {
 			"T1112: Modify Registry",
 			[PSCustomObject]@{
 				RegistryPath = $path
-				Program = $data.ImagePath
+				Program      = $data.ImagePath
 			}
 		)
 	}
@@ -122,22 +122,18 @@ function Test-NaturalLanguageDevelopmentDLLs {
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			if ($data.StemmerDLLPathOverride -ne $null -or $data.WBDLLPathOverride) {
-				if ($data.StemmerDLLPathOverride -ne $null) {
+			if ($data.StemmerDLLPathOverride -or $data.WBDLLPathOverride) {
+				if ($data.StemmerDLLPathOverride) {
 					$dll = $data.StemmerDLLPathOverride
 				}
-				elseif ($data.WBDLLPathOverride -ne $null) {
+				elseif ($data.WBDLLPathOverride) {
 					$dll = $data.WBDLLPathOverride
 				}
 
-				Write-SnapshotMessage -Key $item.Name -Value $dll -Source 'NLPDlls'
-
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_nlpdlls $item.Name $dll
-					if ($result) {
-						continue
-					}
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $dll, 'NLPDlls'), $true)) {
+					continue
 				}
+
 				$detection = [PSCustomObject]@{
 					Name      = 'DLL Override on Natural Language Development Platform'
 					Risk      = 'High'
@@ -176,22 +172,11 @@ function Test-PrintMonitorDLLs {
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			if ($data.Driver -ne $null) {
-				Write-SnapshotMessage -Key $item.Name -Value $data.Driver -Source 'PrintMonitors'
-
-				if ($loadsnapshot) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Allowlist Mismatch: Non-Standard Print Monitor DLL'
-						Risk      = 'Medium'
-						Source    = 'Registry'
-						Technique = "T1112: Modify Registry"
-						Meta      = "Registry Path: " + $item.Name + ", System32 DLL: " + $data.Driver
-					}
-					$result = Assert-IsAllowed $allowtable_printmonitors $item.Name $data.Driver $detection
-					if ($result) {
-						continue
-					}
+			if ($data.Driver) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintMonitors'), $true)) {
+					continue
 				}
+
 				if ($data.Driver -notin $standard_print_monitors) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard Print Monitor DLL'

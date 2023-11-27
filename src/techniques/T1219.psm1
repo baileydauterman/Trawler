@@ -1,10 +1,10 @@
 function Test-T1219 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-RATS $State
 }
@@ -226,14 +226,10 @@ function Test-RATS {
 		}
 		foreach ($tmppath in $paths) {
 			if (Test-Path $tmppath) {
-				Write-SnapshotMessage -Key $rat_name -Value $tmppath -Source 'RATS'
-
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_rats $rat_name $rat_name
-					if ($result) {
-						continue
-					}
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($rat_name, $tmppath, 'RATS'), $true)) {
+					continue
 				}
+
 				$detection = [PSCustomObject]@{
 					Name      = 'Remote Access Tool Artifact'
 					Risk      = 'Medium'

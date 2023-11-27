@@ -126,7 +126,9 @@ Describe "Write-SnapshotMessage" {
     Context "Snapshot Enabled and Path Writeable" {
 
         It "Writes Message to CSV" {
-            Write-SnapshotMessage -Key $key -Value $value -Source $source
+            if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($key, $value, $source), $true)) {
+							continue
+						}
             Should -Invoke -CommandName Export-CSV -Times 1 -Exactly
         }
     }
@@ -135,7 +137,9 @@ Describe "Write-SnapshotMessage" {
             $snapshot = $false
         }
         It "Returns without writing message to CSV" {
-            Write-SnapshotMessage -Key $key -Value $value -Source $source
+            if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($key, $value, $source), $true)) {
+							continue
+						}
             Should -Invoke -CommandName Export-CSV -Times 0 -Exactly
         }
     }
@@ -144,7 +148,9 @@ Describe "Write-SnapshotMessage" {
             $script:snapshotpath_writable = $false
         }
         It "Returns without writing message to CSV" {
-            Write-SnapshotMessage -Key $key -Value $value -Source $source
+            if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($key, $value, $source), $true)) {
+							continue
+						}
             Should -Invoke -CommandName Export-CSV -Times 0 -Exactly
         }
     }
@@ -154,7 +160,9 @@ Describe "Write-SnapshotMessage" {
             $script:snapshotpath_writable = $false
         }
         It "Returns without writing message to CSV" {
-            Write-SnapshotMessage -Key $key -Value $value -Source $source
+            if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($key, $value, $source), $true)) {
+							continue
+						}
             Should -Invoke -CommandName Export-CSV -Times 0 -Exactly
         }
     }

@@ -1,10 +1,10 @@
 function Test-T1553 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-TrustProviderDLL $State
 	Test-SuspiciousCertificates $State
@@ -119,12 +119,12 @@ function Test-SuspiciousCertificates {
 
 		$cn_match = [regex]::Matches($cert.Issuer, $cn_pattern).Groups.Captures.Value
 		#Write-Host $cert.Issuer
-		if ($cn_match -ne $null) {
+		if ($cn_match) {
 			#Write-Host $cn_match[1]
 		}
 		else {
 			$cn_match = [regex]::Matches($cert.Issuer, $cn_pattern_2).Groups.Captures.Value
-			if ($cn_match -ne $null) {
+			if ($cn_match) {
 				#Write-Host $cn_match[1]
 			}
 			else {
@@ -151,21 +151,10 @@ function Test-SuspiciousCertificates {
 			}
 		}
 
-		Write-SnapshotMessage -Key $cert.Issuer -Value $cert.Subject -Source 'Certificates'
-
-		if ($loadsnapshot) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Allowlist Mismatch: Certificate'
-				Risk      = 'Medium'
-				Source    = 'Certificates'
-				Technique = "T1553: Subvert Trust Controls: Install Root Certificate"
-				Meta      = "Subject Name: " + $cert.SubjectName.Name + ", Friendly Name: " + $cert.FriendlyName + ", Issuer: " + $cert.Issuer + ", Subject: " + $cert.Subject + ", NotValidAfter: " + $cert.NotAfter + ", NotValidBefore: " + $cert.NotBefore
-			}
-			$result = Assert-IsAllowed $allowtable_certificates $cert.Issuer $cert.Subject $detection
-			if ($result) {
-				continue
-			}
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($cert.Issuer, $cert.Subject, 'Certificates'), $true)) {
+			continue
 		}
+
 
 		# Valid Cert, Unknown Signer, Valid in Date, Contains Root/AuthRoot/CertificateAuthority
 		if ($cert_verification_status -eq $true -and $valid_signer -eq $false -and $diff.Hours -ge 0) {

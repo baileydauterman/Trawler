@@ -253,7 +253,7 @@ function Test-TerminalProfiles {
 							$exe = $profile.name
 						}
 
-						$userTerminalSettings ="$dir\LocalState\settings.json"
+						$userTerminalSettings = "$dir\LocalState\settings.json"
 
 						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($userTerminalSettings, $exe, "TerminalUserProfile"), $true)) {
 							continue
@@ -296,24 +296,22 @@ function Test-UserInitMPRScripts {
 		if (Test-Path -Path $path) {
 			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 			$items.PSObject.Properties | ForEach-Object {
-				if ($_.Name -eq 'UserInitMprLogonScript') {
-					Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'UserInitMPR'
-
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_userinitmpr $_.Name $_.Value
-						if ($result -eq $true) {
-							return
-						}
-					}
-					$detection = [PSCustomObject]@{
-						Name      = 'Potential Persistence via Logon Initialization Script'
-						Risk      = 'Medium'
-						Source    = 'Registry'
-						Technique = "T1037.001: Boot or Logon Initialization Scripts: Logon Script (Windows)"
-						Meta      = "Key Location: HKCU\Environment, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					}
-					Write-Detection $detection
+				if ($_.Name -ne 'UserInitMprLogonScript') {
+					continue 
 				}
+				
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'UserInitMPR'), $true)) {
+					continue
+				}
+
+				$detection = [PSCustomObject]@{
+					Name      = 'Potential Persistence via Logon Initialization Script'
+					Risk      = 'Medium'
+					Source    = 'Registry'
+					Technique = "T1037.001: Boot or Logon Initialization Scripts: Logon Script (Windows)"
+					Meta      = "Key Location: HKCU\Environment, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
+				}
+				Write-Detection $detection
 			}
 		}
 	}

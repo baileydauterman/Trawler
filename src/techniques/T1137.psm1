@@ -1,10 +1,10 @@
 function Test-T1137 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-OfficeGlobalDotName $State
 	Test-OfficeTest $State
@@ -32,14 +32,10 @@ function Test-OfficeGlobalDotName {
 				$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 				$items.PSObject.Properties | ForEach-Object {
 					if ($_.Name -eq "GlobalDotName") {
-						Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'GlobalDotName'
-
-						if ($loadsnapshot) {
-							$result = Assert-IsAllowed $allowlist_globaldotname $_.Value $_.Value
-							if ($result -eq $true) {
-								continue
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'GlobalDotName'), $true)) {
+							continue
 						}
+
 						$detection = [PSCustomObject]@{
 							Name      = 'Persistence via Office GlobalDotName'
 							Risk      = 'Very High'
@@ -114,41 +110,41 @@ function Test-OutlookStartup {
 		$items = Get-ChildItem -Path $path -File -ErrorAction SilentlyContinue | Select-Object * | Where-Object { $_.extension -in $office_addin_extensions }
 		# Removing this as we are performing this functionality else-where for Office Trusted Location Scanning.
 		#foreach ($item in $items){
-		#	Write-SnapshotMessage -Key $item.FullName -Value $item.FullName -Source 'Office'
+		#	if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.FullName, $item.FullName, 'Office'), $true)) {
+		continue
+	}
 
-		# If the allowlist contains the curren task name
-		#    if ($loadsnapshot -and ($allowlist_outlookstartup.Contains($item.FullName))){
-		#        continue
-		#    }
+	# If the allowlist contains the curren task name
+	#    if ($loadsnapshot -and ($allowlist_outlookstartup.Contains($item.FullName))){
+	#        continue
+	#    }
 
-		#    $detection = [PSCustomObject]@{
-		#        Name = 'Potential Persistence via Office Startup Addin'
-		#        Risk = 'Medium'
-		#        Source = 'Office'
-		#        Technique = "T1137.006: Office Application Startup: Add-ins"
-		#        Meta = "File: "+$item.FullName+", Last Write Time: "+$item.LastWriteTime
-		#    }
-		#Write-Detection $detection - Removing this as it is a duplicate of the new Office Scanning Functionality which will cover the same checks
-		#}
-		$path = "$env_homedrive\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Outlook\VbaProject.OTM"
-		if (Test-Path $path) {
-			Write-SnapshotMessage -Key $path -Value $item.FullName -Source 'Outlook'
-
-			if ($loadsnapshot -and (Assert-IsAllowed $allowlist_outlookstartup $path $item.FullName)) {
-				continue
-			}
-
-			$detection = [PSCustomObject]@{
-				Name      = 'Potential Persistence via Outlook Application Startup'
-				Risk      = 'Medium'
-				Source    = 'Office'
-				Technique = "T1137.006: Office Application Startup: Add-ins"
-				Meta      = "File: " + $path
-			}
-			Write-Detection $detection
+	#    $detection = [PSCustomObject]@{
+	#        Name = 'Potential Persistence via Office Startup Addin'
+	#        Risk = 'Medium'
+	#        Source = 'Office'
+	#        Technique = "T1137.006: Office Application Startup: Add-ins"
+	#        Meta = "File: "+$item.FullName+", Last Write Time: "+$item.LastWriteTime
+	#    }
+	#Write-Detection $detection - Removing this as it is a duplicate of the new Office Scanning Functionality which will cover the same checks
+	#}
+	$path = "$env_homedrive\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Outlook\VbaProject.OTM"
+	if (Test-Path $path) {
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $item.FullName, 'Outlook'), $true)) {
+			continue
 		}
+
+		$detection = [PSCustomObject]@{
+			Name      = 'Potential Persistence via Outlook Application Startup'
+			Risk      = 'Medium'
+			Source    = 'Office'
+			Technique = "T1137.006: Office Application Startup: Add-ins"
+			Meta      = "File: " + $path
+		}
+		Write-Detection $detection
 	}
 }
+
 
 function Test-OfficeTrustedLocations {
 	[CmdletBinding()]
@@ -174,10 +170,10 @@ function Test-OfficeTrustedLocations {
 			foreach ($item in $items) {
 				$path = "Registry::" + $item.Name
 				$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-				if ($data.Path -ne $null) {
+				if ($data.Path) {
 					$possible_paths.Add($data.Path) | Out-Null
 					$currentcaptureduser = [regex]::Matches($data.Path, $user_pattern).Groups.Captures.Value
-					if ($currentcaptureduser -ne $null) {
+					if ($currentcaptureduser) {
 						$current_user = $currentcaptureduser[1]
 					}
 					else {
@@ -201,14 +197,10 @@ function Test-OfficeTrustedLocations {
 						"C:\Users\$actual_current_user\AppData\Roaming\Microsoft\Word\Startup"
 					)
 					$pass = $false
-					Write-SnapshotMessage -Key $data.Path -Value $data.Path -Source 'OfficeTrustedLocations'
-
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_office_trusted_locations $data.Path $data.Path
-						if ($result) {
-							$pass = $true
-						}
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Path, $data.Path, 'OfficeTrustedLocations'), $true)) {
+						continue
 					}
+
 					if ('{0}' -f $data.Path -notin $default_trusted_locations -and $pass -eq $false) {
 						$p = $data.Path
 						$detection = [PSCustomObject]@{
@@ -232,14 +224,10 @@ function Test-OfficeTrustedLocations {
 		if (Test-Path $p) {
 			$items = Get-ChildItem -Path $p -File -ErrorAction SilentlyContinue | Select-Object * | Where-Object { $_.extension -in $office_addin_extensions }
 			foreach ($item in $items) {
-				Write-SnapshotMessage -Key $item.FullName -Value $item.FullName -Source 'OfficeAddins'
-
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_officeaddins $item.FullName $item.FullName
-					if ($result) {
-						continue
-					}
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.FullName, $item.FullName, 'OfficeAddins'), $true)) {
+					continue
 				}
+
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Persistence via Office Startup Addin'
 					Risk      = 'Medium'

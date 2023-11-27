@@ -33,7 +33,9 @@ function Test-Users {
 	foreach ($admin in $local_admins) {
 		$admin_user = Get-LocalUser -SID $admin.SID | Select-Object AccountExpires, Description, Enabled, FullName, PasswordExpires, UserMayChangePassword, PasswordLastSet, LastLogon, Name, SID, PrincipalSource
 
-		Write-SnapshotMessage -Key $admin.name -Value $admin.name -Source "Users"
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($admin.name, $admin.name, "Users"), $true)) {
+							continue
+						}
 
 		if ($loadsnapshot -and (Assert-IsAllowed $allowlist_users $admin.nam $admin.name)) {
 			continue

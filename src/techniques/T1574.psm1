@@ -1,10 +1,10 @@
 function Test-T1574 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-MSDTCDll $State
 	Test-PeerDistExtensionDll $State
@@ -144,14 +144,10 @@ function Test-BIDDll {
 			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq ":Path") {
-					Write-SnapshotMessage -Key $path -Value $_.Value -Source 'BIDDLL'
-
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_biddll $path $_.Value
-						if ($result) {
-							continue
-						}
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'BIDDLL'), $true)) {
+						continue
 					}
+
 					$match = $false
 					foreach ($val in $expected_values) {
 						if ($_.Value -match $val) {
@@ -184,25 +180,19 @@ function Test-WindowsUpdateTestDlls {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in "EventerHookDll", "AllowTestEngine", "AlternateServiceStackDLLPath") {
-				Write-SnapshotMessage -Key $path -Value $_.Value -Source 'WinUpdateTestDLL'
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'WinUpdateTestDLL'), $true)) {
+					continue
+				}
 
-				$pass = $false
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_winupdatetest $path $_.Value
-					if ($result) {
-						$pass = $true
-					}
+				$detection = [PSCustomObject]@{
+					Name      = 'Windows Update Test DLL Exists'
+					Risk      = 'High'
+					Source    = 'Registry'
+					Technique = "T1574: Hijack Execution Flow"
+					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				if ($pass -eq $false) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Windows Update Test DLL Exists'
-						Risk      = 'High'
-						Source    = 'Registry'
-						Technique = "T1574: Hijack Execution Flow"
-						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					}
-					Write-Detection $detection
-				}
+				Write-Detection $detection
+				
 			}
 		}
 	}
@@ -228,15 +218,10 @@ function Test-MiniDumpAuxiliaryDLLs {
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
-			Write-SnapshotMessage -Key $path -Value $_.Name -Source 'MiniDumpAuxiliaryDLL'
-
-			$pass = $false
-			if ($loadsnapshot) {
-				$result = Assert-IsAllowed $allowlist_minidumpauxdlls $path $_.Name
-				if ($result) {
-					$pass = $true
-				}
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'MiniDumpAuxiliaryDLL'), $true)) {
+				continue
 			}
+
 			$matches_good = $false
 			foreach ($allowed_item in $allow_list) {
 				if ($_.Name -match $allowed_item) {
@@ -244,7 +229,7 @@ function Test-MiniDumpAuxiliaryDLLs {
 					break
 				}
 			}
-			if ($matches_good -eq $false -and $pass -eq $false) {
+			if ($matches_good -eq $false) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Non-Standard MiniDumpAuxiliary DLL'
 					Risk      = 'High'
@@ -284,29 +269,23 @@ function Test-ExplorerHelperUtilities {
 			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -ne '""' -and $_.Value -notin $allowlisted_explorer_util_paths) {
-					Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'ExplorerHelpers'
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'ExplorerHelpers'), $true)) {
+						continue
+					}
 
-					$pass = $false
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_explorerhelpers $_.Value $_.Value
-						if ($result -eq $true) {
-							$pass = $true
-						}
+					$detection = [PSCustomObject]@{
+						Name      = 'Explorer\MyComputer Utility Hijack'
+						Risk      = 'Medium'
+						Source    = 'Registry'
+						Technique = "T1574: Hijack Execution Flow"
+						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", DLL: " + $_.Value
 					}
-					if ($pass -eq $false) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Explorer\MyComputer Utility Hijack'
-							Risk      = 'Medium'
-							Source    = 'Registry'
-							Technique = "T1574: Hijack Execution Flow"
-							Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", DLL: " + $_.Value
-						}
-						Write-Detection $detection
-					}
+					Write-Detection $detection
 				}
 			}
 		}
 	}
+	
 }
 
 function Test-ProcessModules {
@@ -348,17 +327,13 @@ function Test-ProcessModules {
 	)
 	foreach ($process in $processes) {
 		$modules = Get-Process -id $process.ProcessId -ErrorAction SilentlyContinue  | Select-Object -ExpandProperty modules -ErrorAction SilentlyContinue | Select-Object Company, FileName, ModuleName
-		if ($modules -ne $null) {
+		if ($modules) {
 			foreach ($module in $modules) {
 				if ($module.ModuleName -in $suspicious_unsigned_dll_names) {
-					Write-SnapshotMessage -Key $module.FileName -Value $module.FileName -Source 'Modules'
-
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_modules $module.FileName $module.FileName
-						if ($result) {
-							continue
-						}
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($module.FileName, $module.FileName, 'Modules'), $true)) {
+						continue
 					}
+
 					$signature = Get-AuthenticodeSignature $module.FileName
 					if ($signature.Status -ne 'Valid') {
 						$item = Get-ChildItem -Path $module.FileName -File -ErrorAction SilentlyContinue | Select-Object *
@@ -412,14 +387,10 @@ function Test-WindowsUnsignedFiles {
 			$sig = Get-AuthenticodeSignature $file.FullName
 			if ($sig.Status -ne 'Valid') {
 				$item = Get-ChildItem -Path $file.FullName -File -ErrorAction SilentlyContinue | Select-Object *
-				Write-SnapshotMessage -Key $file.FullName -Value $file.FullName -Source 'UnsignedWindows'
-
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_unsignedfiles $file.FullName $file.FullName
-					if ($result) {
-						continue
-					}
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($file.FullName, $file.FullName, 'UnsignedWindows'), $true)) {
+					continue
 				}
+
 				$detection = [PSCustomObject]@{
 					Name      = 'Unsigned DLL/EXE present in critical OS directory'
 					Risk      = 'Very High'
@@ -497,15 +468,10 @@ function Test-KnownManagedDebuggers {
 	if (Test-Path -Path $path) {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
-			Write-SnapshotMessage -Key $path -Value $_.Name -Source 'KnownManagedDebuggers'
-
-			$pass = $false
-			if ($loadsnapshot) {
-				$result = Assert-IsAllowed $allowlist_knowndebuggers $path $_.Name
-				if ($result) {
-					$pass = $true
-				}
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'KnownManagedDebuggers'), $true)) {
+				continue
 			}
+
 			$matches_good = $false
 			foreach ($allowed_item in $allow_list) {
 				if ($_.Name -match $allowed_item) {
@@ -513,7 +479,7 @@ function Test-KnownManagedDebuggers {
 					break
 				}
 			}
-			if ($matches_good -eq $false -and $pass -and $false) {
+			if ($matches_good -eq $false -and $pass) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Non-Standard KnownManagedDebugging DLL'
 					Risk      = 'High'
@@ -542,29 +508,23 @@ function Test-Wow64LayerAbuse {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -ne "(Default)") {
-				Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'WOW64Compat'
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WOW64Compat'), $true)) {
+					continue
+				}
 
-				$pass = $false
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_WOW64Compat $_.Name $_.Value
-					if ($result) {
-						$pass = $true
-					}
+				$detection = [PSCustomObject]@{
+					Name      = 'Non-Standard Wow64\x86 DLL loaded into x86 process'
+					Risk      = 'High'
+					Source    = 'Registry'
+					Technique = "T1574: Hijack Execution Flow"
+					Meta      = "Key Location: $path, Target Process Name: " + $_.Name + " Loaded DLL: " + $_.Value
 				}
-				if ($pass -eq $false) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Non-Standard Wow64\x86 DLL loaded into x86 process'
-						Risk      = 'High'
-						Source    = 'Registry'
-						Technique = "T1574: Hijack Execution Flow"
-						Meta      = "Key Location: $path, Target Process Name: " + $_.Name + " Loaded DLL: " + $_.Value
-					}
-					Write-Detection $detection
-				}
+				Write-Detection $detection
 			}
 		}
 	}
 }
+
 
 function Test-SEMgrWallet {
 	[CmdletBinding()]
@@ -581,7 +541,9 @@ function Test-SEMgrWallet {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "DllName" -and $_.Value -notin "", "SEMgrSvc.dll") {
-				Write-SnapshotMessage -Key $path -Value $_.Value -Source 'SEMgr'
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'SEMgr'), $true)) {
+					continue
+				}
 
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential SEMgr Wallet DLL Hijack'
@@ -635,29 +597,23 @@ function Test-WERRuntimeExceptionHandlers {
 			}
 
 			if ($_.Name -ne "(Default)" -and $verified_match -eq $false) {
-				Write-SnapshotMessage -Key $path -Value $_.Name -Source 'WERHandlers'
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'WERHandlers'), $true)) {
+					continue
+				}
 
-				$pass = $false
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_werhandlers $path $_.Name
-					if ($result) {
-						$pass = $true
-					}
+				$detection = [PSCustomObject]@{
+					Name      = 'Potential WER Helper Hijack'
+					Risk      = 'High'
+					Source    = 'Registry'
+					Technique = "T1574: Hijack Execution Flow"
+					Meta      = "Key Location: $path, DLL: " + $_.Name
 				}
-				if ($pass -eq $false) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Potential WER Helper Hijack'
-						Risk      = 'High'
-						Source    = 'Registry'
-						Technique = "T1574: Hijack Execution Flow"
-						Meta      = "Key Location: $path, DLL: " + $_.Name
-					}
-					Write-Detection $detection
-				}
+				Write-Detection $detection
 			}
 		}
 	}
 }
+
 
 function Test-TerminalServicesInitialProgram {
 	[CmdletBinding()]
@@ -689,30 +645,24 @@ function Test-TerminalServicesInitialProgram {
 			}
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'InitialProgram' -and $_.Value -ne "" -and $finherit -eq $true) {
-					Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'TerminalServicesIP'
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'TerminalServicesIP'), $true)) {
+						continue
+					}
 
-					$pass = $false
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_termsrvinitialprogram $_.Value $_.Value
-						if ($result -eq $true) {
-							$pass = $true
-						}
+					$detection = [PSCustomObject]@{
+						Name      = 'TerminalServices InitialProgram Active'
+						Risk      = 'Medium'
+						Source    = 'Registry'
+						Technique = "T1574: Hijack Execution Flow"
+						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", DLL: " + $_.Value
 					}
-					if ($pass -eq $false) {
-						$detection = [PSCustomObject]@{
-							Name      = 'TerminalServices InitialProgram Active'
-							Risk      = 'Medium'
-							Source    = 'Registry'
-							Technique = "T1574: Hijack Execution Flow"
-							Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", DLL: " + $_.Value
-						}
-						Write-Detection $detection
-					}
+					Write-Detection $detection
 				}
 			}
 		}
 	}
 }
+
 
 function Test-EventViewerMSC {
 	[CmdletBinding()]
@@ -786,25 +736,18 @@ function Test-RDPStartupPrograms {
 				$packages = $_.Value.Split(",")
 				foreach ($package in $packages) {
 					if ($package -notin $allowed_rdp_startups) {
-						Write-SnapshotMessage -Key $_.Name -Value $package -Source 'RDPStartup'
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'RDPStartup'), $true)) {
+							continue
+						}
 
-						$pass = $false
-						if ($loadsnapshot) {
-							$result = Assert-IsAllowed $allowlist_rdpstartup $package $package
-							if ($result -eq $true) {
-								$pass = $true
-							}
+						$detection = [PSCustomObject]@{
+							Name      = 'Non-Standard RDP Startup Program'
+							Risk      = 'Medium'
+							Source    = 'Registry'
+							Technique = "T1574: Hijack Execution Flow"
+							Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
 						}
-						if ($pass -eq $false) {
-							$detection = [PSCustomObject]@{
-								Name      = 'Non-Standard RDP Startup Program'
-								Risk      = 'Medium'
-								Source    = 'Registry'
-								Technique = "T1574: Hijack Execution Flow"
-								Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
-							}
-							Write-Detection $detection
-						}
+						Write-Detection $detection
 					}
 				}
 			}
@@ -812,75 +755,72 @@ function Test-RDPStartupPrograms {
 	}
 }
 
+
 <#
 # Start T1574.007
 #>
 
 function Test-PATHHijacks {
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [TrawlerState]
-        $State
-    )
-    # Supports Dynamic Snapshotting
-    # Mostly supports drive retargeting - assumed PATH is prefixed with C:
-    # Data Stored at HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Session Manager\Environment
-    # Can just collect from this key instead of actual PATH var
-    $State.WriteMessage("Checking PATH Hijacks")
-    $system32_path = "$env_homedrive\windows\system32"
-    $system32_bins = Get-ChildItem -File -Path $system32_path  -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".exe" } | Select-Object Name
-    $sys32_bins = New-Object -TypeName "System.Collections.ArrayList"
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
+	# Supports Dynamic Snapshotting
+	# Mostly supports drive retargeting - assumed PATH is prefixed with C:
+	# Data Stored at HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Session Manager\Environment
+	# Can just collect from this key instead of actual PATH var
+	$State.WriteMessage("Checking PATH Hijacks")
+	$system32_path = "$env_homedrive\windows\system32"
+	$system32_bins = Get-ChildItem -File -Path $system32_path  -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".exe" } | Select-Object Name
+	$sys32_bins = New-Object -TypeName "System.Collections.ArrayList"
 
-    foreach ($bin in $system32_bins) {
-        $sys32_bins.Add($bin.Name) | Out-Null
-    }
-    $path_reg = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Session Manager\Environment"
-    if (Test-Path -Path $path_reg) {
-        $items = Get-ItemProperty -Path $path_reg | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-        $items.PSObject.Properties | ForEach-Object {
-            if ($_.Name -eq "Path") {
-                $path_entries = $_.Value
-            }
-        }
-    }
-    $path_entries = $path_entries.Split(";")
-    $paths_before_sys32 = New-Object -TypeName "System.Collections.ArrayList"
-    foreach ($path in $path_entries) {
-        $path = $path.Replace("C:", $env_homedrive)
-        if ($path -ne $system32_path) {
-            $paths_before_sys32.Add($path) | Out-Null
-        }
-        else {
-            break
-        }
-    }
+	foreach ($bin in $system32_bins) {
+		$sys32_bins.Add($bin.Name) | Out-Null
+	}
+	$path_reg = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Session Manager\Environment"
+	if (Test-Path -Path $path_reg) {
+		$items = Get-ItemProperty -Path $path_reg | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items.PSObject.Properties | ForEach-Object {
+			if ($_.Name -eq "Path") {
+				$path_entries = $_.Value
+			}
+		}
+	}
+	$path_entries = $path_entries.Split(";")
+	$paths_before_sys32 = New-Object -TypeName "System.Collections.ArrayList"
+	foreach ($path in $path_entries) {
+		$path = $path.Replace("C:", $env_homedrive)
+		if ($path -ne $system32_path) {
+			$paths_before_sys32.Add($path) | Out-Null
+		}
+		else {
+			break
+		}
+	}
 
-    foreach ($path in $paths_before_sys32) {
-        $path_bins = Get-ChildItem -File -Path $path  -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".exe" } | Select-Object *
-        foreach ($bin in $path_bins) {
-            if ($bin.Name -in $sys32_bins) {
-                Write-SnapshotMessage -Key $bin.FullName -Value $bin.Name -Source 'PATHHijack'
+	foreach ($path in $paths_before_sys32) {
+		$path_bins = Get-ChildItem -File -Path $path  -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".exe" } | Select-Object *
+		foreach ($bin in $path_bins) {
+			if ($bin.Name -in $sys32_bins) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($bin.FullName, $bin.Name, 'PATHHijack'), $true)) {
+					continue
+				}
 
-                if ($loadsnapshot) {
-                    $result = Assert-IsAllowed $allowlist_pathhijack $bin.FullName
-                    if ($result) {
-                        continue
-                    }
-                }
-                $detection = [PSCustomObject]@{
-                    Name      = 'Possible PATH Binary Hijack - same name as SYS32 binary in earlier PATH entry'
-                    Risk      = 'Very High'
-                    Source    = 'PATH'
-                    Technique = "T1574.007: Hijack Execution Flow: Path Interception by PATH Environment Variable"
-                    Meta      = "File: " + $bin.FullName + ", Creation Time: " + $bin.CreationTime + ", Last Write Time: " + $bin.LastWriteTime
-                }
-                #Write-Host $detection.Meta
-                Write-Detection $detection
-            }
-        }
+				$detection = [PSCustomObject]@{
+					Name      = 'Possible PATH Binary Hijack - same name as SYS32 binary in earlier PATH entry'
+					Risk      = 'Very High'
+					Source    = 'PATH'
+					Technique = "T1574.007: Hijack Execution Flow: Path Interception by PATH Environment Variable"
+					Meta      = "File: " + $bin.FullName + ", Creation Time: " + $bin.CreationTime + ", Last Write Time: " + $bin.LastWriteTime
+				}
+				#Write-Host $detection.Meta
+				Write-Detection $detection
+			}
+		}
 
-    }
+	}
 }
 
 <#
@@ -888,61 +828,61 @@ function Test-PATHHijacks {
 #>
 
 function Test-ServiceHijacks {
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [TrawlerState]
-        $State
-    )
-    $State.WriteMessage("Checking Un-Quoted Services")
-    # Supports Drive Retargeting, assumes homedrive is C:
-    #$services = Get-CimInstance -ClassName Win32_Service  | Select-Object Name, PathName, StartMode, Caption, DisplayName, InstallDate, ProcessId, State
-    $service_path = "$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services"
-    $service_list = New-Object -TypeName "System.Collections.ArrayList"
-    if (Test-Path -Path "Registry::$service_path") {
-        $items = Get-ChildItem -Path "Registry::$service_path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-        foreach ($item in $items) {
-            $path = "Registry::" + $item.Name
-            $data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSProvider
-            if ($data.ImagePath -ne $null) {
-                $service = [PSCustomObject]@{
-                    Name     = $data.PSChildName
-                    PathName = $data.ImagePath
-                }
-                $service.PathName = $service.PathName.Replace("\SystemRoot", "$env_assumedhomedrive\Windows")
-                $service_list.Add($service) | Out-Null
-            }
-        }
-    }
-    foreach ($service in $service_list) {
-        $service.PathName = ($service.PathName).Replace("C:", $env_homedrive)
-        if ($service.PathName -match '".*"[\s]?.*') {
-            # Skip Paths where the executable is contained in quotes
-            continue
-        }
-        # Is there a space in the service path?
-        if ($service.PathName.Contains(" ")) {
-            $original_service_path = $service.PathName
-            # Does the path contain a space before the exe?
-            if ($original_service_path -match '.*\s.*\.exe.*') {
-                $tmp_path = $original_service_path.Split(" ")
-                $base_path = ""
-                foreach ($path in $tmp_path) {
-                    $base_path += $path
-                    $test_path = $base_path + ".exe"
-                    if (Test-Path $test_path) {
-                        $detection = [PSCustomObject]@{
-                            Name      = 'Possible Service Path Hijack via Unquoted Path'
-                            Risk      = 'High'
-                            Source    = 'Services'
-                            Technique = "T1574.009: Create or Modify System Process: Windows Service"
-                            Meta      = "Service Name: " + $service.Name + ", Service Path: " + $service.PathName + ", Suspicious File: " + $test_path
-                        }
-                        Write-Detection $detection
-                    }
-                    $base_path += " "
-                }
-            }
-        }
-    }
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TrawlerState]
+		$State
+	)
+	$State.WriteMessage("Checking Un-Quoted Services")
+	# Supports Drive Retargeting, assumes homedrive is C:
+	#$services = Get-CimInstance -ClassName Win32_Service  | Select-Object Name, PathName, StartMode, Caption, DisplayName, InstallDate, ProcessId, State
+	$service_path = "$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services"
+	$service_list = New-Object -TypeName "System.Collections.ArrayList"
+	if (Test-Path -Path "Registry::$service_path") {
+		$items = Get-ChildItem -Path "Registry::$service_path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		foreach ($item in $items) {
+			$path = "Registry::" + $item.Name
+			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSProvider
+			if ($data.ImagePath) {
+				$service = [PSCustomObject]@{
+					Name     = $data.PSChildName
+					PathName = $data.ImagePath
+				}
+				$service.PathName = $service.PathName.Replace("\SystemRoot", "$env_assumedhomedrive\Windows")
+				$service_list.Add($service) | Out-Null
+			}
+		}
+	}
+	foreach ($service in $service_list) {
+		$service.PathName = ($service.PathName).Replace("C:", $env_homedrive)
+		if ($service.PathName -match '".*"[\s]?.*') {
+			# Skip Paths where the executable is contained in quotes
+			continue
+		}
+		# Is there a space in the service path?
+		if ($service.PathName.Contains(" ")) {
+			$original_service_path = $service.PathName
+			# Does the path contain a space before the exe?
+			if ($original_service_path -match '.*\s.*\.exe.*') {
+				$tmp_path = $original_service_path.Split(" ")
+				$base_path = ""
+				foreach ($path in $tmp_path) {
+					$base_path += $path
+					$test_path = $base_path + ".exe"
+					if (Test-Path $test_path) {
+						$detection = [PSCustomObject]@{
+							Name      = 'Possible Service Path Hijack via Unquoted Path'
+							Risk      = 'High'
+							Source    = 'Services'
+							Technique = "T1574.009: Create or Modify System Process: Windows Service"
+							Meta      = "Service Name: " + $service.Name + ", Service Path: " + $service.PathName + ", Suspicious File: " + $test_path
+						}
+						Write-Detection $detection
+					}
+					$base_path += " "
+				}
+			}
+		}
+	}
 }

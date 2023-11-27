@@ -1,10 +1,10 @@
 function Test-T1547 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-LSA $State
 	Test-TimeProviderDLLs $State
@@ -55,14 +55,10 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						Write-SnapshotMessage -Key $_.Name -Value $package -Source 'LSASecurity'
-
-						if ($loadsnapshot) {
-							$result = Assert-IsAllowed $allowlist_lsasecurity $package $package
-							if ($result) {
-								continue
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'), $true)) {
+							continue
 						}
+
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Security Package Review'
 							Risk      = 'Medium'
@@ -78,14 +74,10 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						Write-SnapshotMessage -Key $_.Name -Value $package -Source 'LSASecurity'
-
-						if ($loadsnapshot) {
-							$result = Assert-IsAllowed $allowlist_lsasecurity $package $package
-							if ($result) {
-								continue
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'), $true)) {
+							continue
 						}
+
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Authentication Package Review'
 							Risk      = 'Medium'
@@ -107,14 +99,10 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						Write-SnapshotMessage -Key $_.Name -Value $package -Source 'LSASecurity'
-
-						if ($loadsnapshot) {
-							$result = Assert-IsAllowed $allowlist_lsasecurity $package $package
-							if ($result) {
-								continue
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'), $true)) {
+							continue
 						}
+
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Security Package Review'
 							Risk      = 'Medium'
@@ -136,14 +124,10 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						Write-SnapshotMessage -Key $_.Name -Value $package -Source 'LSASecurity'
-
-						if ($loadsnapshot) {
-							$result = Assert-IsAllowed $allowlist_lsasecurity $package $package
-							if ($result) {
-								continue
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'), $true)) {
+							continue
 						}
+
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Extensions Review'
 							Risk      = 'Medium'
@@ -172,14 +156,10 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $standard_lsa_notification_packages) {
-						Write-SnapshotMessage -Key $_.Name -Value $package -Source 'LSASecurity'
-
-						if ($loadsnapshot) {
-							$result = Assert-IsAllowed $allowlist_lsasecurity $package $package
-							if ($result) {
-								continue
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'), $true)) {
+							continue
 						}
+
 						$detection = [PSCustomObject]@{
 							Name      = 'Potential Exploitation via Password Filter DLL'
 							Risk      = 'High'
@@ -219,27 +199,21 @@ function Test-TimeProviderDLLs {
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			if ($data.DllName -ne $null) {
+			if ($data.DllName) {
 				if ($standard_timeprovider_dll -notcontains $data.DllName) {
-					Write-SnapshotMessage -Key $item.Name -Value $data.DllName -Source 'TimeProviders'
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.DllName, 'TimeProviders'), $true)) {
+						continue
+					}
 
-					$pass = $false
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_timeproviders $data.DllName $data.DllName
-						if ($result -eq $true) {
-							$pass = $true
-						}
+					$detection = [PSCustomObject]@{
+						Name      = 'Non-Standard Time Providers DLL'
+						Risk      = 'High'
+						Source    = 'Registry'
+						Technique = "T1547.003: Boot or Logon Autostart Execution: Time Providers"
+						Meta      = "Registry Path: " + $item.Name + ", DLL: " + $data.DllName
 					}
-					if ($pass -eq $false) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Non-Standard Time Providers DLL'
-							Risk      = 'High'
-							Source    = 'Registry'
-							Technique = "T1547.003: Boot or Logon Autostart Execution: Time Providers"
-							Meta      = "Registry Path: " + $item.Name + ", DLL: " + $data.DllName
-						}
-						Write-Detection $detection
-					}
+					Write-Detection $detection
+					
 				}
 			}
 		}
@@ -266,25 +240,18 @@ function Test-WinlogonHelperDLLs {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in 'Userinit', 'Shell', 'ShellInfrastructure', 'ShellAppRuntime', 'MPNotify' -and $_.Value -notin $standard_winlogon_helper_dlls) {
-				Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'WinlogonHelpers'
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WinlogonHelpers'), $true)) {
+					continue
+				}
 
-				$pass = $false
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_winlogonhelpers $_.Value $_.Value
-					if ($result) {
-						$pass = $true
-					}
+				$detection = [PSCustomObject]@{
+					Name      = 'Potential WinLogon Helper Persistence'
+					Risk      = 'High'
+					Source    = 'Registry'
+					Technique = "T1547.004: Boot or Logon Autostart Execution: Winlogon Helper DLL"
+					Meta      = "Key Location: HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				if ($pass -eq $false) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Potential WinLogon Helper Persistence'
-						Risk      = 'High'
-						Source    = 'Registry'
-						Technique = "T1547.004: Boot or Logon Autostart Execution: Winlogon Helper DLL"
-						Meta      = "Key Location: HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					}
-					Write-Detection $detection
-				}
+				Write-Detection $detection
 			}
 		}
 	}
@@ -378,22 +345,11 @@ function Test-PrintProcessorDLLs {
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			if ($data.Driver -ne $null) {
-				if ($loadsnapshot) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Allowlist Mismatch: Non-Standard Print Processor DLL'
-						Risk      = 'Medium'
-						Source    = 'Registry'
-						Technique = "T1547.012: Boot or Logon Autostart Execution: Print Processors"
-						Meta      = "Registry Path: " + $item.Name + ", DLL: " + $data.Driver
-					}
-					$result = Assert-IsAllowed $allowtable_printprocessors $item.Name $data.Driver $detection
-					if ($result) {
+			if ($data.Driver) {
+				if ($standard_print_processors -notcontains $data.Driver) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintProcessors'), $true)) {
 						continue
 					}
-				}
-				if ($standard_print_processors -notcontains $data.Driver) {
-					Write-SnapshotMessage -Key $item.Name -Value $data.Driver -Source 'PrintProcessors'
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard Print Processor DLL'
@@ -413,15 +369,11 @@ function Test-PrintProcessorDLLs {
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			if ($data.Driver -ne $null) {
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowtable_printprocessors $item.Name $data.Driver
-					if ($result) {
+			if ($data.Driver) {
+				if ($standard_print_processors -notcontains $data.Driver) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintProcessors'), $true)) {
 						continue
 					}
-				}
-				if ($standard_print_processors -notcontains $data.Driver) {
-					Write-SnapshotMessage -Key $item.Name -Value $data.Driver -Source 'PrintProcessors'
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard Print Processor DLL'
@@ -474,27 +426,20 @@ function Test-ActiveSetup {
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			if ($data.StubPath -ne $null) {
+			if ($data.StubPath) {
 				if ($standard_stubpaths -notcontains $data.StubPath -and $data.StubPath -notmatch ".*(\\Program Files\\Google\\Chrome\\Application\\.*chrmstp.exe|Microsoft\\Edge\\Application\\.*\\Installer\\setup.exe).*") {
-					Write-SnapshotMessage -Key $item.Name -Value $data.StubPath -Source 'ActiveSetup'
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.StubPath, 'ActiveSetup'), $true)) {
+						continue
+					}
 
-					$pass = $false
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_activesetup $item.Name $data.StubPath
-						if ($result) {
-							$pass = $true
-						}
+					$detection = [PSCustomObject]@{
+						Name      = 'Non-Standard StubPath Executed on User Logon'
+						Risk      = 'High'
+						Source    = 'Registry'
+						Technique = "T1547.014: Boot or Logon Autostart Execution: Active Setup"
+						Meta      = "Registry Path: " + $item.Name + ", StubPath: " + $data.StubPath
 					}
-					if ($pass -eq $false) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Non-Standard StubPath Executed on User Logon'
-							Risk      = 'High'
-							Source    = 'Registry'
-							Technique = "T1547.014: Boot or Logon Autostart Execution: Active Setup"
-							Meta      = "Registry Path: " + $item.Name + ", StubPath: " + $data.StubPath
-						}
-						Write-Detection $detection
-					}
+					Write-Detection $detection
 				}
 			}
 		}

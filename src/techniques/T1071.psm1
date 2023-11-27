@@ -45,14 +45,18 @@ function Test-Connections {
 
 		$proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue | Select-Object Name, Path
 
-		Write-SnapshotMessage -Key $conn.RemoteAddress -Value $conn.RemoteAddress -Source 'Connections'
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($conn.RemoteAddress, $conn.RemoteAddress, 'Connections'), $true)) {
+							continue
+						}
 
 		if ($loadsnapshot -and (Assert-IsAllowed $allowlist_remote_addresses $conn.RemoteAddress $conn.RemoteAddress)) {
 			continue
 		}
 
 		if ($conn.State -eq 'Listen' -and $conn.LocalPort -gt 1024) {
-			Write-SnapshotMessage -Key $proc.Name -Value $proc.Path -Source 'ProcessConnections'
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($proc.Name, $proc.Path, 'ProcessConnections'), $true)) {
+							continue
+						}
 
 			if ($loadsnapshot -and (Assert-IsAllowed $allowlist_listeningprocs $proc.Name $proc.Path)) {
 				continue
@@ -77,7 +81,7 @@ function Test-Connections {
 			}
 			Write-Detection $detection
 		}
-		if ($proc.Path -ne $null) {
+		if ($proc.Path) {
 			foreach ($path in $suspicious_process_paths) {
 				if (($proc.Path).ToLower() -match $path) {
 					$detection = [PSCustomObject]@{

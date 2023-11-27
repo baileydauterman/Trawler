@@ -1,10 +1,10 @@
 function Test-T1484 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-GPOExtensions $State
 }
@@ -58,14 +58,10 @@ function Test-GPOExtensions {
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 			$data.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'DllName' -and $_.Value -notin $gpo_dll_allowlist) {
-					Write-SnapshotMessage -Key $item.Name -Value $_.Value -Source 'GPOExtensions'
-
-					if ($loadsnapshot) {
-						$result = Assert-IsAllowed $allowlist_gpoextensions $item.Name $_.Value
-						if ($result) {
-							continue
-						}
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'GPOExtensions'), $true)) {
+						continue
 					}
+
 					$detection = [PSCustomObject]@{
 						Name      = 'Review: Non-Standard GPO Extension DLL'
 						Risk      = 'Medium'

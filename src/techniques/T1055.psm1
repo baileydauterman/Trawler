@@ -28,14 +28,10 @@ function Test-DNSServerLevelPluginDLL {
 		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'ServerLevelPluginDll' -and $_.Value -ne '""') {
-				Write-SnapshotMessage -Key $_.Name -Value $_.Value -Source 'DNSPlugin'
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'DNSPlugin'), $true)) {
+							continue
+						}
 
-				if ($loadsnapshot) {
-					$result = Assert-IsAllowed $allowlist_dnsplugin $_.Value $_.Value
-					if ($result -eq $true) {
-						return
-					}
-				}
 				$detection = [PSCustomObject]@{
 					Name      = 'Review: DNS ServerLevelPluginDLL is active'
 					Risk      = 'Medium'

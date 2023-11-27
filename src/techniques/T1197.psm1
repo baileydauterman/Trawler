@@ -1,10 +1,10 @@
 function Test-T19997 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-BITS $State
 }
@@ -27,28 +27,17 @@ function Test-BITS {
 	$State.WriteMessage("Checking BITS Jobs")
 	$bits = Get-BitsTransfer -AllUsers | Select-Object *
 	foreach ($item in $bits) {
-		if ($item.NotifyCmdLine -ne $null) {
+		if ($item.NotifyCmdLine) {
 			$cmd = [string]$item.NotifyCmdLine
 		}
 		else {
 			$cmd = ''
 		}
         
-		Write-SnapshotMessage -Key $item.DisplayName -Value $cmd -Source 'BITS'
-		
-		if ($loadsnapshot) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Allowlist Mismatch:  BITS Job'
-				Risk      = 'Medium'
-				Source    = 'BITS'
-				Technique = "T1197: BITS Jobs"
-				Meta      = "Item Name: " + $item.DisplayName + ", TransferType: " + $item.TransferType + ", Job State: " + $item.JobState + ", User: " + $item.OwnerAccount + ", Command: " + $cmd
-			}
-			$result = Assert-IsAllowed $allowtable_bits $item.DisplayName $cmd $detection
-			if ($result) {
-				continue
-			}
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.DisplayName, $cmd, 'BITS'), $true)) {
+			continue
 		}
+
 		$detection = [PSCustomObject]@{
 			Name      = 'BITS Item Review'
 			Risk      = 'Low'

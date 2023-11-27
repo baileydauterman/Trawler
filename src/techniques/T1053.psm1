@@ -339,25 +339,9 @@ function Test-ScheduledTasks {
 
     foreach ($task in $tasks) {
         # Allowlist Logic
-        Write-SnapshotMessage -Key $task.TaskName -Value $task.Execute -Source "Scheduled Tasks"
-		
-        # If we are loading a snapshot allowlist
-        # TODO - Compare Task Arguments for Changes
-        if ($loadsnapshot) {
-            $detection = [PSCustomObject]@{
-                Name      = 'Allowlist Mismatch: Scheduled Task'
-                Risk      = 'Medium'
-                Source    = 'Scheduled Tasks'
-                Technique = "T1053: Scheduled Task/Job"
-                Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
-            }
-
-            $result = Assert-IsAllowed $allowtable_scheduledtask $task.TaskName $task.Execute $detection
-            if ($result) {
-                continue
-            }
-        }
-
+        if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($task.TaskName, $task.Execute, "Scheduled Tasks"), $true)) {
+							continue
+						}
 
         # Detection - Non-Standard Tasks
         foreach ($i in $default_task_exe_paths) {
@@ -424,7 +408,7 @@ function Test-ScheduledTasks {
             Write-Detection $detection
         }
         # Detection - User Created Tasks
-        if ($task.Author -ne $null) {
+        if ($task.Author) {
             if (($task.Author).Contains("\")) {
                 if ((($task.Author.Split('\')).count - 1) -eq 1) {
                     if ($task.RunAs -eq "SYSTEM") {

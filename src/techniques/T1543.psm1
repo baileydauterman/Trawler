@@ -1,10 +1,10 @@
 function Test-T1543 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-Services $State
 	Test-ServicesByRegex $State
@@ -1058,7 +1058,7 @@ function Test-Services {
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
 			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSProvider
-			if ($data.ImagePath -ne $null) {
+			if ($data.ImagePath) {
 				$service = [PSCustomObject]@{
 					Name     = $data.PSChildName
 					PathName = $data.ImagePath
@@ -1069,21 +1069,10 @@ function Test-Services {
 		}
 	}
 	foreach ($service in $service_list) {
-		Write-SnapshotMessage -Key $service.Name -Value $service.PathName -Source "Services"
-
-		if ($loadsnapshot) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Allowlist Mismatch: Service Name\Path'
-				Risk      = 'Medium'
-				Source    = 'Services'
-				Technique = "T1543.003: Create or Modify System Process: Windows Service"
-				Meta      = "Service Name: " + $service.Name + ", Service Path: " + $service.PathName
-			}
-			$result = Assert-IsAllowed $allowtable_services $service.Name $service.PathName $detection
-			if ($result) {
-				continue
-			}
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($service.Name, $service.PathName, "Services"), $true)) {
+			continue
 		}
+
 		foreach ($term in $rat_terms) {
 			if ($service.PathName -match ".*$term.*") {
 				# Service has a suspicious launch pattern matching a known RAT
@@ -2176,21 +2165,10 @@ function Test-ServicesByRegex {
 			$service_data = Get-ItemProperty -Path $service_path -ErrorAction SilentlyContinue | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 			$service_data.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'ImagePath') {
-					Write-SnapshotMessage -Key $service.Name -Value $_.Value -Source 'Services_REG'
-
-					if ($loadsnapshot) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Allowlist Mismatch: Possible Service Hijack - Unexpected ImagePath Location'
-							Risk      = 'Medium'
-							Source    = 'Services'
-							Technique = "T1543.003: Create or Modify System Process: Windows Service"
-							Meta      = "Key: " + $service.Name + ", Value: " + $_.Value + ", Regex Expected Location: " + $image_path_lookup[$service.Name]
-						}
-						$result = Assert-IsAllowed $allowtable_services_reg $service.Name $_.Value $_.Value $detection
-						if ($result) {
-							continue
-						}
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($service.Name, $_.Value, 'Services_REG'), $true)) {
+						continue
 					}
+
 					if ($image_path_lookup.ContainsKey($service.Name)) {
 						if ($_.Value -notmatch $image_path_lookup[$service.Name]) {
 							$detection = [PSCustomObject]@{
@@ -2213,21 +2191,10 @@ function Test-ServicesByRegex {
 				$data = Get-ItemProperty -Path $child_path -ErrorAction SilentlyContinue | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 				$data.PSObject.Properties | ForEach-Object {
 					if ($_.Name -eq "ServiceDll") {
-						Write-SnapshotMessage -Key $child_key.Name -Value $_.Value -Source 'Services_REG'
-
-						if ($loadsnapshot) {
-							$detection = [PSCustomObject]@{
-								Name      = 'Allowlist Mismatch: Possible Service Hijack - Unexpected ServiceDll Location'
-								Risk      = 'Medium'
-								Source    = 'Services'
-								Technique = "T1543.003: Create or Modify System Process: Windows Service"
-								Meta      = "Key: " + $child_key.Name + ", Value: " + $_.Value + " Regex Expected Location: " + $service_dll_lookup[$child_key.Name]
-							}
-							$result = Assert-IsAllowed $allowtable_services_reg $child_key.Name $_.Value $_.Value $detection
-							if ($result) {
-								continue
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($child_key.Name, $_.Value, 'Services_REG'), $true)) {
+							continue
 						}
+
 						if ($service_dll_lookup.ContainsKey($child_key.Name)) {
 							if ($_.Value -notmatch $service_dll_lookup[$child_key.Name]) {
 								#Write-Host "NAME:"$child_key.Name
