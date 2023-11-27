@@ -20,21 +20,21 @@ function Test-SuspiciousFileLocations {
 	$State.WriteMessage("Checking Suspicious File Locations")
 	$suspicious_extensions = @('*.exe', '*.bat', '*.ps1', '*.hta', '*.vb', '*.vba', '*.vbs', '*.zip', '*.gz', '*.7z', '*.dll', '*.scr', '*.cmd', '*.com', '*.ws', '*.wsf', '*.scf', '*.scr', '*.pif')
 	$recursive_paths_to_check = @(
-		"$env_homedrive\Users\Public"
-		"$env_homedrive\Users\Administrator"
-		"$env_homedrive\Windows\temp"
+		"$($State.DriveTargets.HomeDrive)\Users\Public"
+		"$($State.DriveTargets.HomeDrive)\Users\Administrator"
+		"$($State.DriveTargets.HomeDrive)\Windows\temp"
 	)
 	foreach ($path in $recursive_paths_to_check) {
 		$items = Get-ChildItem -Path $path -Recurse -ErrorAction SilentlyContinue -Include $suspicious_extensions
 		foreach ($item in $items) {
 			$detection = [PSCustomObject]@{
 				Name      = 'Anomalous File in Suspicious Location'
-				Risk      = 'High'
+				Risk      = [TrawlerRiskPriority]::High
 				Source    = 'Windows'
 				Technique = "N/A"
 				Meta      = "File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 	}
 }

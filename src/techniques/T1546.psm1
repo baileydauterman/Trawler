@@ -186,12 +186,12 @@ function Test-ContextMenu {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'DLL loaded in ContextMenuHandler'
-						Risk      = 'Medium'
+						Risk      = [TrawlerRiskPriority]::Medium
 						Source    = 'Windows Context Menu'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "Key: " + $item.Name + ", DLL: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -209,12 +209,12 @@ function Test-ContextMenu {
 					if ($_.Name -eq '(Default)' -and $_.Value -match ".*\.dll.*") {
 						$detection = [PSCustomObject]@{
 							Name      = 'DLL loaded in ContextMenuHandler'
-							Risk      = 'Medium'
+							Risk      = [TrawlerRiskPriority]::Medium
 							Source    = 'Windows Context Menu'
 							Technique = "T1546: Event Triggered Execution"
 							Meta      = "Key: " + $item.Name + ", DLL: " + $_.Value
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -274,12 +274,12 @@ function Test-DiskCleanupHandlers {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Default DiskCleanupHandler Program'
-						Risk      = 'Low'
+						Risk      = [TrawlerRiskPriority]::Low
 						Source    = 'Registry'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "Key: " + $item.Name + ", Program: " + $target_prog
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 				
 			}
@@ -313,12 +313,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -eq 'Debugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential AeDebug Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -337,12 +337,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -eq 'ProtectedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential AeDebug Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -365,12 +365,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -eq 'Debugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential AeDebug Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -391,12 +391,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -eq 'ProtectedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential AeDebug Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -419,12 +419,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -eq 'DbgManagedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" PID %d APPDOM %d EXTEXT `"%s`" EVTHDL %d" -and $pass -eq $false) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential .NET Debugger Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -446,12 +446,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -eq 'DbgManagedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" PID %d APPDOM %d EXTEXT `"%s`" EVTHDL %d" -and $pass -eq $false) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential .NET Debugger Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -473,12 +473,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$env:homedrive\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$env:homedrive\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Microsoft Script Debugger Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -500,12 +500,12 @@ function Test-DebuggerHijacks {
 				if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential Microsoft Script Debugger Hijacking'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -528,12 +528,12 @@ function Test-DebuggerHijacks {
 			if (($_.Name -in '(default)' -and $pass -eq $false -and $_.Value -ne "$($State.DriveTargets.AssumedHomeDrive)\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\WINDOWS\system32\pdm.dll`"")) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Process Debugger Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -554,12 +554,12 @@ function Test-DebuggerHijacks {
 			if ($_.Name -in 'Debugger', 'ReflectDebugger') {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential WER Debugger Hijacking'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -612,12 +612,12 @@ function Test-DisableLowILProcessIsolation {
 					if ($pass -eq $false) {
 						$detection = [PSCustomObject]@{
 							Name      = 'COM Object Registered with flag disabling low-integrity process isolation'
-							Risk      = 'Medium'
+							Risk      = [TrawlerRiskPriority]::Medium
 							Source    = 'Registry'
 							Technique = "T1546: Event Triggered Execution"
 							Meta      = "Key: " + $item.Name + ", Display Name: " + $displayname
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -636,17 +636,17 @@ function Test-Narrator {
 	# Supports Drive Retargeting
 	# https://pentestlab.blog/2020/03/04/persistence-dll-hijacking/
 	$State.WriteMessage("Checking Narrator MSTTSLocEnUS.dll Presence")
-	$basepath = "$env_homedrive\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL"
+	$basepath = "$($State.DriveTargets.HomeDrive)\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL"
 	if (Test-Path $basepath) {
 		$item = Get-Item -Path $basepath -ErrorAction SilentlyContinue | Select-Object *
 		$detection = [PSCustomObject]@{
 			Name      = 'Narrator Missing DLL is Present'
-			Risk      = 'Medium'
+			Risk      = [TrawlerRiskPriority]::Medium
 			Source    = 'Windows Narrator'
 			Technique = "T1546: Event Triggered Execution"
 			Meta      = "File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
 		}
-		Write-Detection $detection
+		$State.WriteDetection($detection)
 	}
 }
 
@@ -661,8 +661,8 @@ function Test-NotepadPlusPlusPlugins {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Notepad++ Plugins")
 	$basepaths = @(
-		"$env_homedrive\Program Files\Notepad++\plugins"
-		"$env_homedrive\Program Files (x86)\Notepad++\plugins"
+		"$($State.DriveTargets.HomeDrive)\Program Files\Notepad++\plugins"
+		"$($State.DriveTargets.HomeDrive)\Program Files (x86)\Notepad++\plugins"
 	)
 	$allowlisted = @(
 		".*\\Config\\nppPluginList\.dll"
@@ -684,12 +684,12 @@ function Test-NotepadPlusPlusPlugins {
 				if ($match -eq $false) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Default Notepad++ Plugin DLL'
-						Risk      = 'Medium'
+						Risk      = [TrawlerRiskPriority]::Medium
 						Source    = 'Notepad++'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -706,9 +706,9 @@ function Test-OfficeAI {
 	# Supports Drive Retargeting
 	# https://twitter.com/Laughing_Mantis/status/1645268114966470662
 	$State.WriteMessage("Checking Office AI.exe Presence")
-	$basepath = "$env_homedrive\Program Files\Microsoft Office\root\Office*"
+	$basepath = "$($State.DriveTargets.HomeDrive)\Program Files\Microsoft Office\root\Office*"
 	if (Test-Path $basepath) {
-		$path = "$env_homedrive\Program Files\Microsoft Office\root"
+		$path = "$($State.DriveTargets.HomeDrive)\Program Files\Microsoft Office\root"
 		$dirs = Get-ChildItem -Path $path -Directory -Filter "Office*" -ErrorAction SilentlyContinue
 		foreach ($dir in $dirs) {
 			$ai = $dir.FullName + "\ai.exe"
@@ -716,12 +716,12 @@ function Test-OfficeAI {
 				$item = Get-Item -Path $ai -ErrorAction SilentlyContinue | Select-Object *
 				$detection = [PSCustomObject]@{
 					Name      = 'AI.exe in Office Directory'
-					Risk      = 'Medium'
+					Risk      = [TrawlerRiskPriority]::Medium
 					Source    = 'Windows Context Menu'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -752,12 +752,12 @@ function Test-UninstallStrings {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Uninstall String with Suspicious Keywords'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "Application: " + $item.Name + ", Uninstall String: " + $data.UninstallString
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 			if ($data.QuietUninstallString) {
@@ -768,12 +768,12 @@ function Test-UninstallStrings {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Uninstall String with Suspicious Keywords'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "Application: " + $item.Name + ", Uninstall String: " + $data.QuietUninstallString
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -811,12 +811,12 @@ function Test-PolicyManager {
 
 						$detection = [PSCustomObject]@{
 							Name      = 'Non-Standard Policy Manager DLL'
-							Risk      = 'High'
+							Risk      = [TrawlerRiskPriority]::High
 							Source    = 'Registry'
 							Technique = "T1546: Event Triggered Execution"
 							Meta      = "Path: " + $subkey.Name + ", Entry Name: PreCheckDLLPath, DLL: " + $data.PreCheckDLLPath
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 				if ($data.transportDllPath) {
@@ -827,12 +827,12 @@ function Test-PolicyManager {
 					if ($pass -eq $false) {
 						$detection = [PSCustomObject]@{
 							Name      = 'Non-Standard Policy Manager DLL'
-							Risk      = 'High'
+							Risk      = [TrawlerRiskPriority]::High
 							Source    = 'Registry'
 							Technique = "T1546: Event Triggered Execution"
 							Meta      = "Path: " + $subkey.Name + ", Entry Name: transportDllPath, DLL: " + $data.transportDllPath
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -864,12 +864,12 @@ function Test-WindowsLoadKey {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential Windows Load Hijacking'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -892,12 +892,12 @@ function Test-AutoDialDLL {
 			if ($_.Name -eq 'AutodialDLL' -and $_.Value -ne 'C:\Windows\System32\rasadhlp.dll') {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Hijacking of Autodial DLL'
-					Risk      = 'Very High'
+					Risk      = [TrawlerRiskPriority]::VeryHigh
 					Source    = 'Registry'
 					Technique = "T1546: Event Triggered Execution"
 					Meta      = "Key Location: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinSock2\Parameters, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -921,12 +921,12 @@ function Test-HTMLHelpDLL {
 				if ($_.Name -eq 'location') {
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential CHM DLL Hijack'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546: Event Triggered Execution"
 						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -1001,12 +1001,12 @@ function Test-AssociationHijack {
 									if ($exe -notmatch $value_regex_lookup[$basefile]) {
 										$detection = [PSCustomObject]@{
 											Name      = 'Possible File Association Hijack - Mismatch on Expected Value'
-											Risk      = 'High'
+											Risk      = [TrawlerRiskPriority]::High
 											Source    = 'Registry'
 											Technique = "T1546.001: Event Triggered Execution: Change Default File Association"
 											Meta      = "FileType: " + $open_path + ", Expected Association: " + $value_regex_lookup[$basefile] + ", Current Association: " + $exe
 										}
-										Write-Detection $detection
+										$State.WriteDetection($detection)
 										return
 									}
 									else {
@@ -1017,23 +1017,23 @@ function Test-AssociationHijack {
 								if ($exe -match ".*\.exe.*\.exe") {
 									$detection = [PSCustomObject]@{
 										Name      = 'Possible File Association Hijack - Multiple EXEs'
-										Risk      = 'High'
+										Risk      = [TrawlerRiskPriority]::High
 										Source    = 'Registry'
 										Technique = "T1546.001: Event Triggered Execution: Change Default File Association"
 										Meta      = "FileType: " + $open_path + ", Current Association: " + $exe
 									}
-									Write-Detection $detection
+									$State.WriteDetection($detection)
 									return
 								}
 								if ($exe -match $suspicious_terms) {
 									$detection = [PSCustomObject]@{
 										Name      = 'Possible File Association Hijack - Suspicious Keywords'
-										Risk      = 'High'
+										Risk      = [TrawlerRiskPriority]::High
 										Source    = 'Registry'
 										Technique = "T1546.001: Event Triggered Execution: Change Default File Association"
 										Meta      = "FileType: " + $open_path + ", Current Association: " + $exe
 									}
-									Write-Detection $detection
+									$State.WriteDetection($detection)
 								}
 							}
 						}
@@ -1065,12 +1065,12 @@ function Test-AssociationHijack {
 								if ($exe -notmatch $value_regex_lookup[$basefile]) {
 									$detection = [PSCustomObject]@{
 										Name      = 'Possible File Association Hijack - Mismatch on Expected Value'
-										Risk      = 'High'
+										Risk      = [TrawlerRiskPriority]::High
 										Source    = 'Registry'
 										Technique = "T1546.001: Event Triggered Execution: Change Default File Association"
 										Meta      = "FileType: " + $open_path + ", Expected Association: " + $value_regex_lookup[$basefile] + ", Current Association: " + $exe
 									}
-									Write-Detection $detection
+									$State.WriteDetection($detection)
 									return
 								}
 								else {
@@ -1081,23 +1081,23 @@ function Test-AssociationHijack {
 							if ($exe -match ".*\.exe.*\.exe") {
 								$detection = [PSCustomObject]@{
 									Name      = 'Possible File Association Hijack - Multiple EXEs'
-									Risk      = 'High'
+									Risk      = [TrawlerRiskPriority]::High
 									Source    = 'Registry'
 									Technique = "T1546.001: Event Triggered Execution: Change Default File Association"
 									Meta      = "FileType: " + $open_path + ", Current Association: " + $exe
 								}
-								Write-Detection $detection
+								$State.WriteDetection($detection)
 								return
 							}
 							if ($exe -match $suspicious_terms) {
 								$detection = [PSCustomObject]@{
 									Name      = 'Possible File Association Hijack - Suspicious Keywords'
-									Risk      = 'High'
+									Risk      = [TrawlerRiskPriority]::High
 									Source    = 'Registry'
 									Technique = "T1546.001: Event Triggered Execution: Change Default File Association"
 									Meta      = "FileType: " + $open_path + ", Current Association: " + $exe
 								}
-								Write-Detection $detection
+								$State.WriteDetection($detection)
 							}
 						}
 					}
@@ -1129,12 +1129,12 @@ function Test-ScreenSaverEXE {
 				if ($_.Name -eq "SCRNSAVE.exe") {
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential Persistence via ScreenSaver Executable Hijack'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546.002: Event Triggered Execution: Screensaver"
 						Meta      = "Key Location: HKCU\Control Panel\Desktop, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -1173,12 +1173,12 @@ function Test-WMIConsumers {
 
 			$detection = [PSCustomObject]@{
 				Name      = 'WMI ActiveScript Consumer'
-				Risk      = 'High'
+				Risk      = [TrawlerRiskPriority]::High
 				Source    = 'WMI'
 				Technique = "T1546.003: Event Triggered Execution: Windows Management Instrumentation Event Subscription"
 				Meta      = "Consumer Name: " + $consumer.Name + ", Script Name: " + $consumer.ScriptFileName + ", Script Text: " + $consumer.ScriptText
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 		if ($consumer.CommandLineTemplate) {
 			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($consumer.Name, $consumer.CommandLineTemplate, 'WMI Consumers'), $true)) {
@@ -1187,12 +1187,12 @@ function Test-WMIConsumers {
 			
 			$detection = [PSCustomObject]@{
 				Name      = 'WMI CommandLine Consumer'
-				Risk      = 'High'
+				Risk      = [TrawlerRiskPriority]::High
 				Source    = 'WMI'
 				Technique = "T1546.003: Event Triggered Execution: Windows Management Instrumentation Event Subscription"
 				Meta      = "Consumer Name: " + $consumer.Name + ", Executable Path: " + $consumer.ExecutablePath + ", CommandLine Template: " + $consumer.CommandLineTemplate
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 	}
 }
@@ -1246,12 +1246,12 @@ function Test-NetSHDLLs {
 
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Persistence via Netsh Helper DLL Hijack'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546.007: Event Triggered Execution: Netsh Helper DLL"
 					Meta      = "Key Location: HKLM\SOFTWARE\Microsoft\Netsh, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 			
 		}
@@ -1276,12 +1276,12 @@ function Test-UtilmanHijack {
 	if (Test-Path -Path $path) {
 		$detection = [PSCustomObject]@{
 			Name      = 'Potential utilman.exe Registry Persistence'
-			Risk      = 'High'
+			Risk      = [TrawlerRiskPriority]::High
 			Source    = 'Registry'
 			Technique = "T1546.008: Event Triggered Execution: Accessibility Features"
 			Meta      = "Review Data for Key: HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\utilman.exe"
 		}
-		Write-Detection $detection
+		$State.WriteDetection($detection)
 	}
 }
 
@@ -1299,12 +1299,12 @@ function Test-SethcHijack {
 	if (Test-Path -Path $path) {
 		$detection = [PSCustomObject]@{
 			Name      = 'Potential sethc.exe Registry Persistence'
-			Risk      = 'High'
+			Risk      = [TrawlerRiskPriority]::High
 			Source    = 'Registry'
 			Technique = "T1546.008: Event Triggered Execution: Accessibility Features"
 			Meta      = "Review Data for Key: HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe"
 		}
-		Write-Detection $detection
+		$State.WriteDetection($detection)
 	}
 }
 
@@ -1319,14 +1319,14 @@ function Test-ModifiedWindowsAccessibilityFeature {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Accessibility Binaries")
 	$files_to_check = @(
-		"$env_homedrive\Program Files\Common Files\microsoft shared\ink\HID.dll"
-		"$env_homedrive\Windows\System32\AtBroker.exe",
-		"$env_homedrive\Windows\System32\DisplaySwitch.exe",
-		"$env_homedrive\Windows\System32\Magnify.exe",
-		"$env_homedrive\Windows\System32\Narrator.exe",
-		"$env_homedrive\Windows\System32\osk.exe",
-		"$env_homedrive\Windows\System32\sethc.exe",
-		"$env_homedrive\Windows\System32\utilman.exe"
+		"$($State.DriveTargets.HomeDrive)\Program Files\Common Files\microsoft shared\ink\HID.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\AtBroker.exe",
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\DisplaySwitch.exe",
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\Magnify.exe",
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\Narrator.exe",
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\osk.exe",
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\sethc.exe",
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\utilman.exe"
 	)
 	foreach ($file in $files_to_check) { 
 		$fdata = Get-Item $file -ErrorAction SilentlyContinue | Select-Object CreationTime, LastWriteTime
@@ -1334,12 +1334,12 @@ function Test-ModifiedWindowsAccessibilityFeature {
 			if ($fdata.CreationTime.ToString() -ne $fdata.LastWriteTime.ToString()) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential modification of Windows Accessibility Feature'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Windows'
 					Technique = "T1546.008: Event Triggered Execution: Accessibility Features"
 					Meta      = "File: " + $file + ", Created: " + $fdata.CreationTime + ", Modified: " + $fdata.LastWriteTime
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -1371,12 +1371,12 @@ function Test-AppCertDLLs {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential Persistence via AppCertDLL Hijack'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546.009: Event Triggered Execution: AppCert DLLs"
 						Meta      = "Key Location: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\AppCertDlls, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		
@@ -1408,12 +1408,12 @@ function Test-AppInitDLLs {
 
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential AppInit DLL Persistence'
-					Risk      = 'Medium'
+					Risk      = [TrawlerRiskPriority]::Medium
 					Source    = 'Registry'
 					Technique = "T1546.010: Event Triggered Execution: AppInit DLLs"
 					Meta      = "Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 			
 		}
@@ -1429,12 +1429,12 @@ function Test-AppInitDLLs {
 
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential AppInit DLL Persistence'
-					Risk      = 'Medium'
+					Risk      = [TrawlerRiskPriority]::Medium
 					Source    = 'Registry'
 					Technique = "T1546.010: Event Triggered Execution: AppInit DLLs"
 					Meta      = "Key Location: HKEY_LOCAL_MACHINE\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 		
@@ -1506,12 +1506,12 @@ function Test-IFEO {
 
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Image File Execution Option Debugger Injection'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546.012: Event Triggered Execution: Image File Execution Options Injection"
 					Meta      = "Registry Path: " + $item.Name + ", Debugger: " + $data.Debugger
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -1544,12 +1544,12 @@ function Test-RegistryChecks {
 						if ($_.Name -eq '(default)') {
 							$detection = [PSCustomObject]@{
 								Name      = 'Potential COM Hijack'
-								Risk      = 'High'
+								Risk      = [TrawlerRiskPriority]::High
 								Source    = 'Registry'
 								Technique = "T1546.012: Event Triggered Execution: Image File Execution Options Injection"
 								Meta      = "Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
 							}
-							#Write-Detection $detection
+							#$State.WriteDetection($detection)
 							# This is now handled by Test-COM-Hijacks along with HKLM and HKCR checks (which should be identical)
 						}
 					}
@@ -1587,12 +1587,12 @@ function Test-SilentProcessExitMonitoring {
 				#allowtable_silentprocessexit
 				$detection = [PSCustomObject]@{
 					Name      = 'Process Launched on SilentProcessExit'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546.012: Event Triggered Execution: Image File Execution Options Injection"
 					Meta      = "Monitored Process: " + $item.Name + ", Launched Process: " + $data.MonitorProcess + ", Reporting Mode: " + $data.ReportingMode
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -1621,8 +1621,8 @@ function Test-PowerShellProfiles {
 	$State.WriteMessage("Checking PowerShell Profiles")
 	if ($drivechange) {
 		# TODO - Investigate whether these paths can be retrieved from the HKLM HIVE dynamically
-		$alluserallhost = "$env_homedrive\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
-		$allusercurrenthost = "$env_homedrive\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1"
+		$alluserallhost = "$($State.DriveTargets.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
+		$allusercurrenthost = "$($State.DriveTargets.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1"
 	}
  else {
 		$PROFILE | Select-Object AllUsersAllHosts, AllUsersCurrentHost, CurrentUserAllHosts, CurrentUserCurrentHost | Out-Null
@@ -1633,58 +1633,58 @@ function Test-PowerShellProfiles {
 	if (Test-Path $alluserallhost) {
 		$detection = [PSCustomObject]@{
 			Name      = 'Review: Global Custom PowerShell Profile'
-			Risk      = 'Medium'
+			Risk      = [TrawlerRiskPriority]::Medium
 			Source    = 'PowerShell'
 			Technique = "T1546.013: Event Triggered Execution: PowerShell Profile"
 			Meta      = "Profile: " + $PROFILE.AllUsersAllHosts
 		}
-		Write-Detection $detection
+		$State.WriteDetection($detection)
 	}
 	if (Test-Path $allusercurrenthost) {
 		$detection = [PSCustomObject]@{
 			Name      = 'Review: Global Custom PowerShell Profile'
-			Risk      = 'Medium'
+			Risk      = [TrawlerRiskPriority]::Medium
 			Source    = 'PowerShell'
 			Technique = "T1546.013: Event Triggered Execution: PowerShell Profile"
 			Meta      = "Profile: " + $PROFILE.AllUsersCurrentHost
 		}
-		Write-Detection $detection
+		$State.WriteDetection($detection)
 	}
 
-	$profile_names = Get-ChildItem "$env_homedrive\Users" -Attributes Directory | Select-Object Name
+	$profile_names = Get-ChildItem "$($State.DriveTargets.HomeDrive)\Users" -Attributes Directory | Select-Object Name
 	foreach ($name in $profile_names) {
-		$path1 = "$env_homedrive\Users\$name\Documents\WindowsPowerShell\profile.ps1"
-		$path2 = "$env_homedrive\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
-		$path3 = "$env_homedrive\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+		$path1 = "$($State.DriveTargets.HomeDrive)\Users\$name\Documents\WindowsPowerShell\profile.ps1"
+		$path2 = "$($State.DriveTargets.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
+		$path3 = "$($State.DriveTargets.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
 		if (Test-Path $path1) {
 			$detection = [PSCustomObject]@{
 				Name      = 'Review: Custom PowerShell Profile'
-				Risk      = 'Medium'
+				Risk      = [TrawlerRiskPriority]::Medium
 				Source    = 'PowerShell'
 				Technique = "T1546.013: Event Triggered Execution: PowerShell Profile"
 				Meta      = "Profile: " + $path1
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 		if (Test-Path $path2) {
 			$detection = [PSCustomObject]@{
 				Name      = 'Review: Custom PowerShell Profile'
-				Risk      = 'Medium'
+				Risk      = [TrawlerRiskPriority]::Medium
 				Source    = 'PowerShell'
 				Technique = "T1546.013: Event Triggered Execution: PowerShell Profile"
 				Meta      = "Profile: " + $path2
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 		if (Test-Path $path3) {
 			$detection = [PSCustomObject]@{
 				Name      = 'Review: Custom PowerShell Profile'
-				Risk      = 'Medium'
+				Risk      = [TrawlerRiskPriority]::Medium
 				Source    = 'PowerShell'
 				Technique = "T1546.013: Event Triggered Execution: PowerShell Profile"
 				Meta      = "Profile: " + $path3
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 	}
 }
@@ -1728,7 +1728,7 @@ function Test-ComHijacks {
 				if ($TrawlerState.LoadSnapshot) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Allowlist Mismatch: COM Hijack'
-						Risk      = 'Medium'
+						Risk      = [TrawlerRiskPriority]::Medium
 						Source    = 'Registry'
 						Technique = "T1546.015: Event Triggered Execution: Component Object Model Hijacking"
 						Meta      = "Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
@@ -1745,12 +1745,12 @@ function Test-ComHijacks {
 				if (!($verified_match) -or $_.Value -match "$env:homedrive\\Users\\(public|administrator|guest).*") {
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential COM Hijack'
-						Risk      = 'Medium'
+						Risk      = [TrawlerRiskPriority]::Medium
 						Source    = 'Registry'
 						Technique = "T1546.015: Event Triggered Execution: Component Object Model Hijacking"
 						Meta      = "Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -1777,12 +1777,12 @@ function Test-WellKnownCOM {
 			$items.PSObject.Properties | ForEach-Object {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential shell32.dll Hijack for Persistence'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546.015: Event Triggered Execution: Component Object Model Hijacking"
 					Meta      = "Key Location: HKCU\\Software\\Classes\\CLSID\\{42aedc87-2188-41fd-b9a3-0c966feabec1}\\InprocServer32, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -1795,12 +1795,12 @@ function Test-WellKnownCOM {
 			$items.PSObject.Properties | ForEach-Object {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential WBEM Subsystem Hijack for Persistence'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1546.015: Event Triggered Execution: Component Object Model Hijacking"
 					Meta      = "Key Location: HKCU\\Software\\Classes\\CLSID\\{F3130CDB-AA52-4C3A-AB32-85FFC23AF9C1}\\InprocServer32, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -1923,12 +1923,12 @@ function Test-COM-Hijacks {
 							if ($verified_match -ne $true -or $_.Value -match "$env:homedrive\\Users\\(public|administrator|guest).*") {
 								$detection = [PSCustomObject]@{
 									Name      = 'Potential COM Hijack'
-									Risk      = 'Medium'
+									Risk      = [TrawlerRiskPriority]::Medium
 									Source    = 'Registry'
 									Technique = "T1546.015: Event Triggered Execution: Component Object Model Hijacking"
 									Meta      = "Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
 								}
-								Write-Detection $detection
+								$State.WriteDetection($detection)
 							}
 						}
 					}
@@ -1999,13 +1999,13 @@ function Test-COM-Hijacks {
 
 									$detection = [PSCustomObject]@{
 										Name      = 'Potential COM Hijack'
-										Risk      = 'Medium'
+										Risk      = [TrawlerRiskPriority]::Medium
 										Source    = 'Registry'
 										Technique = "T1546.015: Event Triggered Execution: Component Object Model Hijacking"
 										Meta      = "Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
 									}
 									
-									Write-Detection $detection
+									$State.WriteDetection($detection)
 								}
 							}
 						}
@@ -2039,12 +2039,12 @@ function Test-FolderOpen {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential Folder Open Hijack for Persistence'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1546.015: Event Triggered Execution: Component Object Model Hijacking"
 						Meta      = "Key Location: HKCU\Software\Classes\Folder\shell\open\command, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}

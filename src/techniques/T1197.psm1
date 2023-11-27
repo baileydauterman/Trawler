@@ -40,11 +40,11 @@ function Test-BITS {
 
 		$detection = [PSCustomObject]@{
 			Name      = 'BITS Item Review'
-			Risk      = 'Low'
+			Risk      = [TrawlerRiskPriority]::Low
 			Source    = 'BITS'
 			Technique = "T1197: BITS Jobs"
 			Meta      = "Item Name: " + $item.DisplayName + ", TransferType: " + $item.TransferType + ", Job State: " + $item.JobState + ", User: " + $item.OwnerAccount + ", Command: " + $cmd
 		}
-		Write-Detection $detection
+		$State.WriteDetection($detection)
 	}
 }

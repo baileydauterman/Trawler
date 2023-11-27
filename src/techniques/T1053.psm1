@@ -157,7 +157,7 @@ function Test-ScheduledTasks {
     # TODO - Add Argument Comparison Checks
     $State.WriteMessage("Checking Scheduled Tasks")
 
-    $task_base_path = "$env_homedrive\Windows\System32\Tasks"
+    $task_base_path = "$($State.DriveTargets.HomeDrive)\Windows\System32\Tasks"
     $tasks = New-Object -TypeName "System.Collections.ArrayList"
     $author_pattern = '<Author>(?<Author>.*?)<\/Author>'
     $runas_pattern = '<Principal id="(?<RunAs>.*?)">'
@@ -284,12 +284,12 @@ function Test-ScheduledTasks {
                 # Service has a suspicious launch pattern matching a known RAT
                 $detection = [PSCustomObject]@{
                     Name      = 'Scheduled Task has known-RAT Keyword'
-                    Risk      = 'Medium'
+                    Risk      = [TrawlerRiskPriority]::Medium
                     Source    = 'Scheduled Tasks'
                     Technique = "T1053: Scheduled Task/Job"
                     Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs + ", RAT Keyword: " + $term
                 }
-                Write-Detection $detection
+                $State.WriteDetection($detection)
             }
         }
 
@@ -298,12 +298,12 @@ function Test-ScheduledTasks {
             # Current Task Executable Path is non-standard
             $detection = [PSCustomObject]@{
                 Name      = 'Non-Standard Scheduled Task Running as SYSTEM'
-                Risk      = 'High'
+                Risk      = [TrawlerRiskPriority]::High
                 Source    = 'Scheduled Tasks'
                 Technique = "T1053: Scheduled Task/Job"
                 Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
             }
-            Write-Detection $detection
+            $State.WriteDetection($detection)
             continue
         }
         
@@ -312,12 +312,12 @@ function Test-ScheduledTasks {
             # Task Contains an IP Address
             $detection = [PSCustomObject]@{
                 Name      = 'Scheduled Task contains an IP Address'
-                Risk      = 'High'
+                Risk      = [TrawlerRiskPriority]::High
                 Source    = 'Scheduled Tasks'
                 Technique = "T1053: Scheduled Task/Job"
                 Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
             }
-            Write-Detection $detection
+            $State.WriteDetection($detection)
         }
         # TODO - Task contains domain-pattern
 
@@ -326,12 +326,12 @@ function Test-ScheduledTasks {
         if ($task.Execute -match $suspicious_keyword_regex -or $task.Arguments -match $suspicious_keyword_regex) {
             $detection = [PSCustomObject]@{
                 Name      = 'Scheduled Task contains suspicious keywords'
-                Risk      = 'High'
+                Risk      = [TrawlerRiskPriority]::High
                 Source    = 'Scheduled Tasks'
                 Technique = "T1053: Scheduled Task/Job"
                 Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
             }
-            Write-Detection $detection
+            $State.WriteDetection($detection)
         }
         # Detection - User Created Tasks
         if ($task.Author) {
@@ -341,23 +341,23 @@ function Test-ScheduledTasks {
                         # Current Task Executable Path is non-standard
                         $detection = [PSCustomObject]@{
                             Name      = 'User-Created Task running as SYSTEM'
-                            Risk      = 'High'
+                            Risk      = [TrawlerRiskPriority]::High
                             Source    = 'Scheduled Tasks'
                             Technique = "T1053: Scheduled Task/Job"
                             Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
                         }
-                        Write-Detection $detection
+                        $State.WriteDetection($detection)
                         continue
                     }
                     # Single '\' in author most likely indicates it is a user-made task
                     $detection = [PSCustomObject]@{
                         Name      = 'User Created Task'
-                        Risk      = 'Low'
+                        Risk      = [TrawlerRiskPriority]::Low
                         Source    = 'Scheduled Tasks'
                         Technique = "T1053: Scheduled Task/Job"
                         Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
                     }
-                    Write-Detection $detection
+                    $State.WriteDetection($detection)
                 }
             }
         }
@@ -366,12 +366,12 @@ function Test-ScheduledTasks {
             # Current Task Executable Path is non-standard
             $detection = [PSCustomObject]@{
                 Name      = 'Non-Standard Scheduled Task Executable'
-                Risk      = 'Low'
+                Risk      = [TrawlerRiskPriority]::Low
                 Source    = 'Scheduled Tasks'
                 Technique = "T1053: Scheduled Task/Job"
                 Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs + ", UserId: " + $task.UserId
             }
-            Write-Detection $detection
+            $State.WriteDetection($detection)
         }
     }
 }

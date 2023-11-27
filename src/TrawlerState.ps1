@@ -122,14 +122,21 @@ enum TrawlerTechniques {
 
 class TrawlerState {
     <# Define the class. Try constructors, properties, or methods. #>
-    [string]$OutputPath = "$PSScriptRoot\trawler_detections.csv"
-    [string]$SnapShotPath = "$PSScriptRoot\snapshot.csv"
+    [string]$UserDataPath
+    [string]$OutputPath
+    [string]$SnapShotPath
     [switch]$CreateSnapShot
     [switch]$Quiet
     [string]$LoadSnapShot
-    [string]$TargetDrive
+    [string]$TargetDrive = "C:"
     [TrawlerScanOptions[]]$ScanOptions
     [TrawlerTechniques[]]$TechniqueOptions
+
+    TrawlerState() {
+        $this.UserDataPath = "$($env:USERPROFILE)\.trawler"
+        $this.OutputPath = "$($this.UserDataPath)\trawler_detections.csv"
+        $this.SnapShotPath = "$($this.UserDataPath)\snapshot.csv"
+    }
 
     [void] Run() {
         $this.Logo()
@@ -286,6 +293,10 @@ class TrawlerState {
     # Validate the output and snapshot paths. Will exit on failure to validate
     #>
     [void] ValidatePaths() {
+        if (-not (Test-Path $this.UserDataPath)) {
+            New-Item $this.UserDataPath | Out-Null
+        }
+
         if (ValidatePath($this.OutputPath)) {
             $this.WriteMessage("Detection Output Path: $($this.OutputPath)")
             $this.OutputWritable = $true
@@ -305,9 +316,11 @@ class TrawlerState {
         }
     }
 
+    <#
+    # Try to create 
+    #>
     [bool] ValidatePath([string]$path) {
         if (Test-Path -Path $path -PathType Container) {
-            Write-Error "The provided path is a folder, not a file. Please provide a file path."
             return $false
         }
 

@@ -43,12 +43,12 @@ function Test-Users {
 
 		$detection = [PSCustomObject]@{
 			Name      = 'Local Administrator Account'
-			Risk      = 'Medium'
+			Risk      = [TrawlerRiskPriority]::Medium
 			Source    = 'Users'
 			Technique = "T1136: Create Account"
 			Meta      = "Name: " + $admin.Name + ", Last Logon: " + $admin_user.LastLogon + ", Enabled: " + $admin_user.Enabled
 		}
-		Write-Detection $detection
+		$State.WriteDetection($detection)
 	}
     
 }

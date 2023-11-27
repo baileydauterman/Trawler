@@ -64,34 +64,34 @@ function Test-Connections {
 
 			$detection = [PSCustomObject]@{
 				Name      = 'Process Listening on Ephemeral Port'
-				Risk      = 'Very Low'
+				Risk      = [TrawlerRiskPriority]::VeryLow
 				Source    = 'Network Connections'
 				Technique = "T1071: Application Layer Protocol"
 				Meta      = "Local Port: " + $conn.LocalPort + ", PID: " + $conn.OwningProcess + ", Process Name: " + $proc.Name + ", Process Path: " + $proc.Path
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 		if ($conn.State -eq 'Established' -and ($conn.LocalPort -in $suspicious_ports -or $conn.RemotePort -in $suspicious_ports) -and $proc.Name -notin $allow_listed_process_names) {
 			$detection = [PSCustomObject]@{
 				Name      = 'Established Connection on Suspicious Port'
-				Risk      = 'Low'
+				Risk      = [TrawlerRiskPriority]::Low
 				Source    = 'Network Connections'
 				Technique = "T1071: Application Layer Protocol"
 				Meta      = "Local Port: " + $conn.LocalPort + ", Remote Port: " + $conn.RemotePort + ", Remote Address: " + $conn.RemoteAddress + ", PID: " + $conn.OwningProcess + ", Process Name: " + $proc.Name + ", Process Path: " + $proc.Path
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 		if ($proc.Path) {
 			foreach ($path in $suspicious_process_paths) {
 				if (($proc.Path).ToLower() -match $path) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Process running from suspicious path has Network Connection'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Network Connections'
 						Technique = "T1071: Application Layer Protocol"
 						Meta      = "Local Port: " + $conn.LocalPort + ", Remote Port: " + $conn.RemotePort + ", Remote Address: " + $conn.RemoteAddress + ", PID: " + $conn.OwningProcess + ", Process Name: " + $proc.Name + ", Process Path: " + $proc.Path
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}

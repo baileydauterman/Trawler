@@ -39,35 +39,35 @@ function Test-Processes {
 			if ($process.CommandLine -match ".*$term.*") {
 				$detection = [PSCustomObject]@{
 					Name      = 'Running Process has known-RAT Keyword'
-					Risk      = 'Medium'
+					Risk      = [TrawlerRiskPriority]::Medium
 					Source    = 'Processes'
 					Technique = "T1059: Command and Scripting Interpreter"
 					Meta      = "Process Name: " + $process.ProcessName + ", CommandLine: " + $process.CommandLine + ", Executable: " + $process.ExecutablePath + ", RAT Keyword: " + $term
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 		if ($process.CommandLine -match $ipv4_pattern -or $process.CommandLine -match $ipv6_pattern) {
 			$detection = [PSCustomObject]@{
 				Name      = 'IP Address Pattern detected in Process CommandLine'
-				Risk      = 'Medium'
+				Risk      = [TrawlerRiskPriority]::Medium
 				Source    = 'Processes'
 				Technique = "T1059: Command and Scripting Interpreter"
 				Meta      = "Process Name: " + $process.ProcessName + ", CommandLine: " + $process.CommandLine + ", Executable: " + $process.ExecutablePath
 			}
-			Write-Detection $detection
+			$State.WriteDetection($detection)
 		}
 		# TODO - Determine if this should be changed to implement allow-listing through a set boolean or stay as-is
 		foreach ($path in $suspicious_process_paths) {
 			if ($process.ExecutablePath -match $path) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Suspicious Executable Path on Running Process'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Processes'
 					Technique = "T1059: Command and Scripting Interpreter"
 					Meta      = "Process Name: " + $process.ProcessName + ", CommandLine: " + $process.CommandLine + ", Executable: " + $process.ExecutablePath
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 

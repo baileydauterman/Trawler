@@ -81,8 +81,7 @@ function Test-Startups {
 			continue
 		}
 
-		$item = Get-TrawlerItemProperty -Path $path
-		$item.PSObject.Properties | ForEach-Object {
+		Get-TrawlerItemPropertyObjectProperties -Path $path | ForEach-Object {
 			if ($_.Name -eq "(Default)" -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'Startup'), $true)) {
 				continue
 			}
@@ -261,7 +260,7 @@ function Test-TerminalProfiles {
 
 						$State.WriteDetection([TrawlerDetection]::new(
 								'Windows Terminal launching command on login',
-								'Medium',
+								[TrawlerRiskPriority]::Medium,
 								'Terminal',
 								"T1037: Boot or Logon Initialization Scripts",
 								[PSCustomObject]@{
@@ -291,28 +290,32 @@ function Test-UserInitMPRScripts {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking UserInitMPRLogonScript")
 	$basepath = "Registry::HKEY_CURRENT_USER\Environment"
-	foreach ($p in $regtarget_hkcu_list) {
+	foreach ($p in $State.DriveTargets.HkcuList) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -Path $path) {
-			$items = Get-TrawlerItemProperty -Path $path
-			$items.PSObject.Properties | ForEach-Object {
-				if ($_.Name -ne 'UserInitMprLogonScript') {
-					continue 
-				}
-				
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'UserInitMPR'), $true)) {
-					continue
-				}
-
-				$detection = [PSCustomObject]@{
-					Name      = 'Potential Persistence via Logon Initialization Script'
-					Risk      = 'Medium'
-					Source    = 'Registry'
-					Technique = "T1037.001: Boot or Logon Initialization Scripts: Logon Script (Windows)"
-					Meta      = "Key Location: HKCU\Environment, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				}
-				Write-Detection $detection
+		if (-not (Test-Path -Path $path)) {
+			continue 
+		}
+		
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
+			if ($_.Name -ne 'UserInitMprLogonScript') {
+				continue 
 			}
+				
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'UserInitMPR'), $true)) {
+				continue
+			}
+
+			$State.WriteDetection([TrawlerDetection]::new(
+					'Potential Persistence via Logon Initialization Script',
+					[TrawlerRiskPriority]::Medium,
+					'Registry',
+					"T1037.001: Boot or Logon Initialization Scripts: Logon Script (Windows)",
+					[PSCustomObject]@{
+						KeyLocation = "HKCU\Environment"
+						EntryName   = $_.Name
+						EntryValue  = $_.Value
+					}
+				))
 		}
 	}
 }

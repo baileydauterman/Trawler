@@ -61,12 +61,12 @@ function Test-LSA {
 
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Security Package Review'
-							Risk      = 'Medium'
+							Risk      = [TrawlerRiskPriority]::Medium
 							Source    = 'Registry'
 							Technique = "T1547.005: Boot or Logon Autostart Execution: Security Support Provider"
 							Meta      = "Key Location: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -80,12 +80,12 @@ function Test-LSA {
 
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Authentication Package Review'
-							Risk      = 'Medium'
+							Risk      = [TrawlerRiskPriority]::Medium
 							Source    = 'Registry'
 							Technique = "T1547.002: Boot or Logon Autostart Execution: Authentication Packages"
 							Meta      = "Key Location: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -105,12 +105,12 @@ function Test-LSA {
 
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Security Package Review'
-							Risk      = 'Medium'
+							Risk      = [TrawlerRiskPriority]::Medium
 							Source    = 'Registry'
 							Technique = "T1547.005: Boot or Logon Autostart Execution: Security Support Provider"
 							Meta      = "Key Location: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -130,12 +130,12 @@ function Test-LSA {
 
 						$detection = [PSCustomObject]@{
 							Name      = 'LSA Extensions Review'
-							Risk      = 'Medium'
+							Risk      = [TrawlerRiskPriority]::Medium
 							Source    = 'Registry'
 							Technique = "T1547.005: Boot or Logon Autostart Execution: Security Support Provider"
 							Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -162,12 +162,12 @@ function Test-LSA {
 
 						$detection = [PSCustomObject]@{
 							Name      = 'Potential Exploitation via Password Filter DLL'
-							Risk      = 'High'
+							Risk      = [TrawlerRiskPriority]::High
 							Source    = 'Registry'
 							Technique = "T1556.002: Modify Authentication Process: Password Filter DLL"
 							Meta      = "Key Location: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
 						}
-						Write-Detection $detection
+						$State.WriteDetection($detection)
 					}
 				}
 			}
@@ -207,12 +207,12 @@ function Test-TimeProviderDLLs {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard Time Providers DLL'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1547.003: Boot or Logon Autostart Execution: Time Providers"
 						Meta      = "Registry Path: " + $item.Name + ", DLL: " + $data.DllName
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 					
 				}
 			}
@@ -246,12 +246,12 @@ function Test-WinlogonHelperDLLs {
 
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential WinLogon Helper Persistence'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1547.004: Boot or Logon Autostart Execution: Winlogon Helper DLL"
 					Meta      = "Key Location: HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -273,9 +273,9 @@ function Test-LNK {
 	$State.WriteMessage("Checking LNK Targets")
 	$current_date = Get-Date
 	$WScript = New-Object -ComObject WScript.Shell
-	$profile_names = Get-ChildItem "$env_homedrive\Users" -Attributes Directory | Select-Object *
+	$profile_names = Get-ChildItem "$($State.DriveTargets.HomeDrive)\Users" -Attributes Directory | Select-Object *
 	foreach ($user in $profile_names) {
-		$path = "$env_homedrive\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Windows\Recent"
+		$path = "$($State.DriveTargets.HomeDrive)\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Windows\Recent"
 		$items = Get-ChildItem -Path $path -File -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".lnk" } | Select-Object *
 		foreach ($item in $items) {
 			#Write-Host $item.FullName, $item.LastWriteTime
@@ -289,32 +289,32 @@ function Test-LNK {
 				if ($lnk_target -match ".*\.exe.*\.exe.*") {
 					$detection = [PSCustomObject]@{
 						Name      = 'LNK Target contains multiple executables'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'LNK'
 						Technique = "T1547.009: Boot or Logon Autostart Execution: Shortcut Modification"
 						Meta      = "LNK File: " + $item.FullName + ", LNK Target: " + $lnk_target + ", Last Write Time: " + $item.LastWriteTime
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 				if ($lnk_target -match $suspicious_terms) {
 					$detection = [PSCustomObject]@{
 						Name      = 'LNK Target contains suspicious key-term'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'LNK'
 						Technique = "T1547.009: Boot or Logon Autostart Execution: Shortcut Modification"
 						Meta      = "LNK File: " + $item.FullName + ", LNK Target: " + $lnk_target + ", Last Write Time: " + $item.LastWriteTime
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 				if ($lnk_target -match ".*\.(csv|pdf|xlsx|doc|ppt|txt|jpeg|png|gif|exe|dll|ps1|webp|svg|zip|xls).*\.(csv|pdf|xlsx|doc|ppt|txt|jpeg|png|gif|exe|dll|ps1|webp|svg|zip|xls).*") {
 					$detection = [PSCustomObject]@{
 						Name      = 'LNK Target contains multiple file extensions'
-						Risk      = 'Medium'
+						Risk      = [TrawlerRiskPriority]::Medium
 						Source    = 'LNK'
 						Technique = "T1547.009: Boot or Logon Autostart Execution: Shortcut Modification"
 						Meta      = "LNK File: " + $item.FullName + ", LNK Target: " + $lnk_target + ", Last Write Time: " + $item.LastWriteTime
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 
 			}
@@ -353,12 +353,12 @@ function Test-PrintProcessorDLLs {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard Print Processor DLL'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1547.012: Boot or Logon Autostart Execution: Print Processors"
 						Meta      = "Registry Path: " + $item.Name + ", DLL: " + $data.Driver
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -377,12 +377,12 @@ function Test-PrintProcessorDLLs {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard Print Processor DLL'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1547.012: Boot or Logon Autostart Execution: Print Processors"
 						Meta      = "Registry Path: " + $item.Name + ", DLL: " + $data.Driver
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -434,12 +434,12 @@ function Test-ActiveSetup {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard StubPath Executed on User Logon'
-						Risk      = 'High'
+						Risk      = [TrawlerRiskPriority]::High
 						Source    = 'Registry'
 						Technique = "T1547.014: Boot or Logon Autostart Execution: Active Setup"
 						Meta      = "Registry Path: " + $item.Name + ", StubPath: " + $data.StubPath
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}

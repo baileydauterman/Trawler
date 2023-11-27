@@ -44,7 +44,7 @@ function Test-AMSIProviders {
 			$State.WriteMessage("ASMI Providers checking: $new_path")
 			
 			$dll_data = Get-ItemProperty -Path $new_path
-			foreach ($property in $dll_data.PSObject.Properties) {
+			foreach ($property in Get-TrawlerItemData -Path $new_path -ItemType ItemProperty) {
 				if ($property.Name -ne '(Default)') {
 					continue
 				}
@@ -136,12 +136,12 @@ function Test-NaturalLanguageDevelopmentDLLs {
 
 				$detection = [PSCustomObject]@{
 					Name      = 'DLL Override on Natural Language Development Platform'
-					Risk      = 'High'
+					Risk      = [TrawlerRiskPriority]::High
 					Source    = 'Registry'
 					Technique = "T1112: Modify Registry"
 					Meta      = "Registry Path: " + $item.Name + ", DLL: " + $dll
 				}
-				Write-Detection $detection
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -180,12 +180,12 @@ function Test-PrintMonitorDLLs {
 				if ($data.Driver -notin $standard_print_monitors) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Non-Standard Print Monitor DLL'
-						Risk      = 'Medium'
+						Risk      = [TrawlerRiskPriority]::Medium
 						Source    = 'Registry'
 						Technique = "T1112: Modify Registry"
 						Meta      = "Registry Path: " + $item.Name + ", System32 DLL: " + $data.Driver
 					}
-					Write-Detection $detection
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -254,8 +254,8 @@ function Test-RemoteUACSetting {
 	if (-not (Test-Path -Path $path)) {
 		return 
 	}
-	$items = Get-TrawlerItemProperty -Path $path
-	$items.PSObject.Properties | ForEach-Object {
+	
+	Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 		if ($_.Name -eq 'LocalAccountTokenFilterPolicy') {
 			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'RemoteUAC'), $true)) {
 				continue

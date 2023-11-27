@@ -19,19 +19,19 @@ function Test-GPOExtensions {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking GPO Extension DLLs")
-	$homedrive = $env:HOMEDRIVE
+	
 	$gpo_dll_allowlist = @(
-		"$homedrive\Windows\System32\TsUsbRedirectionGroupPolicyExtension.dll"
-		"$homedrive\Windows\System32\cscobj.dll"
-		"$homedrive\Windows\System32\dskquota.dll"
-		"$homedrive\Windows\System32\gpprefcl.dll"
-		"$homedrive\Windows\System32\gpscript.dll"
-		"$homedrive\Windows\System32\iedkcs32.dll"
-		"$homedrive\Windows\System32\polstore.dll"
-		"$homedrive\Windows\System32\srchadmin.dll"
-		"$homedrive\Windows\System32\tsworkspace.dll"
-		"$homedrive\Windows\system32\domgmt.dll"
-		"$homedrive\Windows\system32\gpprnext.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\TsUsbRedirectionGroupPolicyExtension.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\cscobj.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\dskquota.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\gpprefcl.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\gpscript.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\iedkcs32.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\polstore.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\srchadmin.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\System32\tsworkspace.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\system32\domgmt.dll"
+		"$($State.DriveTargets.HomeDrive)\Windows\system32\gpprnext.dll"
 		"AppManagementConfiguration.dll"
 		"WorkFoldersGPExt.dll"
 		"appmgmts.dll"
@@ -55,8 +55,7 @@ function Test-GPOExtensions {
 		$items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-TrawlerItemProperty -Path $path
-			$data.PSObject.Properties | ForEach-Object {
+			Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 				if ($_.Name -eq 'DllName' -and $_.Value -notin $gpo_dll_allowlist) {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'GPOExtensions'), $true)) {
 						continue
@@ -64,12 +63,13 @@ function Test-GPOExtensions {
 
 					$detection = [PSCustomObject]@{
 						Name      = 'Review: Non-Standard GPO Extension DLL'
-						Risk      = 'Medium'
+						Risk      = [TrawlerRiskPriority]::Medium
 						Source    = 'Windows GPO Extensions'
 						Technique = "T1484.001: Domain Policy Modification: Group Policy Modification"
 						Meta      = "Key: " + $item.Name + ", DLL: " + $_.Value
 					}
-					Write-Detection $detection
+
+					$State.WriteDetection($detection)
 				}
 			}
 		}

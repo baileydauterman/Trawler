@@ -6,21 +6,21 @@ BeforeAll {
     . .\trawler.ps1
     $detection = [PSCustomObject]@{
         Name = 'Test Detection'
-        Risk = 'Medium'
+        Risk = [TrawlerRiskPriority]::Medium
         Source = 'Test'
         Technique = "T0000: Test"
         Meta = "Test"
     }
     $low_detection = [PSCustomObject]@{
         Name = 'Test Detection'
-        Risk = 'Low'
+        Risk = [TrawlerRiskPriority]::Low
         Source = 'Test'
         Technique = "T0000: Test"
         Meta = "Test"
     }
     $high_detection = [PSCustomObject]@{
         Name = 'Test Detection'
-        Risk = 'High'
+        Risk = [TrawlerRiskPriority]::High
         Source = 'Test'
         Technique = "T0000: Test"
         Meta = "Test"
@@ -32,7 +32,7 @@ BeforeAll {
     $regtarget_hklm = (Get-PSDrive TestRegistry).Root+"\"
     $regtarget_hkcu_list = @($regtarget_hklm)
     $env_assumed_homdrive = "C:"
-    $env_homedrive = "TestDrive:"
+    $($State.DriveTargets.HomeDrive) = "TestDrive:"
     $env_programdata = "C:\ProgramData"
 }
 
@@ -45,7 +45,7 @@ Describe "Write-Detection" {
             $hide_console_output = $false
         }
         It "Writes two lines to console" {
-            Write-Detection $detection
+            $State.WriteDetection($detection)
             Should -Invoke -CommandName Write-Host -Times 2 -Exactly
         }
     }
@@ -54,7 +54,7 @@ Describe "Write-Detection" {
             $hide_console_output = $true
         }
         It "Writes zero lines to console" {
-            Write-Detection $detection
+            $State.WriteDetection($detection)
             Should -Invoke -CommandName Write-Host -Times 0 -Exactly
         }
     }
@@ -63,7 +63,7 @@ Describe "Write-Detection" {
             $output_writable = $true
         }
         It "Should output to file" {
-            Write-Detection $detection
+            $State.WriteDetection($detection)
             Should -Invoke -CommandName Export-CSV -Times 1 -Exactly
         }
     }
@@ -72,13 +72,13 @@ Describe "Write-Detection" {
             $output_writable = $false
         }
         It "Should not output to file" {
-            Write-Detection $detection
+            $State.WriteDetection($detection)
             Should -Invoke -CommandName Export-CSV -Times 0 -Exactly
         }
     }
     Context "Detection Added to List" {
         It "Should add one detection to detection_list" {
-            Write-Detection $detection
+            $State.WriteDetection($detection)
             $detection_list.Count | Should -Be 1
         }
     }
@@ -98,7 +98,7 @@ Describe "Detection-Metrics" {
     }
     Context "General Detection Metrics" {
         It "Adds 2 detections and counts them" {
-            Write-Detection $low_detection
+            $State.WriteDetection($low_detection)
             Detection-Metrics
             Should -Invoke -CommandName Export-CSV -Times 1 -Exactly
             $detection_list.Count | Should -Be 1
@@ -499,39 +499,39 @@ Describe "Drive-Change" {
 
 Describe "Check-Suspicious-File-Locations" {
     BeforeEach {
-        $env_homedrive = "TestDrive:"
+        $($State.DriveTargets.HomeDrive) = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 3 detections for suspicious exe files" {
-        $testPath = New-Item "$env_homedrive\Users\Public\test.exe" -ItemType File -Force
-        $testPath2 = New-Item "$env_homedrive\Users\Administrator\test.exe" -ItemType File -Force
-        $testPath3 = New-Item "$env_homedrive\Users\Public\hello\test.exe" -ItemType File -Force
+        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Users\Public\test.exe" -ItemType File -Force
+        $testPath2 = New-Item "$($State.DriveTargets.HomeDrive)\Users\Administrator\test.exe" -ItemType File -Force
+        $testPath3 = New-Item "$($State.DriveTargets.HomeDrive)\Users\Public\hello\test.exe" -ItemType File -Force
         Check-Suspicious-File-Locations
-        Should -Invoke -CommandName Write-Detection -Times 3 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 3 -Exactly)
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
         Remove-Item $testPath2 -Force -ErrorAction SilentlyContinue
         Remove-Item $testPath3 -Force -ErrorAction SilentlyContinue
     }
     It "should write 0 detections for suspicious exe files" {
         Check-Suspicious-File-Locations
-        Should -Invoke -CommandName Write-Detection -Times 0 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 0 -Exactly)
     }
 }
 
 Describe "Check-Narrator" {
     BeforeEach {
-        $env_homedrive = "TestDrive:"
+        $($State.DriveTargets.HomeDrive) = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 1 detection" {
-        $testPath = New-Item "$env_homedrive\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL" -ItemType File -Force
+        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL" -ItemType File -Force
         Check-Narrator
-        Should -Invoke -CommandName Write-Detection -Times 1 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 1 -Exactly)
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
     }
     It "should write 0 detections" {
         Check-Narrator
-        Should -Invoke -CommandName Write-Detection -Times 0 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 0 -Exactly)
     }
 }
 
@@ -544,7 +544,7 @@ Describe "Check-MSDTCDll" {
     }
     It "should write 0 detections" {
         Check-MSDTCDll
-        Should -Invoke -CommandName Write-Detection -Times 0 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 0 -Exactly)
     }
     It "should write 6 detection" {
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleOciLib" -Value "test.dll"
@@ -554,42 +554,42 @@ Describe "Check-MSDTCDll" {
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLib" -Value "test.dll"
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLibPath" -Value "$($State.DriveTargets.AssumedHomeDrive)\Users\Public\test.dll"
         Check-MSDTCDll
-        Should -Invoke -CommandName Write-Detection -Times 6 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 6 -Exactly)
     }
 }
 
 Describe "Check-Notepad++-Plugins" {
     BeforeEach {
-        $env_homedrive = "TestDrive:"
+        $($State.DriveTargets.HomeDrive) = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 1 detections" {
-        $testPath = New-Item "$env_homedrive\Program Files\Notepad++\plugins\test\test.dll" -ItemType File -Force
+        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Program Files\Notepad++\plugins\test\test.dll" -ItemType File -Force
         Check-Notepad++-Plugins
-        Should -Invoke -CommandName Write-Detection -Times 1 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 1 -Exactly)
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
     }
     It "should write 0 detections" {
-        New-Item "$env_homedrive\Program Files\Notepad++\plugins\Config\nppPluginList.dll" -ItemType File -Force
+        New-Item "$($State.DriveTargets.HomeDrive)\Program Files\Notepad++\plugins\Config\nppPluginList.dll" -ItemType File -Force
         Check-Notepad++-Plugins
-        Should -Invoke -CommandName Write-Detection -Times 0 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 0 -Exactly)
     }
 }
 
 Describe "Check-OfficeAI" {
     BeforeEach {
-        $env_homedrive = "TestDrive:"
+        $($State.DriveTargets.HomeDrive) = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 1 detections" {
-        $testPath = New-Item "$env_homedrive\Program Files\Microsoft Office\root\Office16\ai.exe" -ItemType File -Force
+        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Program Files\Microsoft Office\root\Office16\ai.exe" -ItemType File -Force
         Check-OfficeAI
-        Should -Invoke -CommandName Write-Detection -Times 1 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 1 -Exactly)
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
     }
     It "should write 0 detections" {
         Check-OfficeAI
-        Should -Invoke -CommandName Write-Detection -Times 0 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 0 -Exactly)
     }
 }
 
@@ -602,30 +602,30 @@ Describe "Check-ContextMenu" {
     }
     It "should write 0 detections" {
         Check-ContextMenu
-        Should -Invoke -CommandName Write-Detection -Times 0 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 0 -Exactly)
     }
     It "should write 2 detections" {
         Set-ItemProperty  -Path "$path\Test" -Name "(Default)" -Value "test.dll"
         Check-ContextMenu
-        Should -Invoke -CommandName Write-Detection -Times 2 -Exactly
+        Should -Invoke -CommandName $State.WriteDetection(-Times 2 -Exactly)
     }
 }
 
 Describe "Check-RATS" {
     BeforeEach {
-        $env_homedrive = "TestDrive:"
+        $($State.DriveTargets.HomeDrive) = "TestDrive:"
         Mock Write-Detection
-        New-Item "$env_homedrive\Users\test_user" -ItemType File -Force
+        New-Item "$($State.DriveTargets.HomeDrive)\Users\test_user" -ItemType File -Force
     }
     It "should write 0 detections" {
         #Check-RATS
-        #Should -Invoke -CommandName Write-Detection -Times 0 -Exactly
+        #Should -Invoke -CommandName $State.WriteDetection(-Times 0 -Exactly)
     }
     It "should write 3 detections" {
         New-Item "$env_programdata\AMMYY\access.log" -ItemType File -Force
-        New-Item "$env_homedrive\Windows\dwrcs" -ItemType Directory -Force
-        New-Item "$env_homedrive\Users\test_user\AppData\Local\GoTo" -ItemType Directory -Force
+        New-Item "$($State.DriveTargets.HomeDrive)\Windows\dwrcs" -ItemType Directory -Force
+        New-Item "$($State.DriveTargets.HomeDrive)\Users\test_user\AppData\Local\GoTo" -ItemType Directory -Force
         #Check-RATS
-        #Should -Invoke -CommandName Write-Detection -Times 6 -Exactly
+        #Should -Invoke -CommandName $State.WriteDetection(-Times 6 -Exactly)
     }
 }
