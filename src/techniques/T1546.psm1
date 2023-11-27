@@ -302,7 +302,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in 'Debugger') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -325,7 +325,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'ProtectedDebugger') {
 				Write-SnapshotMessage -Key $path -Value $_.Value-Source 'Debuggers'
@@ -351,7 +351,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'Debugger') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -377,7 +377,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'ProtectedDebugger') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -405,7 +405,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\.NETFramework"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'DbgManagedDebugger') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -432,7 +432,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Wow6432Node\Microsoft\.NETFramework"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'DbgManagedDebugger') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -459,7 +459,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Classes\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq '@') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -486,7 +486,7 @@ function Test-DebuggerHijacks {
 	foreach ($p in $regtarget_hkcu_class_list) {
 		$path = $basepath.Replace("HKEY_CLASSES_ROOT", $p)
 		if (Test-Path -Path "Registry::$path") {
-			$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 			$item.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq '@') {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -497,7 +497,7 @@ function Test-DebuggerHijacks {
 						$pass = $true
 					}
 				}
-				if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$env_assumedhomedrive\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$env_assumedhomedrive\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
+				if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential Microsoft Script Debugger Hijacking'
 						Risk      = 'High'
@@ -514,7 +514,7 @@ function Test-DebuggerHijacks {
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Classes\CLSID\{78A51822-51F4-11D0-8F20-00805F2CD064}\InprocServer32"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq '(default)') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -525,7 +525,7 @@ function Test-DebuggerHijacks {
 					$pass = $true
 				}
 			}
-			if (($_.Name -in '(default)' -and $pass -eq $false -and $_.Value -ne "$env_assumedhomedrive\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$env_assumedhomedrive\WINDOWS\system32\pdm.dll`"")) {
+			if (($_.Name -in '(default)' -and $pass -eq $false -and $_.Value -ne "$($State.DriveTargets.AssumedHomeDrive)\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\WINDOWS\system32\pdm.dll`"")) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Process Debugger Hijacking'
 					Risk      = 'High'
@@ -540,7 +540,7 @@ function Test-DebuggerHijacks {
 	# WER Debuggers
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\Windows Error Reporting\Hangs"
 	if (Test-Path -Path "Registry::$path") {
-		$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'Debugger') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
@@ -742,7 +742,7 @@ function Test-UninstallStrings {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			#allowtable_uninstallstrings
 			if ($data.UninstallString) {
 				if ($data.UninstallString -match $suspicious_terms) {
@@ -855,7 +855,7 @@ function Test-WindowsLoadKey {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path "Registry::$path") {
-			$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 			$item.PSObject.Properties | ForEach-Object {
 				if ($_.Name -in 'Load') {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WindowsLoad'), $true)) {
@@ -887,7 +887,7 @@ function Test-AutoDialDLL {
 	$State.WriteMessage("Checking Autodial DLL")
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\CurrentControlSet\Services\WinSock2\Parameters"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'AutodialDLL' -and $_.Value -ne 'C:\Windows\System32\rasadhlp.dll') {
 				$detection = [PSCustomObject]@{
@@ -916,7 +916,7 @@ function Test-HTMLHelpDLL {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path "Registry::$path") {
-			$item = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 			$item.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'location') {
 					$detection = [PSCustomObject]@{
@@ -947,7 +947,7 @@ function Test-AssociationHijack {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking File Associations")
-	$homedrive = $env_assumedhomedrive
+	$homedrive = $($State.DriveTargets.AssumedHomeDrive)
 	$value_regex_lookup = @{
 		accesshtmlfile            = "`"$homedrive\\Program Files\\Microsoft Office\\Root\\Office.*\\MSACCESS.EXE`"";
 		batfile                   = '"%1" %';
@@ -1124,7 +1124,7 @@ function Test-ScreenSaverEXE {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq "SCRNSAVE.exe") {
 					$detection = [PSCustomObject]@{
@@ -1237,7 +1237,7 @@ function Test-NetSHDLLs {
 	)
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Netsh"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Value -notin $standard_netsh_dlls) {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'NetshDLLs'), $true)) {
@@ -1362,7 +1362,7 @@ function Test-AppCertDLLs {
 	$standard_appcert_dlls = @()
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Session Manager\AppCertDlls"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Value -notin $standard_appcert_dlls) {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppCertDLLs'), $true)) {
@@ -1399,7 +1399,7 @@ function Test-AppInitDLLs {
 	$State.WriteMessage("Checking AppInit DLLs")
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'AppInit_DLLs' -and $_.Value -ne '') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppInitDLLs'), $true)) {
@@ -1420,7 +1420,7 @@ function Test-AppInitDLLs {
 	}
 	$path = "Registry::$($State.DriveTargets.Hklm)Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'AppInit_DLLs' -and $_.Value -ne '') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppInitDLLs'), $true)) {
@@ -1498,7 +1498,7 @@ function Test-IFEO {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.Debugger) {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Debugger, 'IFEO'), $true)) {
 					continue
@@ -1574,7 +1574,7 @@ function Test-SilentProcessExitMonitoring {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.MonitorProcess) {
 				if ($data.ReportingMode -eq $null) {
 					$data.ReportingMode = 'NA'
@@ -1773,7 +1773,7 @@ function Test-WellKnownCOM {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential shell32.dll Hijack for Persistence'
@@ -1791,7 +1791,7 @@ function Test-WellKnownCOM {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential WBEM Subsystem Hijack for Persistence'
@@ -1857,7 +1857,7 @@ function Test-COM-Hijacks {
 	# TODO - Some regex appears to be non-functional, especially on HKU inspection - need to figure out why/troubleshoot
 	# TODO - Inspect TreatAs options
 	# Malware will typically target 'well-known' keys that are present in default versions of Windows - that should be enough for most situations and help to reduce noise.
-	$ComTables = Build-ComPaths -HomeDrive $env_assumedhomedrive
+	$ComTables = Build-ComPaths -HomeDrive $($State.DriveTargets.AssumedHomeDrive)
 
 	# HKCR
 	$path = "HKCR\CLSID_SKIP"
@@ -2030,7 +2030,7 @@ function Test-FolderOpen {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'DelegateExecute') {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'FolderOpen'), $true)) {

@@ -29,7 +29,7 @@ function Test-OfficeGlobalDotName {
 		foreach ($p in $regtarget_hkcu_list) {
 			$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 			if (Test-Path -Path $path) {
-				$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+				$items = Get-TrawlerItemProperty -Path $path
 				$items.PSObject.Properties | ForEach-Object {
 					if ($_.Name -eq "GlobalDotName") {
 						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'GlobalDotName'), $true)) {
@@ -64,7 +64,7 @@ function Test-OfficeTest {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				$detection = [PSCustomObject]@{
 					Name      = 'Persistence via Office test\Special\Perf Key'
@@ -79,7 +79,7 @@ function Test-OfficeTest {
 	}
 	$path = "Registry::$($State.DriveTargets.Hklm)Software\Microsoft\Office test\Special\Perf"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			$detection = [PSCustomObject]@{
 				Name      = 'Persistence via Office test\Special\Perf Key'
@@ -160,7 +160,7 @@ function Test-OfficeTrustedLocations {
 	#TODO - Add 'abnormal trusted location' detection
 	$profile_names = Get-ChildItem "$env_homedrive\Users" -Attributes Directory | Select-Object *
 	$actual_current_user = $env:USERNAME
-	$user_pattern = "$env_assumedhomedrive\\Users\\(.*?)\\.*"
+	$user_pattern = "$($State.DriveTargets.AssumedHomeDrive)\\Users\\(.*?)\\.*"
 	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\16.0\Word\Security\Trusted Locations"
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
@@ -169,7 +169,7 @@ function Test-OfficeTrustedLocations {
 			$possible_paths = New-Object -TypeName "System.Collections.ArrayList"
 			foreach ($item in $items) {
 				$path = "Registry::" + $item.Name
-				$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+				$data = Get-TrawlerItemProperty -Path $path
 				if ($data.Path) {
 					$possible_paths.Add($data.Path) | Out-Null
 					$currentcaptureduser = [regex]::Matches($data.Path, $user_pattern).Groups.Captures.Value

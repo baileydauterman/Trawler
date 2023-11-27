@@ -37,15 +37,15 @@ function Test-MSDTCDll {
 	$State.WriteMessage("Checking MSDTC DLL Hijack")
 	$matches = @{
 		"OracleOciLib"     = "oci.dll"
-		"OracleOciLibPath" = "$env_assumedhomedrive\Windows\system32"
+		"OracleOciLibPath" = "$($State.DriveTargets.AssumedHomeDrive)\Windows\system32"
 		"OracleSqlLib"     = "SQLLib80.dll"
-		"OracleSqlLibPath" = "$env_assumedhomedrive\Windows\system32"
+		"OracleSqlLibPath" = "$($State.DriveTargets.AssumedHomeDrive)\Windows\system32"
 		"OracleXaLib"      = "xa80.dll"
-		"OracleXaLibPath"  = "$env_assumedhomedrive\Windows\system32"
+		"OracleXaLibPath"  = "$($State.DriveTargets.AssumedHomeDrive)\Windows\system32"
 	}
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\MSDTC\MTxOCI"
 	if (Test-Path -Path "Registry::$path") {
-		$data = Get-ItemProperty -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$data = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$data.PSObject.Properties | ForEach-Object {
 			if ($matches.ContainsKey($_.Name)) {
 				if ($_.Value -ne $matches[$_.Name]) {
@@ -75,7 +75,7 @@ function Test-PeerDistExtensionDll {
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\PeerDist\Extension"
 	$expected_value = "peerdist.dll"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "PeerdistDllName" -and $_.Value -ne $expected_value) {
 				$detection = [PSCustomObject]@{
@@ -101,9 +101,9 @@ function Test-InternetSettingsLUIDll {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking InternetSettings DLL")
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\LUI"
-	$expected_value = "$env_assumedhomedrive\Windows\system32\wininetlui.dll!InternetErrorDlgEx"
+	$expected_value = "$($State.DriveTargets.AssumedHomeDrive)\Windows\system32\wininetlui.dll!InternetErrorDlgEx"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "0" -and $_.Value -ne $expected_value) {
 				$detection = [PSCustomObject]@{
@@ -141,7 +141,7 @@ function Test-BIDDll {
 	)
 	foreach ($path in $paths) {
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq ":Path") {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'BIDDLL'), $true)) {
@@ -177,7 +177,7 @@ function Test-WindowsUpdateTestDlls {
 	$State.WriteMessage("Checking Windows Update Test")
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Test"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in "EventerHookDll", "AllowTestEngine", "AlternateServiceStackDLLPath") {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'WinUpdateTestDLL'), $true)) {
@@ -216,7 +216,7 @@ function Test-MiniDumpAuxiliaryDLLs {
 
 	)
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'MiniDumpAuxiliaryDLL'), $true)) {
 				continue
@@ -266,7 +266,7 @@ function Test-ExplorerHelperUtilities {
 	)
 	foreach ($path in $paths) {
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -ne '""' -and $_.Value -notin $allowlisted_explorer_util_paths) {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'ExplorerHelpers'), $true)) {
@@ -466,7 +466,7 @@ function Test-KnownManagedDebuggers {
 		"$env:homedrive\\Windows\\System32\\mrt_map\.dll"
 	)
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'KnownManagedDebuggers'), $true)) {
 				continue
@@ -505,7 +505,7 @@ function Test-Wow64LayerAbuse {
 	$State.WriteMessage("Checking WOW64 Compatibility DLLs")
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Wow64\x86"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -ne "(Default)") {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WOW64Compat'), $true)) {
@@ -538,7 +538,7 @@ function Test-SEMgrWallet {
 	$State.WriteMessage("Checking SEMgr Wallet DLLs")
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\SEMgr\Wallet"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "DllName" -and $_.Value -notin "", "SEMgrSvc.dll") {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'SEMgr'), $true)) {
@@ -569,21 +569,21 @@ function Test-WERRuntimeExceptionHandlers {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Error Reporting Handler DLLs")
 	$allowed_entries = @(
-		"$env_assumedhomedrive\\Program Files( \(x86\))?\\Microsoft\\Edge\\Application\\.*\\msedge_wer\.dll"
-		"$env_assumedhomedrive\\Program Files( \(x86\))?\\Common Files\\Microsoft Shared\\ClickToRun\\c2r64werhandler\.dll"
-		"$env_assumedhomedrive\\Program Files( \(x86\))?\\dotnet\\shared\\Microsoft\.NETCore\.App\\.*\\mscordaccore\.dll"
-		"$env_assumedhomedrive\\Program Files( \(x86\))?\\Google\\Chrome\\Application\\.*\\chrome_wer\.dll"
-		"$env_assumedhomedrive\\Program Files( \(x86\))?\\Microsoft Office\\root\\VFS\\ProgramFilesCommonX64\\Microsoft Shared\\OFFICE.*\\msowercrash\.dll"
-		"$env_assumedhomedrive\\Program Files( \(x86\))?\\Microsoft Visual Studio\\.*\\Community\\common7\\ide\\VsWerHandler\.dll"
-		"$env_assumedhomedrive\\Windows\\Microsoft\.NET\\Framework64\\.*\\mscordacwks\.dll"
-		"$env_assumedhomedrive\\Windows\\System32\\iertutil.dll"
-		"$env_assumedhomedrive\\Windows\\System32\\msiwer.dll"
-		"$env_assumedhomedrive\\Windows\\System32\\wbiosrvc.dll"
-		"$env_assumedhomedrive\\(Program Files|Program Files\(x86\))\\Mozilla Firefox\\mozwer.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Program Files( \(x86\))?\\Microsoft\\Edge\\Application\\.*\\msedge_wer\.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Program Files( \(x86\))?\\Common Files\\Microsoft Shared\\ClickToRun\\c2r64werhandler\.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Program Files( \(x86\))?\\dotnet\\shared\\Microsoft\.NETCore\.App\\.*\\mscordaccore\.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Program Files( \(x86\))?\\Google\\Chrome\\Application\\.*\\chrome_wer\.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Program Files( \(x86\))?\\Microsoft Office\\root\\VFS\\ProgramFilesCommonX64\\Microsoft Shared\\OFFICE.*\\msowercrash\.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Program Files( \(x86\))?\\Microsoft Visual Studio\\.*\\Community\\common7\\ide\\VsWerHandler\.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Windows\\Microsoft\.NET\\Framework64\\.*\\mscordacwks\.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Windows\\System32\\iertutil.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Windows\\System32\\msiwer.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\Windows\\System32\\wbiosrvc.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\\(Program Files|Program Files\(x86\))\\Mozilla Firefox\\mozwer.dll"
 	)
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 
 			$verified_match = $false
@@ -637,12 +637,7 @@ function Test-TerminalServicesInitialProgram {
 	foreach ($path in $paths) {
 		if (Test-Path -Path $path) {
 			$finherit = $false
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			$items.PSObject.Properties | ForEach-Object {
-				if ($_.Name -eq 'fInheritInitialProgram' -and $_.Value -eq "1") {
-					$finherit = $true
-				}
-			}
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'InitialProgram' -and $_.Value -ne "" -and $finherit -eq $true) {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'TerminalServicesIP'), $true)) {
@@ -730,7 +725,7 @@ function Test-RDPStartupPrograms {
 	)
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Terminal Server\Wds\rdpwd"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'StartupPrograms' -and $_.Value -ne "") {
 				$packages = $_.Value.Split(",")
@@ -849,7 +844,7 @@ function Test-ServiceHijacks {
 					Name     = $data.PSChildName
 					PathName = $data.ImagePath
 				}
-				$service.PathName = $service.PathName.Replace("\SystemRoot", "$env_assumedhomedrive\Windows")
+				$service.PathName = $service.PathName.Replace("\SystemRoot", "$($State.DriveTargets.AssumedHomeDrive)\Windows")
 				$service_list.Add($service) | Out-Null
 			}
 		}

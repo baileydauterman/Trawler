@@ -49,7 +49,7 @@ function Test-LSA {
 	)
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'Security Packages' -and $_.Value -ne '""') {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
@@ -93,7 +93,7 @@ function Test-LSA {
 	}
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa\OSConfig"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'Security Packages' -and $_.Value -ne '""') {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
@@ -118,7 +118,7 @@ function Test-LSA {
 	}
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\LsaExtensionConfig\LsaSrv"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'Extensions' -and $_.Value -ne '""') {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
@@ -150,7 +150,7 @@ function Test-LSA {
 	)
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "Notification Packages") {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
@@ -198,7 +198,7 @@ function Test-TimeProviderDLLs {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.DllName) {
 				if ($standard_timeprovider_dll -notcontains $data.DllName) {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.DllName, 'TimeProviders'), $true)) {
@@ -237,7 +237,7 @@ function Test-WinlogonHelperDLLs {
 	)
 	$path = "Registry::$($State.DriveTargets.Hklm)Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in 'Userinit', 'Shell', 'ShellInfrastructure', 'ShellAppRuntime', 'MPNotify' -and $_.Value -notin $standard_winlogon_helper_dlls) {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WinlogonHelpers'), $true)) {
@@ -344,7 +344,7 @@ function Test-PrintProcessorDLLs {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.Driver) {
 				if ($standard_print_processors -notcontains $data.Driver) {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintProcessors'), $true)) {
@@ -368,7 +368,7 @@ function Test-PrintProcessorDLLs {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.Driver) {
 				if ($standard_print_processors -notcontains $data.Driver) {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintProcessors'), $true)) {
@@ -407,25 +407,25 @@ function Test-ActiveSetup {
 	$standard_stubpaths = @(
 		"/UserInstall",
 		'"C:\Program Files\Windows Mail\WinMail.exe" OCInstallUserConfigOE', # Server 2016
-		"$env_assumedhomedrive\Windows\System32\ie4uinit.exe -UserConfig", # 10
-		"$env_assumedhomedrive\Windows\System32\Rundll32.exe C:\Windows\System32\mscories.dll,Install", # 10
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -UserConfig", # 10
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\Rundll32.exe C:\Windows\System32\mscories.dll,Install", # 10
 		'"C:\Windows\System32\rundll32.exe" "C:\Windows\System32\iesetup.dll",IEHardenAdmin', # Server 2019
 		'"C:\Windows\System32\rundll32.exe" "C:\Windows\System32\iesetup.dll",IEHardenUser', # Server 2019
-		"$env_assumedhomedrive\Windows\System32\unregmp2.exe /FirstLogon", # 10
-		"$env_assumedhomedrive\Windows\System32\unregmp2.exe /ShowWMP", # 10
-		"$env_assumedhomedrive\Windows\System32\ie4uinit.exe -EnableTLS",
-		"$env_assumedhomedrive\Windows\System32\ie4uinit.exe -DisableSSL3"
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\unregmp2.exe /FirstLogon", # 10
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\unregmp2.exe /ShowWMP", # 10
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -EnableTLS",
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -DisableSSL3"
 		"U"
 		"regsvr32.exe /s /n /i:U shell32.dll"
-		"$env_assumedhomedrive\Windows\system32\regsvr32.exe /s /n /i:/UserInstall C:\Windows\system32\themeui.dll"
-		"$env_assumedhomedrive\Windows\system32\unregmp2.exe /FirstLogon /Shortcuts /RegBrowsers /ResetMUI"
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\system32\regsvr32.exe /s /n /i:/UserInstall C:\Windows\system32\themeui.dll"
+		"$($State.DriveTargets.AssumedHomeDrive)\Windows\system32\unregmp2.exe /FirstLogon /Shortcuts /RegBrowsers /ResetMUI"
 	)
 	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Active Setup\Installed Components"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.StubPath) {
 				if ($standard_stubpaths -notcontains $data.StubPath -and $data.StubPath -notmatch ".*(\\Program Files\\Google\\Chrome\\Application\\.*chrmstp.exe|Microsoft\\Edge\\Application\\.*\\Installer\\setup.exe).*") {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.StubPath, 'ActiveSetup'), $true)) {

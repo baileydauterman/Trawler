@@ -294,7 +294,7 @@ function Test-UserInitMPRScripts {
 	foreach ($p in $regtarget_hkcu_list) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
-			$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -ne 'UserInitMprLogonScript') {
 					continue 

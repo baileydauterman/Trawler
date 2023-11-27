@@ -20,7 +20,7 @@ function Test-TerminalServicesDLL {
 	$State.WriteMessage("Checking TerminalServices DLL")
 	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\CurrentControlSet\Services\TermService\Parameters"
 	if (Test-Path -Path $path) {
-		$items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'ServiceDll' -and $_.Value -ne 'C:\Windows\System32\termsrv.dll') {
 				$detection = [PSCustomObject]@{

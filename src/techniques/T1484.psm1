@@ -55,7 +55,7 @@ function Test-GPOExtensions {
 		$items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			$data.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'DllName' -and $_.Value -notin $gpo_dll_allowlist) {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'GPOExtensions'), $true)) {

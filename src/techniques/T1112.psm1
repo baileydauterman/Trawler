@@ -121,7 +121,7 @@ function Test-NaturalLanguageDevelopmentDLLs {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.StemmerDLLPathOverride -or $data.WBDLLPathOverride) {
 				if ($data.StemmerDLLPathOverride) {
 					$dll = $data.StemmerDLLPathOverride
@@ -171,7 +171,7 @@ function Test-PrintMonitorDLLs {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
 			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.Driver) {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintMonitors'), $true)) {
 					continue

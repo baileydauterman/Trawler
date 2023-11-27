@@ -31,7 +31,7 @@ BeforeAll {
     $snapshotpath = ".\snapshot_test.csv"
     $regtarget_hklm = (Get-PSDrive TestRegistry).Root+"\"
     $regtarget_hkcu_list = @($regtarget_hklm)
-    $env_assumedhomedrive = "C:"
+    $env_assumed_homdrive = "C:"
     $env_homedrive = "TestDrive:"
     $env_programdata = "C:\ProgramData"
 }
@@ -548,11 +548,11 @@ Describe "Check-MSDTCDll" {
     }
     It "should write 6 detection" {
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleOciLib" -Value "test.dll"
-        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleOciLibPath" -Value "$env_assumedhomedrive\Users\Public\test.dll"
+        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleOciLibPath" -Value "$($State.DriveTargets.AssumedHomeDrive)\Users\Public\test.dll"
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleSqlLib" -Value "test.dll"
-        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleSqlLibPath" -Value "$env_assumedhomedrive\Users\Public\test.dll"
+        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleSqlLibPath" -Value "$($State.DriveTargets.AssumedHomeDrive)\Users\Public\test.dll"
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLib" -Value "test.dll"
-        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLibPath" -Value "$env_assumedhomedrive\Users\Public\test.dll"
+        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLibPath" -Value "$($State.DriveTargets.AssumedHomeDrive)\Users\Public\test.dll"
         Check-MSDTCDll
         Should -Invoke -CommandName Write-Detection -Times 6 -Exactly
     }
