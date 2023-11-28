@@ -296,7 +296,7 @@ function Test-LNK {
 					}
 					$State.WriteDetection($detection)
 				}
-				if ($lnk_target -match $suspicious_terms) {
+				if (Test-SuspiciousTerms -Value $lnk_target) {
 					$detection = [PSCustomObject]@{
 						Name      = 'LNK Target contains suspicious key-term'
 						Risk      = [TrawlerRiskPriority]::High

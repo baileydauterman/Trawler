@@ -279,18 +279,16 @@ function Test-ScheduledTasks {
             }
         }
 
-        ForEach ($term in $State.RatTerms) {
-            if ($task.Execute -match ".*$term.*" -or $task.Arguments -match ".*$term.*") {
-                # Service has a suspicious launch pattern matching a known RAT
-                $detection = [PSCustomObject]@{
-                    Name      = 'Scheduled Task has known-RAT Keyword'
-                    Risk      = [TrawlerRiskPriority]::Medium
-                    Source    = 'Scheduled Tasks'
-                    Technique = "T1053: Scheduled Task/Job"
-                    Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs + ", RAT Keyword: " + $term
-                }
-                $State.WriteDetection($detection)
+        if (Test-RemoteAccessTrojanTerms -Value $task.Execute -or Test-RemoteAccessTrojanTerms -Value $task.Arguments) {
+            # Service has a suspicious launch pattern matching a known RAT
+            $detection = [PSCustomObject]@{
+                Name      = 'Scheduled Task has known-RAT Keyword'
+                Risk      = [TrawlerRiskPriority]::Medium
+                Source    = 'Scheduled Tasks'
+                Technique = "T1053: Scheduled Task/Job"
+                Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs + ", RAT Keyword: " + $term
             }
+            $State.WriteDetection($detection)
         }
 
         # Task Running as SYSTEM
@@ -308,7 +306,7 @@ function Test-ScheduledTasks {
         }
         
         # Detection - Task contains an IP Address
-        if ($task.Execute -match $ipv4_pattern -or $task.Execute -match $ipv6_pattern) {
+        if (Test-IPAddress -Value $task.Execute) {
             # Task Contains an IP Address
             $detection = [PSCustomObject]@{
                 Name      = 'Scheduled Task contains an IP Address'

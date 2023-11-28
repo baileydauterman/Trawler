@@ -29,7 +29,7 @@ function Test-AMSIProviders {
 		"{2781761E-28E0-4109-99FE-B9D127C57AFE}"
 	)
 
-	$path = "$regtarget_hklm\SOFTWARE\Microsoft\AMSI\Providers"
+	$path = "$($State.DriveTargets.Hklm)\SOFTWARE\Microsoft\AMSI\Providers"
 	if (Test-Path -Path $path) {
 		foreach ($item in Get-TrawlerChildItem -Path $path -AsRegistry) {
 			if ($item.PSChildName -in $allowedProviders) {

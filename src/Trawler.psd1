@@ -16,6 +16,7 @@
     NestedModules    = @(
         "./Trawler.psm1"
         "./helpers/data-grabbers.psm1"
+        "./helpers/data-comparers.psm1"
         "./data/build-data.psm1"
         "./techniques/NoTechnique.psm1"
         "./techniques/T1037.psm1"

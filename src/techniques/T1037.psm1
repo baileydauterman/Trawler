@@ -37,7 +37,7 @@ function Test-Startups {
 	if ($nevermind) {
 		foreach ($tmpbase in $paths) {
 			if ($tmpbase -match "REPLACE.*") {
-				foreach ($p in $regtarget_hkcu_list) {
+				foreach ($p in $State.DriveTargets.HkcuList) {
 					$newpath = $tmpbase.Replace("REPLACE", $p)
 					$paths += $newpath
 				}
@@ -53,7 +53,7 @@ function Test-Startups {
 	# Redoing this to only read reg-keys instead of using win32_StartupCommand
 	foreach ($tmpbase in $paths) {
 		if ($tmpbase -match "REPLACE.*") {
-			foreach ($p in $regtarget_hkcu_list) {
+			foreach ($p in $State.DriveTargets.HkcuList) {
 				$newpath = $tmpbase.Replace("REPLACE", $p)
 				$paths += $newpath
 			}

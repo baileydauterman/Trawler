@@ -90,8 +90,8 @@ function Test-RATS {
 		"AnyDesk (Log 3)"                   = "$($State.DriveTargets.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\AnyDesk\ad.trace"
 		"AnyDesk (Log 4)"                   = "$env_programdata\AnyDesk\ad_svc.trace"
 		"AnyDesk (Log 5)"                   = "$($State.DriveTargets.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\AnyDesk\*.conf"
-		"AnyDesk (Reg 1)"                   = "Registry::{0}SYSTEM\*\Services\AnyDesk" -f $regtarget_hklm
-		"AnyDesk (Reg 2)"                   = "Registry::{0}SOFTWARE\Clients\Media\AnyDesk" -f $regtarget_hklm
+		"AnyDesk (Reg 1)"                   = "Registry::{0}SYSTEM\*\Services\AnyDesk" -f $($State.DriveTargets.Hklm)
+		"AnyDesk (Reg 2)"                   = "Registry::{0}SOFTWARE\Clients\Media\AnyDesk" -f $($State.DriveTargets.Hklm)
 		"AnyScreen"                         = ""
 		"Bomgar\BeyondTrust (Dir 1)"        = "$($State.DriveTargets.HomeDrive)\Program Files\Bomgar"
 		"Bomgar\BeyondTrust (Dir 2)"        = "$($State.DriveTargets.HomeDrive)\Program Files (x86)\Bomgar"
@@ -99,16 +99,16 @@ function Test-RATS {
 		"Atera\SplashTop (Log 1)"           = "$($State.DriveTargets.HomeDrive)\Program Files\ATERA Networks\AteraAgent\Packages\AgentPackageRunCommandInteractive\log.txt"
 		"Atera\SplashTop (Log 2)"           = "$($State.DriveTargets.HomeDrive)\Program Files (x86)\Splashtop\Splashtop Remote\Server\log\*.txt"
 		"Atera\SplashTop (Dir 1)"           = "$($State.DriveTargets.HomeDrive)\Program Files\ATERA Networks\AteraAgent"
-		"Atera\SplashTop (Reg 1)"           = "Registry::{0}SOFTWARE\Microsoft\Tracing\AteraAgent_RASAPI32" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 2)"           = "Registry::{0}SOFTWARE\Microsoft\Tracing\AteraAgent_RASMANCS" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 3)"           = "Registry::{0}SYSTEM\*\Services\EventLog\Application\AlphaAgent" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 4)"           = "Registry::{0}SYSTEM\*\Services\EventLog\Application\AteraAgent" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 5)"           = "Registry::{0}SYSTEM\*\Services\AteraAgent" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 6)"           = "Registry::{0}SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Splashtop-Splashtop Streamer-Remote Session/Operational" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 7)"           = "Registry::{0}SYSTEM\*\Services\SplashtopRemoteService" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 8)"           = "Registry::{0}SYSTEM\*\Control\SafeBoot\Network\SplashtopRemoteService" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 9)"           = "Registry::{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\Print\Printers\Splashtop PDF Remote Printer" -f $regtarget_hklm
-		"Atera\SplashTop (Reg 10)"          = "Registry::{0}SOFTWARE\WOW6432Node\Splashtop Inc.\Splashtop Remote Server\ClientInfo" -f $regtarget_hklm
+		"Atera\SplashTop (Reg 1)"           = "Registry::{0}SOFTWARE\Microsoft\Tracing\AteraAgent_RASAPI32" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 2)"           = "Registry::{0}SOFTWARE\Microsoft\Tracing\AteraAgent_RASMANCS" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 3)"           = "Registry::{0}SYSTEM\*\Services\EventLog\Application\AlphaAgent" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 4)"           = "Registry::{0}SYSTEM\*\Services\EventLog\Application\AteraAgent" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 5)"           = "Registry::{0}SYSTEM\*\Services\AteraAgent" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 6)"           = "Registry::{0}SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Splashtop-Splashtop Streamer-Remote Session/Operational" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 7)"           = "Registry::{0}SYSTEM\*\Services\SplashtopRemoteService" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 8)"           = "Registry::{0}SYSTEM\*\Control\SafeBoot\Network\SplashtopRemoteService" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 9)"           = "Registry::{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\Print\Printers\Splashtop PDF Remote Printer" -f $($State.DriveTargets.Hklm)
+		"Atera\SplashTop (Reg 10)"          = "Registry::{0}SOFTWARE\WOW6432Node\Splashtop Inc.\Splashtop Remote Server\ClientInfo" -f $($State.DriveTargets.Hklm)
 		"ConnectWise\ScreenConnect (Dir 1)" = "$env_programdata\ScreenConnect*"
 		"ConnectWise\ScreenConnect (Dir 2)" = "$($State.DriveTargets.HomeDrive)\Program Files (x86)\ScreenConnect*"
 		"ConnectWise\ScreenConnect (Dir 3)" = "$($State.DriveTargets.HomeDrive)\Program Files\ScreenConnect*"
@@ -131,7 +131,7 @@ function Test-RATS {
 		"NinjaOne"                          = ""
 		"Pulseway (Dir 1)"                  = "$($State.DriveTargets.HomeDrive)\Users\*\AppData\Roaming\Pulseway Remote Control"
 		"Pulseway (Reg 1)"                  = "Registry::HKCU\Software\MMSOFT Design\Pulseway\Remote Desktop"
-		"Pulseway (Reg 2)"                  = "Registry::{0}Software\MMSOFT Design\Pulseway\Remote Desktop" -f $regtarget_hklm
+		"Pulseway (Reg 2)"                  = "Registry::{0}Software\MMSOFT Design\Pulseway\Remote Desktop" -f $($State.DriveTargets.Hklm)
 		"Radmin (Dir 1)"                    = "$($State.DriveTargets.HomeDrive)\Program Files\Radmin*"
 		"Radmin (Dir 2)"                    = "$($State.DriveTargets.HomeDrive)\Program Files (x86)\Radmin*"
 		"RealVNC (Dir 1)"                   = "$env_programdata\RealVBC-Service"
@@ -167,9 +167,9 @@ function Test-RATS {
 		"TeamViewer (Log 4)"                = "$($State.DriveTargets.HomeDrive)\Program Files\TeamViewer\TeamViewer*_Logfile.log"
 		"TeamViewer (Log 5)"                = "$($State.DriveTargets.HomeDrive)\Users\USER_REPLACE\AppData\Local\TeamViewer\Logs\TeamViewer*_Logfile.log"
 		"TeamViewer (Log 6)"                = "$($State.DriveTargets.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\TeamViewer\TeamViewer*_Logfile.log"
-		"TeamViewer (Reg 1)"                = "Registry::{0}SOFTWARE\TeamViewer" -f $regtarget_hklm
-		"TeamViewer (Reg 2)"                = "Registry::{0}SYSTEM\*\Services\TeamViewer" -f $regtarget_hklm
-		#"TeamViewer (Reg 3)" = "Registry::{0}SYSTEM\ControlSet001\Services\TeamViewer" -f $regtarget_hklm
+		"TeamViewer (Reg 1)"                = "Registry::{0}SOFTWARE\TeamViewer" -f $($State.DriveTargets.Hklm)
+		"TeamViewer (Reg 2)"                = "Registry::{0}SYSTEM\*\Services\TeamViewer" -f $($State.DriveTargets.Hklm)
+		#"TeamViewer (Reg 3)" = "Registry::{0}SYSTEM\ControlSet001\Services\TeamViewer" -f $($State.DriveTargets.Hklm)
 		"UltraVNC (Log 1)"                  = "$env_programdata\uvnc bvba\WinVNC.log"
 		"UltraVNC (Log 2)"                  = "$env_programdata\uvnc bvba\mslogon.log"
 		"UltraViewer (Dir 1)"               = "$($State.DriveTargets.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\UltraViewer"
@@ -180,8 +180,9 @@ function Test-RATS {
 		"ZoHo Assist (Dir 3)"               = "$($State.DriveTargets.HomeDrive)\Program Files (x86)\GoTo Resolve*"
 		"ZoHo Assist (Dir 4)"               = "$($State.DriveTargets.HomeDrive)\Users\USER_REPLACE\AppData\Local\GoTo"
 	}
+
 	if (Test-Path "$($State.DriveTargets.HomeDrive)\Users") {
-		$profile_names = Get-ChildItem "$($State.DriveTargets.HomeDrive)\Users" -Attributes Directory | Select-Object *
+		$profile_names = Get-ChildItem "$($State.DriveTargets.HomeDrive)\Users" -Directory | Select-Object *
 	}
  else {
 		$profile_names = @()
@@ -203,7 +204,7 @@ function Test-RATS {
 					$paths += $tmp
 				}
 				elseif ($checked_path -match ".*HKCU.*") {
-					foreach ($p in $regtarget_hkcu_list) {
+					foreach ($p in $State.DriveTargets.HkcuList) {
 						$paths += $checked_path.Replace("HKCU", $p)
 					}
 					break
@@ -216,7 +217,7 @@ function Test-RATS {
 		}
 		else {
 			if ($checked_path -match ".*HKCU.*") {
-				foreach ($p in $regtarget_hkcu_list) {
+				foreach ($p in $State.DriveTargets.HkcuList) {
 					$paths += $checked_path.Replace("HKCU", $p)
 				}
 			}
@@ -224,6 +225,7 @@ function Test-RATS {
 				$paths += $checked_path
 			}
 		}
+
 		foreach ($tmppath in $paths) {
 			if (Test-Path $tmppath) {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($rat_name, $tmppath, 'RATS'), $true)) {
@@ -238,7 +240,6 @@ function Test-RATS {
 					Meta      = "Possible RAT Artifact: $rat_name, Location: $tmppath"
 				}
 				$State.WriteDetection($detection)
-				#Write-Host "Found RAT Artifact: $rat_name, Location: $checked_path"
 			}
 		}
 	}

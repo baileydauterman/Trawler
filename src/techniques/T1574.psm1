@@ -35,7 +35,7 @@ function Test-MSDTCDll {
 	)
 	# https://pentestlab.blog/2020/03/04/persistence-dll-hijacking/
 	$State.WriteMessage("Checking MSDTC DLL Hijack")
-	$matches = @{
+	$oracleMatches = @{
 		"OracleOciLib"     = "oci.dll"
 		"OracleOciLibPath" = "$($State.DriveTargets.AssumedHomeDrive)\Windows\system32"
 		"OracleSqlLib"     = "SQLLib80.dll"
@@ -45,9 +45,9 @@ function Test-MSDTCDll {
 	}
 	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\MSDTC\MTxOCI"
 	if (Test-Path -Path "Registry::$path") {
-		$data = Get-TrawlerItemProperty -Path $path -AsRegistry
+		$data = Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry
 		$data.PSObject.Properties | ForEach-Object {
-			if ($matches.ContainsKey($_.Name)) {
+			if ($oracleMatches.ContainsKey($_.Name)) {
 				if ($_.Value -ne $matches[$_.Name]) {
 					$detection = [PSCustomObject]@{
 						Name      = 'MSDTC Key/Value Mismatch'
@@ -415,37 +415,39 @@ function Test-ErrorHandlerCMD {
 	# Support Drive Retargeting
 	$State.WriteMessage("Checking ErrorHandler.cmd")
 	$path = "$($State.DriveTargets.HomeDrive)\windows\Setup\Scripts\ErrorHandler.cmd"
-	if (Test-Path $path) {
+	if (-not (Test-Path $path)) {
+		continue
+	}
 
-		$script_content_detection = $false
-		try {
-			$script_content = Get-Content $path
-			foreach ($line_ in $script_content) {
-				if ($line_ -match $suspicious_terms -and $script_content_detection -eq $false) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Suspicious Content in ErrorHandler.cmd'
-						Risk      = [TrawlerRiskPriority]::High
-						Source    = 'Windows'
-						Technique = "T1574: Hijack Execution Flow"
-						Meta      = "File: $path, Suspicious Line: +$line_"
-					}
-					$State.WriteDetection($detection)
-					$script_content_detection = $true
+	$script_content_detection = $false
+	try {
+		$script_content = Get-Content $path
+		foreach ($line_ in $script_content) {
+			if (Test-SuspiciousTerms -Value $line_ -and $script_content_detection -eq $false) {
+				$detection = [PSCustomObject]@{
+					Name      = 'Suspicious Content in ErrorHandler.cmd'
+					Risk      = [TrawlerRiskPriority]::High
+					Source    = 'Windows'
+					Technique = "T1574: Hijack Execution Flow"
+					Meta      = "File: $path, Suspicious Line: +$line_"
 				}
+				$State.WriteDetection($detection)
+				$script_content_detection = $true
 			}
 		}
-		catch {
+	}
+	catch {
+	}
+
+	if ($script_content_detection -eq $false) {
+		$detection = [PSCustomObject]@{
+			Name      = 'Review: ErrorHandler.cmd Existence'
+			Risk      = [TrawlerRiskPriority]::High
+			Source    = 'Windows'
+			Technique = "T1574: Hijack Execution Flow"
+			Meta      = "File Location: $path"
 		}
-		if ($script_content_detection -eq $false) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Review: ErrorHandler.cmd Existence'
-				Risk      = [TrawlerRiskPriority]::High
-				Source    = 'Windows'
-				Technique = "T1574: Hijack Execution Flow"
-				Meta      = "File Location: $path"
-			}
-			$State.WriteDetection($detection)
-		}
+		$State.WriteDetection($detection)
 	}
 }
 
@@ -630,7 +632,7 @@ function Test-TerminalServicesInitialProgram {
 		"Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Terminal Server\WinStations\RDP-Tcp"
 	)
 	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-	foreach ($p in $regtarget_hkcu_list) {
+	foreach ($p in $State.DriveTargets.HkcuList) {
 		$paths += $basepath.Replace("HKEY_CURRENT_USER", $p)
 	}
 

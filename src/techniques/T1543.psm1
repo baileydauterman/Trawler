@@ -47,24 +47,22 @@ function Test-Services {
 			continue
 		}
 
-		foreach ($term in $rat_terms) {
-			if ($service.PathName -match ".*$term.*") {
-				# Service has a suspicious launch pattern matching a known RAT
-				$detection = [TrawlerDetection]::new(
-					'Service Argument has known-RAT Keyword',
-					[TrawlerRiskPriority]::Medium,
-					'Services',
-					"T1543.003: Create or Modify System Process: Windows Service",
-					[PSCustomObject]@{
-						ServiceName = $service.Name
-						ServicePath = $service.PathName
-						RATKeyword  = $term
-					}
-				)
-				$State.WriteDetection($detection)
-			}
+		if (Test-RemoteAccessTrojanTerms -Value $service.PathName) {
+			# Service has a suspicious launch pattern matching a known RAT
+			$detection = [TrawlerDetection]::new(
+				'Service Argument has known-RAT Keyword',
+				[TrawlerRiskPriority]::Medium,
+				'Services',
+				"T1543.003: Create or Modify System Process: Windows Service",
+				[PSCustomObject]@{
+					ServiceName = $service.Name
+					ServicePath = $service.PathName
+					RATKeyword  = $term
+				}
+			)
+			$State.WriteDetection($detection)
 		}
-
+			
 		if ($service.PathName -match "$($State.DriveTargets.AssumedHomeDrive)\\Windows\\Temp\\.*") {
 			# Service launching from Windows\Temp
 			$detection = [TrawlerDetection]::new(
@@ -136,7 +134,7 @@ function Test-Services {
 			$State.WriteDetection($detection)
 		}
 
-		if ($service.PathName -match $suspicious_terms) {
+		if (Test-SuspiciousTerms $service.PathName) {
 			# Service has a suspicious launch pattern
 			$detection = [TrawlerDetection]::new(
 				'Service launching with suspicious keywords',
@@ -160,7 +158,7 @@ function Test-ServicesByRegex {
 	$State.WriteMessage("Checking Service Registry Entries")
 	# Service DLL Inspection
 
-	$path = "{0}SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services" -f $regtarget_hklm
+	$path = "{0}SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services" -f $($State.DriveTargets.Hklm)
 	if (-not (Test-Path -Path "Registry::$path")) {
 		return
 	}
