@@ -141,6 +141,7 @@ class TrawlerState {
     [void] Run() {
         $this.Logo()
         $this.ValidatePaths()
+        $this.TryReadSnapShot()
         $this.RetargetDrives()
         $this.ExecuteScanOptions()
         $this.ExecuteTechniqueOptions()
@@ -297,7 +298,7 @@ class TrawlerState {
             New-Item $this.UserDataPath | Out-Null
         }
 
-        if (ValidatePath($this.OutputPath)) {
+        if ($this.ValidatePath($this.OutputPath)) {
             $this.WriteMessage("Detection Output Path: $($this.OutputPath)")
             $this.OutputWritable = $true
         }
@@ -306,7 +307,7 @@ class TrawlerState {
             exit
         }
 
-        if (ValidatePath($this.SnapShotPath)) {
+        if ($this.ValidatePath($this.SnapShotPath)) {
             $this.WriteMessage("SnapShot Output Path: $($this.OutputPath)")
             $this.OutputWritable = $true
         }
@@ -324,20 +325,9 @@ class TrawlerState {
             return $false
         }
 
+        # ensure file exists and is writeable by opening it with write permissions
         [System.IO.File]::OpenWrite($path).Close()
         return $true
-    }
-
-    <#
-    # Loads the snapshot data into the allow vulnerabilities
-    #>
-    [void] LoadSnapShot() {
-        if ($this.LoadSnapShot -and $this.CreateSnapShot) {
-            Write-Host "[!] Cannot load and save snapshot simultaneously!" -ForegroundColor "Red"
-        }
-        elseif ($this.LoadSnapShot) {
-            $this.TryReadSnapShot()
-        }
     }
 
     <#
@@ -353,7 +343,7 @@ class TrawlerState {
     [void] RetargetDrives() {
         $this.WriteMessage("Setting up Registry Variables")
 
-        if ($this.TargetDrive -and ($this.TargetDrive -match "^[A-Za-z]{1}:$")) {
+        if ($this.TargetDrive -and $this.TargetDrive -ne "C:" -and ($this.TargetDrive -match "^[A-Za-z]{1}:$")) {
             $this.WriteMessage("[!] Attempting move Target Drive to $($this.TargetDrive)")
 
             if (-not (Get-ChildItem $this.TargetDrive -Directory -Filter "Windows")) {
@@ -404,7 +394,7 @@ class TrawlerState {
             $this.Drives.CurrentControlSet = "ControlSet001"
         }
         else {
-            foreach ($item in Get-TrawlerChildItem -Path $this.PathAsRegistry("HKEY_USERS")) {
+            foreach ($item in Get-TrawlerChildItem -Path "HKEY_USERS" -AsRegistry) {
                 if ($item.Name -match ".*_Classes") {
                     $this.Drives.HkcuClassList += $item.Name
                 }
@@ -454,7 +444,7 @@ class TrawlerState {
     # Returns true if the key and value exist in the table, otherwise, returns false
     #>
     [bool] IsExemptBySnapShot([TrawlerSnapShotData]$data, [switch]$writeSnapShot) {
-        if (-not $this.LoadSnapShot) {
+        if (-not $this.SnapShotPath -or -not $this.AllowedVulns) {
             return $false
         }
 
@@ -462,10 +452,7 @@ class TrawlerState {
             $this.WriteSnapShotMessage($data)
         }
 
-        $exemptionsTable = $this.AllowedVulns.($data.Source)
-        $exemption = $exemptionsTable[$data.Key]
-        
-        return $exemption -eq $data.Value
+        return ($this.AllowedVulns | Where-Object Source -eq $data.Source | Where-Object Key -eq $data.Key |Where-Object Value -eq $data.Value).Count -gt 0
     }
 
     <#
@@ -473,14 +460,19 @@ class TrawlerState {
     # Returns true if able to successfully load the snapshot, otherwise, returns false
     #>
     [bool] TryReadSnapShot() {
-        $this.WriteMessage("Reading Snapshot File: $($this.LoadSnapShot)")
+        if ($this.SnapShotPath -and $this.CreateSnapShot) {
+            Write-Host "[!] Cannot load and save snapshot simultaneously!" -ForegroundColor "Red"
+            return $false
+        }
 
-        if (-not(Test-Path $this.LoadSnapShot)) {
+        $this.WriteMessage("Reading Snapshot File: $($this.SnapShotPath)")
+
+        if (-not(Test-Path $this.SnapShotPath)) {
             Write-Host "[!] Specified snapshot file does not exist!" -ForegroundColor "Yellow"
             return $false
         }
 
-        $this.AllowedVulns = Import-Csv $this.LoadSnapShot
+        $this.AllowedVulns = Import-Csv $this.SnapShotPath
         return $true
     }
 
@@ -501,7 +493,7 @@ class TrawlerState {
 
         if (-not($this.Quiet)) {
             Write-Host "[!] Detection: $($det.Name) - Risk: $($det.Risk)" -ForegroundColor $fg_color
-            Write-Host "[%] $($det.Meta)" -ForegroundColor White
+            Write-Host "[%] $($det.Metadata)" -ForegroundColor White
         }
 
         if ($this.OutputWritable) {
@@ -513,7 +505,7 @@ class TrawlerState {
     # Output overall statistics of detections
     #>
     [void] WriteDetectionMetrics() {
-        Write-Host "[!] ### Detection Metadata ###" -ForeGroundColor White
+        Write-Host "[!] ### Detection Metrics ###" -ForeGroundColor White
         $this.WriteMessage("Total Detections: $($this.Detections.Count)")
 
         foreach ($str in ($this.Detections | Group-Object Risk | Select-Object Name, Count | Out-String).Split([System.Environment]::NewLine)) {
@@ -539,7 +531,7 @@ class TrawlerState {
             return;
         }
 
-        $snapShotData | Export-CSV $this.CreateSnapShotPath -Append -NoTypeInformation -Encoding UTF8
+        $snapShotData | Export-CSV $this.SnapShotPath -Append -NoTypeInformation -Encoding UTF8
     }
 
     <#
@@ -581,7 +573,7 @@ class TrawlerState {
         if ($this.Quiet) {
             return
         }
-        
+
         $logo = "
   __________  ___ _       ____    __________ 
  /_  __/ __ \/   | |     / / /   / ____/ __ \

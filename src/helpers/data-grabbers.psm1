@@ -41,9 +41,9 @@ function Get-TrawlerChildItem {
     )
 
     if ($AsRegistry) {
-        return Get-ChildItem -Path "Registry::$Path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+        return Get-ChildItem -Path "Registry::$Path" -ErrorAction SilentlyContinue | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
     } else {
-        return Get-ChildItem -Path $Path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+        return Get-ChildItem -Path $Path -ErrorAction SilentlyContinue | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
     }
 }
 
