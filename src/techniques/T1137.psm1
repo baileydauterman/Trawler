@@ -26,7 +26,7 @@ function Test-OfficeGlobalDotName {
 	$office_versions = @(14, 15, 16)
 	foreach ($version in $office_versions) {
 		$basepath = "Registry::HKEY_CURRENT_USER\software\microsoft\office\$version.0\word\options"
-		foreach ($p in $State.DriveTargets.HkcuList) {
+		foreach ($p in $State.Drives.CurrentUsers) {
 			$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 			
 			if (-not (Test-Path -Path $path)) {
@@ -63,7 +63,7 @@ function Test-OfficeTest {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Office test usage")
 	$basepath = "Registry::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 
 		if (-not (Test-Path -Path $path)) {
@@ -82,7 +82,7 @@ function Test-OfficeTest {
 		}
 	}
 
-	$path = "Registry::$($State.DriveTargets.Hklm)Software\Microsoft\Office test\Special\Perf"
+	$path = "Registry::$($State.Drives.Hklm)Software\Microsoft\Office test\Special\Perf"
 	if (Test-Path -Path $path) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			$detection = [PSCustomObject]@{
@@ -109,7 +109,7 @@ function Test-OutlookStartup {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Outlook Macros")
 
-	$path = "$($State.DriveTargets.HomeDrive)\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Outlook\VbaProject.OTM"
+	$path = "$($State.Drives.HomeDrive)\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Outlook\VbaProject.OTM"
 	if (-not (Test-Path $path)) {
 		return 
 	}
@@ -142,11 +142,11 @@ function Test-OfficeTrustedLocations {
 	# https://github.com/PowerShell/PowerShell/issues/16812
 	$State.WriteMessage("Checking Office Trusted Locations")
 	#TODO - Add 'abnormal trusted location' detection
-	$profile_names = Get-ChildItem "$($State.DriveTargets.HomeDrive)\Users" -Attributes Directory | Select-Object *
+	$profile_names = Get-ChildItem "$($State.Drives.HomeDrive)\Users" -Attributes Directory | Select-Object *
 	$actual_current_user = $env:USERNAME
-	$user_pattern = "$($State.DriveTargets.AssumedHomeDrive)\\Users\\(.*?)\\.*"
+	$user_pattern = "$($State.Drives.AssumedHomeDrive)\\Users\\(.*?)\\.*"
 	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\16.0\Word\Security\Trusted Locations"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
 			$items = Get-TrawlerItemData -Path $path -ItemType ChildItem

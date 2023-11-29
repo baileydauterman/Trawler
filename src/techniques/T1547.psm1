@@ -47,7 +47,7 @@ function Test-LSA {
 		"wsauth",
 		"wsauth" #vmware
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -91,7 +91,7 @@ function Test-LSA {
 			}
 		}
 	}
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa\OSConfig"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Lsa\OSConfig"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -116,7 +116,7 @@ function Test-LSA {
 			}
 		}
 	}
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\LsaExtensionConfig\LsaSrv"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\LsaExtensionConfig\LsaSrv"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -148,7 +148,7 @@ function Test-LSA {
 		"rassfm", # Windows Server 2019 AWS Lightsail
 		"scecli" # Windows 10/Server
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Lsa"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Lsa"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -193,7 +193,7 @@ function Test-TimeProviderDLLs {
 		"$env:homedrive\Windows\System32\w32time.dll",
 		"$env:homedrive\Windows\System32\vmictimeprovider.dll"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services\W32Time\TimeProviders"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Services\W32Time\TimeProviders"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -235,7 +235,7 @@ function Test-WinlogonHelperDLLs {
 		"ShellAppRuntime.exe"
 		"mpnotify.exe"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
+	$path = "Registry::$($State.Drives.Hklm)Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -273,9 +273,9 @@ function Test-LNK {
 	$State.WriteMessage("Checking LNK Targets")
 	$current_date = Get-Date
 	$WScript = New-Object -ComObject WScript.Shell
-	$profile_names = Get-ChildItem "$($State.DriveTargets.HomeDrive)\Users" -Attributes Directory | Select-Object *
+	$profile_names = Get-ChildItem "$($State.Drives.HomeDrive)\Users" -Attributes Directory | Select-Object *
 	foreach ($user in $profile_names) {
-		$path = "$($State.DriveTargets.HomeDrive)\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Windows\Recent"
+		$path = "$($State.Drives.HomeDrive)\Users\" + $user.Name + "\AppData\Roaming\Microsoft\Windows\Recent"
 		$items = Get-ChildItem -Path $path -File -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".lnk" } | Select-Object *
 		foreach ($item in $items) {
 			#Write-Host $item.FullName, $item.LastWriteTime
@@ -339,7 +339,7 @@ function Test-PrintProcessorDLLs {
 	$standard_print_processors = @(
 		"winprint.dll"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -363,7 +363,7 @@ function Test-PrintProcessorDLLs {
 			}
 		}
 	}
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Print\Environments\Windows x64\Print Processors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -407,20 +407,20 @@ function Test-ActiveSetup {
 	$standard_stubpaths = @(
 		"/UserInstall",
 		'"C:\Program Files\Windows Mail\WinMail.exe" OCInstallUserConfigOE', # Server 2016
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -UserConfig", # 10
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\Rundll32.exe C:\Windows\System32\mscories.dll,Install", # 10
+		"$($State.Drives.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -UserConfig", # 10
+		"$($State.Drives.AssumedHomeDrive)\Windows\System32\Rundll32.exe C:\Windows\System32\mscories.dll,Install", # 10
 		'"C:\Windows\System32\rundll32.exe" "C:\Windows\System32\iesetup.dll",IEHardenAdmin', # Server 2019
 		'"C:\Windows\System32\rundll32.exe" "C:\Windows\System32\iesetup.dll",IEHardenUser', # Server 2019
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\unregmp2.exe /FirstLogon", # 10
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\unregmp2.exe /ShowWMP", # 10
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -EnableTLS",
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -DisableSSL3"
+		"$($State.Drives.AssumedHomeDrive)\Windows\System32\unregmp2.exe /FirstLogon", # 10
+		"$($State.Drives.AssumedHomeDrive)\Windows\System32\unregmp2.exe /ShowWMP", # 10
+		"$($State.Drives.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -EnableTLS",
+		"$($State.Drives.AssumedHomeDrive)\Windows\System32\ie4uinit.exe -DisableSSL3"
 		"U"
 		"regsvr32.exe /s /n /i:U shell32.dll"
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\system32\regsvr32.exe /s /n /i:/UserInstall C:\Windows\system32\themeui.dll"
-		"$($State.DriveTargets.AssumedHomeDrive)\Windows\system32\unregmp2.exe /FirstLogon /Shortcuts /RegBrowsers /ResetMUI"
+		"$($State.Drives.AssumedHomeDrive)\Windows\system32\regsvr32.exe /s /n /i:/UserInstall C:\Windows\system32\themeui.dll"
+		"$($State.Drives.AssumedHomeDrive)\Windows\system32\unregmp2.exe /FirstLogon /Shortcuts /RegBrowsers /ResetMUI"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Active Setup\Installed Components"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Active Setup\Installed Components"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {

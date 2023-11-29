@@ -20,9 +20,9 @@ function Test-SuspiciousFileLocations {
 	$State.WriteMessage("Checking Suspicious File Locations")
 	$suspicious_extensions = @('*.exe', '*.bat', '*.ps1', '*.hta', '*.vb', '*.vba', '*.vbs', '*.zip', '*.gz', '*.7z', '*.dll', '*.scr', '*.cmd', '*.com', '*.ws', '*.wsf', '*.scf', '*.scr', '*.pif')
 	$recursive_paths_to_check = @(
-		"$($State.DriveTargets.HomeDrive)\Users\Public"
-		"$($State.DriveTargets.HomeDrive)\Users\Administrator"
-		"$($State.DriveTargets.HomeDrive)\Windows\temp"
+		"$($State.Drives.HomeDrive)\Users\Public"
+		"$($State.Drives.HomeDrive)\Users\Administrator"
+		"$($State.Drives.HomeDrive)\Windows\temp"
 	)
 	foreach ($path in $recursive_paths_to_check) {
 		$items = Get-ChildItem -Path $path -Recurse -ErrorAction SilentlyContinue -Include $suspicious_extensions

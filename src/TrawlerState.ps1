@@ -362,11 +362,11 @@ class TrawlerState {
                 exit
             }
 
-            $this.DriveTargets.HomeDrive = $this.TargetDrive
-            $this.DriveTargets.AssumedHomeDrive = "C:"
+            $this.Drives.HomeDrive = $this.TargetDrive
+            $this.Drives.AssumedHomeDrive = "C:"
             $this.ProgramData = $this.ToTargetDrivePath(@("ProgramData"))
 
-            foreach ($hive in $this.DriveTargets.TargetHives) {
+            foreach ($hive in $this.Drives.TargetHives) {
                 $hivePath = $this.ToTargetDrivePath(@("Windows", "System32", "Config", $hive))
 
                 if (Test-Path -Path $hivePath) {
@@ -383,44 +383,44 @@ class TrawlerState {
                     if (Test-Path $ntUserPath) {
                         $hivePath = "ANALYSIS_$($user.Name)"
                         $this.LoadHive($hivePath, $ntUserPath, "HKEY_USERS")
-                        $this.DriveTargets.HkcuList += "HKEY_USERS\$hivePath"
+                        $this.Drives.CurrentUsers += "HKEY_USERS\$hivePath"
                     }
 
                     if (Test-Path $classPath) {
                         $hivePath = "ANALYSIS_$($user.Name)_Classes"
                         $this.LoadHive($hivePath, $ntUserPath, "HKEY_USERS")
-                        $this.DriveTargets.HkcuList += "HKEY_USERS\$hivePath"
+                        $this.Drives.CurrentUsers += "HKEY_USERS\$hivePath"
                     }
                 }
             }
             else {
-                Write-Warning "[!] Could not find '$($this.DriveTargets.HomeDrive)\Users'!"
+                Write-Warning "[!] Could not find '$($this.Drives.HomeDrive)\Users'!"
             }
 
-            $this.DriveTargets.Hklm = "HKEY_LOCAL_MACHINE\ANALYSIS_"
-            $this.DriveTargets.Hkcu = "HKEY_CURRENT_USER\"
+            $this.Drives.Hklm = "HKEY_LOCAL_MACHINE\ANALYSIS_"
+            $this.Drives.Hkcu = "HKEY_CURRENT_USER\"
             # Need to avoid using HKCR as it will be unavailable on dead drives
-            $this.DriveTargets.Hkcr = "HKEY_CLASSES_ROOT\"
-            $this.DriveTargets.CurrentControlSet = "ControlSet001"
+            $this.Drives.Hkcr = "HKEY_CLASSES_ROOT\"
+            $this.Drives.CurrentControlSet = "ControlSet001"
         }
         else {
             foreach ($item in Get-TrawlerChildItem -Path $this.PathAsRegistry("HKEY_USERS")) {
                 if ($item.Name -match ".*_Classes") {
-                    $this.DriveTargets.HkcuClassList += $item.Name
+                    $this.Drives.HkcuClassList += $item.Name
                 }
                 else {
-                    $this.DriveTargets.HkcuList += $item.Name
+                    $this.Drives.CurrentUsers += $item.Name
                 }
             }
 
-            $this.DriveTargets.HomeDrive = $env:homedrive
-            $this.DriveTargets.AssumedHomeDrive = $env:homedrive
-            $this.DriveTargets.ProgramData = $env:programdata
-            $this.DriveTargets.Hklm = "HKEY_LOCAL_MACHINE\"
-            $this.DriveTargets.Hkcu = "HKEY_CURRENT_USER\"
+            $this.Drives.HomeDrive = $env:homedrive
+            $this.Drives.AssumedHomeDrive = $env:homedrive
+            $this.Drives.ProgramData = $env:programdata
+            $this.Drives.Hklm = "HKEY_LOCAL_MACHINE\"
+            $this.Drives.Hkcu = "HKEY_CURRENT_USER\"
             # Need to avoid using HKCR as it will be unavailable on dead drives
-            $this.DriveTargets.Hkcr = "HKEY_CLASSES_ROOT\"
-            $this.DriveTargets.CurrentControlSet = "CurrentControlSet"
+            $this.Drives.Hkcr = "HKEY_CLASSES_ROOT\"
+            $this.Drives.CurrentControlSet = "CurrentControlSet"
         }
     }
 
@@ -428,7 +428,7 @@ class TrawlerState {
     # Converts the given path segments into a proper file path starting with the target drive path.
     #>
     [string] ToTargetDrivePath([string[]]$pathSegments) {
-        return [System.IO.Path]::Combine($this.DriveTargets.HomeDrive, $pathSegments)
+        return [System.IO.Path]::Combine($this.Drives.HomeDrive, $pathSegments)
     }
 
     [void] LoadHive([string]$hiveName, [string]$hivePath, [string]$hiveRoot) {
@@ -591,7 +591,7 @@ class TrawlerState {
     $OutputWritable = (Test-Path $this.OutputPath)
     $SnapShotWritable = (Test-Path $this.SnapShotPath)
     $AllowedVulns
-    $DriveTargets = [PSCustomObject]@{
+    $Drives = [PSCustomObject]@{
         HomeDrive         = ""
         AssumedHomeDrive  = "C:"
         ProgramData       = ""
@@ -600,7 +600,7 @@ class TrawlerState {
             "SYSTEM"
         )
         UserHives         = @()
-        HkcuList          = @()
+        CurrentUsers          = @()
         HkcuClassList     = @()
         Hklm              = ""
         Hkcu              = ""

@@ -21,17 +21,17 @@ function Test-GPOExtensions {
 	$State.WriteMessage("Checking GPO Extension DLLs")
 	
 	$gpo_dll_allowlist = @(
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\TsUsbRedirectionGroupPolicyExtension.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\cscobj.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\dskquota.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\gpprefcl.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\gpscript.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\iedkcs32.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\polstore.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\srchadmin.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\tsworkspace.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\system32\domgmt.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\system32\gpprnext.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\TsUsbRedirectionGroupPolicyExtension.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\cscobj.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\dskquota.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\gpprefcl.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\gpscript.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\iedkcs32.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\polstore.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\srchadmin.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\tsworkspace.dll"
+		"$($State.Drives.HomeDrive)\Windows\system32\domgmt.dll"
+		"$($State.Drives.HomeDrive)\Windows\system32\gpprnext.dll"
 		"AppManagementConfiguration.dll"
 		"WorkFoldersGPExt.dll"
 		"appmgmts.dll"
@@ -50,7 +50,7 @@ function Test-GPOExtensions {
 		"wlgpclnt.dll"
 	)
 
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GPExtensions"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GPExtensions"
 	if (Test-Path -Path "Registry::$path") {
 		$items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {

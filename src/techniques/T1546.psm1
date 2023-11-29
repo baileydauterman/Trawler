@@ -50,7 +50,7 @@ function Test-AppPaths {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking AppPaths")
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
 
 	if (-not (Test-TrawlerPath -Path $path -AsRegistry)) {
 		return
@@ -105,7 +105,7 @@ function Test-CommandAutoRunProcessors {
 	)
 	
 	$State.WriteMessage("Checking Command AutoRun Processors")
-	$path = "Registry::$($State.DriveTargets.Hklm)`SOFTWARE\Microsoft\Command Processor"
+	$path = "Registry::$($State.Drives.Hklm)`SOFTWARE\Microsoft\Command Processor"
 
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
@@ -129,7 +129,7 @@ function Test-CommandAutoRunProcessors {
 	}
 
 	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Command Processor"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (-not (Test-Path -Path $path)) {
 			continue 
@@ -172,7 +172,7 @@ function Test-ContextMenu {
 	# TODO - Check ColumnHandlers, CopyHookHandlers, DragDropHandlers and PropertySheetHandlers in same key, HKLM\Software\Classes\*\shellex
 	$State.WriteMessage("Checking Context Menu Handlers")
 
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Classes\*\shellex\ContextMenuHandlers"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Classes\*\shellex\ContextMenuHandlers"
 	if (Test-Path -LiteralPath "Registry::$path") {
 		$items = Get-ChildItem -LiteralPath "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -198,7 +198,7 @@ function Test-ContextMenu {
 	}
 
 	$basepath = "HKEY_CURRENT_USER\SOFTWARE\Classes\*\shellex\ContextMenuHandlers"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -LiteralPath "Registry::$path") {
 			$items = Get-ChildItem -LiteralPath "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
@@ -247,7 +247,7 @@ function Test-DiskCleanupHandlers {
 		"C:\Windows\system32\scavengeui.dll",
 		"C:\Windows\System32\fhcleanup.dll"
 	)
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\"
 	if (Test-Path -LiteralPath "Registry::$path") {
 		$items = Get-TrawlerChildItem "Registry::$path"
 		foreach ($item in $items) {
@@ -256,7 +256,7 @@ function Test-DiskCleanupHandlers {
 			$data.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq '(Default)') {
 					$target_prog = ''
-					$tmp_path = "$regtarget_hkcr`CLSID\$($_.Value)\InProcServer32"
+					$tmp_path = "$($State.Drive.Hkcr)CLSID\$($_.Value)\InProcServer32"
 					if (Test-Path -LiteralPath "Registry::$tmp_path") {
 						$data_tmp = Get-TrawlerItemProperty "Registry::$tmp_path"
 						$data_tmp.PSObject.Properties | ForEach-Object {
@@ -299,7 +299,7 @@ function Test-DebuggerHijacks {
 	# allowtable_debuggers
 	# Debugger Hijacks
 	# AeDebug 32
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -322,7 +322,7 @@ function Test-DebuggerHijacks {
 			}
 		}
 	}
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -348,7 +348,7 @@ function Test-DebuggerHijacks {
 	}
 
 	# AeDebug 64
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -374,7 +374,7 @@ function Test-DebuggerHijacks {
 			}
 		}
 	}
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -402,7 +402,7 @@ function Test-DebuggerHijacks {
 	}
 
 	# .NET 32
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\.NETFramework"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\.NETFramework"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -429,7 +429,7 @@ function Test-DebuggerHijacks {
 		}
 	}
 	# .NET 64
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Wow6432Node\Microsoft\.NETFramework"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Wow6432Node\Microsoft\.NETFramework"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -456,7 +456,7 @@ function Test-DebuggerHijacks {
 		}
 	}
 	# Microsoft Script Debugger
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Classes\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Classes\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -483,7 +483,7 @@ function Test-DebuggerHijacks {
 		}
 	}
 	$basepath = "HKEY_CLASSES_ROOT\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
-	foreach ($p in $regtarget_hkcu_class_list) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CLASSES_ROOT", $p)
 		if (Test-Path -Path "Registry::$path") {
 			$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -497,7 +497,7 @@ function Test-DebuggerHijacks {
 						$pass = $true
 					}
 				}
-				if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
+				if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
 					$detection = [PSCustomObject]@{
 						Name      = 'Potential Microsoft Script Debugger Hijacking'
 						Risk      = [TrawlerRiskPriority]::High
@@ -511,7 +511,7 @@ function Test-DebuggerHijacks {
 		}
 	}
 	# Process Debugger
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Classes\CLSID\{78A51822-51F4-11D0-8F20-00805F2CD064}\InprocServer32"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Classes\CLSID\{78A51822-51F4-11D0-8F20-00805F2CD064}\InprocServer32"
 	$pass = $false
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
@@ -525,7 +525,7 @@ function Test-DebuggerHijacks {
 					$pass = $true
 				}
 			}
-			if (($_.Name -in '(default)' -and $pass -eq $false -and $_.Value -ne "$($State.DriveTargets.AssumedHomeDrive)\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$($State.DriveTargets.AssumedHomeDrive)\WINDOWS\system32\pdm.dll`"")) {
+			if (($_.Name -in '(default)' -and $pass -eq $false -and $_.Value -ne "$($State.Drives.AssumedHomeDrive)\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\WINDOWS\system32\pdm.dll`"")) {
 				$detection = [PSCustomObject]@{
 					Name      = 'Potential Process Debugger Hijacking'
 					Risk      = [TrawlerRiskPriority]::High
@@ -538,7 +538,7 @@ function Test-DebuggerHijacks {
 		}
 	}
 	# WER Debuggers
-	$path = "$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\Windows Error Reporting\Hangs"
+	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\Windows Error Reporting\Hangs"
 	if (Test-Path -Path "Registry::$path") {
 		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
 		$item.PSObject.Properties | ForEach-Object {
@@ -576,7 +576,7 @@ function Test-DisableLowILProcessIsolation {
 	# Supports Drive Retargeting
 	# Supports Snapshotting
 	$State.WriteMessage("Checking for COM Objects running without Low Integrity Isolation")
-	$path = "$($State.DriveTargets.Hklm)Software\Classes\CLSID"
+	$path = "$($State.Drives.Hklm)Software\Classes\CLSID"
 	$allowlist = @(
 		"@C:\\Program Files\\Microsoft Office\\Root\\VFS\\ProgramFilesCommonX64\\Microsoft Shared\\Office16\\oregres\.dll.*"
 		"@wmploc\.dll.*"
@@ -636,7 +636,7 @@ function Test-Narrator {
 	# Supports Drive Retargeting
 	# https://pentestlab.blog/2020/03/04/persistence-dll-hijacking/
 	$State.WriteMessage("Checking Narrator MSTTSLocEnUS.dll Presence")
-	$basepath = "$($State.DriveTargets.HomeDrive)\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL"
+	$basepath = "$($State.Drives.HomeDrive)\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL"
 	if (Test-Path $basepath) {
 		$item = Get-Item -Path $basepath -ErrorAction SilentlyContinue | Select-Object *
 		$detection = [PSCustomObject]@{
@@ -661,8 +661,8 @@ function Test-NotepadPlusPlusPlugins {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Notepad++ Plugins")
 	$basepaths = @(
-		"$($State.DriveTargets.HomeDrive)\Program Files\Notepad++\plugins"
-		"$($State.DriveTargets.HomeDrive)\Program Files (x86)\Notepad++\plugins"
+		"$($State.Drives.HomeDrive)\Program Files\Notepad++\plugins"
+		"$($State.Drives.HomeDrive)\Program Files (x86)\Notepad++\plugins"
 	)
 	$allowlisted = @(
 		".*\\Config\\nppPluginList\.dll"
@@ -706,9 +706,9 @@ function Test-OfficeAI {
 	# Supports Drive Retargeting
 	# https://twitter.com/Laughing_Mantis/status/1645268114966470662
 	$State.WriteMessage("Checking Office AI.exe Presence")
-	$basepath = "$($State.DriveTargets.HomeDrive)\Program Files\Microsoft Office\root\Office*"
+	$basepath = "$($State.Drives.HomeDrive)\Program Files\Microsoft Office\root\Office*"
 	if (Test-Path $basepath) {
-		$path = "$($State.DriveTargets.HomeDrive)\Program Files\Microsoft Office\root"
+		$path = "$($State.Drives.HomeDrive)\Program Files\Microsoft Office\root"
 		$dirs = Get-ChildItem -Path $path -Directory -Filter "Office*" -ErrorAction SilentlyContinue
 		foreach ($dir in $dirs) {
 			$ai = $dir.FullName + "\ai.exe"
@@ -737,7 +737,7 @@ function Test-UninstallStrings {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Uninstall Strings")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
 	if (-not (Test-Path -Path $path)) {
 		return 
 	}
@@ -791,7 +791,7 @@ function Test-PolicyManager {
 		"%SYSTEMROOT%\system32\PolicyManagerPrecheck.dll"
 		"%SYSTEMROOT%\system32\hascsp.dll"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\PolicyManager\default"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\PolicyManager\default"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -849,7 +849,7 @@ function Test-WindowsLoadKey {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Windows Load")
 	$basepath = "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (-not (Test-Path -Path "Registry::$path")) {
 			continue 
@@ -884,7 +884,7 @@ function Test-AutoDialDLL {
 
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Autodial DLL")
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\CurrentControlSet\Services\WinSock2\Parameters"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\CurrentControlSet\Services\WinSock2\Parameters"
 	if (-not (Test-Path -Path $path)) {
 		return 
 	}
@@ -913,7 +913,7 @@ function Test-HTMLHelpDLL {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking HTML Help (.chm) DLL")
 	$basepath = "HKEY_CURRENT_USER\Software\Microsoft\HtmlHelp Author"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (-not (Test-Path -Path "Registry::$path")) {
 			continue 
@@ -949,7 +949,7 @@ function Test-AssociationHijack {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking File Associations")
-	$homedrive = $($State.DriveTargets.AssumedHomeDrive)
+	$homedrive = $($State.Drives.AssumedHomeDrive)
 	$value_regex_lookup = @{
 		accesshtmlfile            = "`"$homedrive\\Program Files\\Microsoft Office\\Root\\Office.*\\MSACCESS.EXE`"";
 		batfile                   = '"%1" %';
@@ -979,7 +979,7 @@ function Test-AssociationHijack {
 
 	# This specifically uses the list of CLASSES associated with each user, rather than the user hives directly
 	$basepath = "Registry::HKEY_CURRENT_USER"
-	foreach ($p in $regtarget_hkcu_class_list) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
 			foreach ($item in Get-TrawlerChildItem -Path $path) {
@@ -1043,7 +1043,7 @@ function Test-AssociationHijack {
 		}
 	}
 
-	$basepath = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Classes"
+	$basepath = "Registry::$($State.Drives.Hklm)SOFTWARE\Classes"
 	if (Test-Path -Path $basepath) {
 		$items = Get-ChildItem -Path $basepath | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -1121,7 +1121,7 @@ function Test-ScreenSaverEXE {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking ScreenSaver exe")
 	$basepath = "Registry::HKEY_CURRENT_USER\Control Panel\Desktop"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
 			$items = Get-TrawlerItemProperty -Path $path
@@ -1235,7 +1235,7 @@ function Test-NetSHDLLs {
 		"wshelper.dll",
 		"wwancfg.dll"
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Netsh"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Netsh"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -1272,7 +1272,7 @@ function Test-UtilmanHijack {
 	# TODO - Add Better Details
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking utilman.exe")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\utilman.exe"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\utilman.exe"
 	if (Test-Path -Path $path) {
 		$detection = [PSCustomObject]@{
 			Name      = 'Potential utilman.exe Registry Persistence'
@@ -1295,7 +1295,7 @@ function Test-SethcHijack {
 	# TODO - Add Better Details
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking sethc.exe")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe"
 	if (Test-Path -Path $path) {
 		$detection = [PSCustomObject]@{
 			Name      = 'Potential sethc.exe Registry Persistence'
@@ -1319,14 +1319,14 @@ function Test-ModifiedWindowsAccessibilityFeature {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Accessibility Binaries")
 	$files_to_check = @(
-		"$($State.DriveTargets.HomeDrive)\Program Files\Common Files\microsoft shared\ink\HID.dll"
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\AtBroker.exe",
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\DisplaySwitch.exe",
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\Magnify.exe",
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\Narrator.exe",
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\osk.exe",
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\sethc.exe",
-		"$($State.DriveTargets.HomeDrive)\Windows\System32\utilman.exe"
+		"$($State.Drives.HomeDrive)\Program Files\Common Files\microsoft shared\ink\HID.dll"
+		"$($State.Drives.HomeDrive)\Windows\System32\AtBroker.exe",
+		"$($State.Drives.HomeDrive)\Windows\System32\DisplaySwitch.exe",
+		"$($State.Drives.HomeDrive)\Windows\System32\Magnify.exe",
+		"$($State.Drives.HomeDrive)\Windows\System32\Narrator.exe",
+		"$($State.Drives.HomeDrive)\Windows\System32\osk.exe",
+		"$($State.Drives.HomeDrive)\Windows\System32\sethc.exe",
+		"$($State.Drives.HomeDrive)\Windows\System32\utilman.exe"
 	)
 	foreach ($file in $files_to_check) { 
 		$fdata = Get-Item $file -ErrorAction SilentlyContinue | Select-Object CreationTime, LastWriteTime
@@ -1360,7 +1360,7 @@ function Test-AppCertDLLs {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking AppCert DLLs")
 	$standard_appcert_dlls = @()
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Session Manager\AppCertDlls"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Session Manager\AppCertDlls"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -1397,7 +1397,7 @@ function Test-AppInitDLLs {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking AppInit DLLs")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -1418,7 +1418,7 @@ function Test-AppInitDLLs {
 			
 		}
 	}
-	$path = "Registry::$($State.DriveTargets.Hklm)Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows"
+	$path = "Registry::$($State.Drives.Hklm)Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
@@ -1455,7 +1455,7 @@ function Test-ApplicationShims {
 
 	$State.WriteMessage("Checking Application Shims")
 	# TODO - Also check HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Custom
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB"
 	if (-not (Test-Path -Path $path)) {
 		return 
 	}
@@ -1493,7 +1493,7 @@ function Test-IFEO {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Image File Execution Options")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -1569,7 +1569,7 @@ function Test-SilentProcessExitMonitoring {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking SilentProcessExit Monitoring")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -1621,8 +1621,8 @@ function Test-PowerShellProfiles {
 	$State.WriteMessage("Checking PowerShell Profiles")
 	if ($drivechange) {
 		# TODO - Investigate whether these paths can be retrieved from the HKLM HIVE dynamically
-		$alluserallhost = "$($State.DriveTargets.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
-		$allusercurrenthost = "$($State.DriveTargets.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1"
+		$alluserallhost = "$($State.Drives.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
+		$allusercurrenthost = "$($State.Drives.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1"
 	}
  else {
 		$PROFILE | Select-Object AllUsersAllHosts, AllUsersCurrentHost, CurrentUserAllHosts, CurrentUserCurrentHost | Out-Null
@@ -1651,11 +1651,11 @@ function Test-PowerShellProfiles {
 		$State.WriteDetection($detection)
 	}
 
-	$profile_names = Get-ChildItem "$($State.DriveTargets.HomeDrive)\Users" -Attributes Directory | Select-Object Name
+	$profile_names = Get-ChildItem "$($State.Drives.HomeDrive)\Users" -Attributes Directory | Select-Object Name
 	foreach ($name in $profile_names) {
-		$path1 = "$($State.DriveTargets.HomeDrive)\Users\$name\Documents\WindowsPowerShell\profile.ps1"
-		$path2 = "$($State.DriveTargets.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
-		$path3 = "$($State.DriveTargets.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+		$path1 = "$($State.Drives.HomeDrive)\Users\$name\Documents\WindowsPowerShell\profile.ps1"
+		$path2 = "$($State.Drives.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
+		$path3 = "$($State.Drives.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
 		if (Test-Path $path1) {
 			$detection = [PSCustomObject]@{
 				Name      = 'Review: Custom PowerShell Profile'
@@ -1770,7 +1770,7 @@ function Test-WellKnownCOM {
 
 	# shell32.dll Hijack
 	$basepath = "Registry::HKEY_CURRENT_USER\Software\Classes\CLSID\{42aedc87-2188-41fd-b9a3-0c966feabec1}\InprocServer32"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
 			$items = Get-TrawlerItemProperty -Path $path
@@ -1788,7 +1788,7 @@ function Test-WellKnownCOM {
 	}
 	# WBEM Subsystem
 	$basepath = "Registry::HKEY_CURRENT_USER\Software\Classes\CLSID\{F3130CDB-AA52-4C3A-AB32-85FFC23AF9C1}\InprocServer32"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
 			$items = Get-TrawlerItemProperty -Path $path
@@ -1857,7 +1857,7 @@ function Test-COM-Hijacks {
 	# TODO - Some regex appears to be non-functional, especially on HKU inspection - need to figure out why/troubleshoot
 	# TODO - Inspect TreatAs options
 	# Malware will typically target 'well-known' keys that are present in default versions of Windows - that should be enough for most situations and help to reduce noise.
-	$ComTables = Build-ComPaths -HomeDrive $($State.DriveTargets.AssumedHomeDrive)
+	$ComTables = Build-ComPaths -HomeDrive $($State.Drives.AssumedHomeDrive)
 
 	# HKCR
 	$path = "HKCR\CLSID_SKIP"
@@ -1866,7 +1866,7 @@ function Test-COM-Hijacks {
 	## HKLM
 	$default_hklm_com_lookups = @{}
 	$default_hklm_com_server_lookups = @{}
-	$local_regretarget = $($State.DriveTargets.Hklm) + "SOFTWARE\Classes"
+	$local_regretarget = $($State.Drives.Hklm) + "SOFTWARE\Classes"
 	#Write-Host $local_regretarget
 	foreach ($hash in $ComTables.DefaultHkcrComLookups.GetEnumerator()) {
 		$new_name = ($hash.Name).Replace("HKEY_CLASSES_ROOT", $local_regretarget)
@@ -1878,7 +1878,7 @@ function Test-COM-Hijacks {
 	}
 
 	#test AD5FBC96-ACFE-46bd-A2E2-623FD110C74C
-	$local_regretarget2 = "$($State.DriveTargets.Hklm)SOFTWARE\Classes\CLSID"
+	$local_regretarget2 = "$($State.Drives.Hklm)SOFTWARE\Classes\CLSID"
 	#$path = "HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID"
 	$path = $local_regretarget2
 	if (Test-Path -Path "Registry::$path") {
@@ -1941,18 +1941,18 @@ function Test-COM-Hijacks {
 	$default_hkcu_com_lookups = @{}
 	$default_hkcu_com_server_lookups = @{}
 	foreach ($hash in $ComTables.DefaultHkcrComLookups) {
-		foreach ($p in $regtarget_hkcu_class_list) {
+		foreach ($p in $State.Drives.CurrentUsers) {
 			$new_name = ($hash.Name).Replace("HKEY_CLASSES_ROOT", "$p\CLSID")
 			$default_hkcu_com_lookups["$new_name"] = $hash.Value
 		}
 	}
 	foreach ($hash in $ComTables.Server2022Coms) {
-		foreach ($p in $regtarget_hkcu_class_list) {
+		foreach ($p in $State.Drives.CurrentUsers) {
 			$new_name = ($hash.Name).Replace("HKEY_CLASSES_ROOT", "$p\CLSID")
 			$default_hkcu_com_server_lookups["$new_name"] = $hash.Value
 		}
 	}
-	foreach ($p in $regtarget_hkcu_class_list) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = "$p\CLSID"
 		if (Test-Path -Path "Registry::$path") {
 			$items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
@@ -2027,7 +2027,7 @@ function Test-FolderOpen {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking FolderOpen Command")
 	$basepath = "Registry::HKEY_CURRENT_USER\Software\Classes\Folder\shell\open\command"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (Test-Path -Path $path) {
 			$items = Get-TrawlerItemProperty -Path $path

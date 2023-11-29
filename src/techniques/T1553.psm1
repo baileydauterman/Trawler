@@ -18,7 +18,7 @@ function Test-TrustProviderDLL {
 	)
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Trust Provider")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}"
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {

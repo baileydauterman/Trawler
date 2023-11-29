@@ -29,7 +29,7 @@ function Test-AMSIProviders {
 		"{2781761E-28E0-4109-99FE-B9D127C57AFE}"
 	)
 
-	$path = "$($State.DriveTargets.Hklm)\SOFTWARE\Microsoft\AMSI\Providers"
+	$path = "$($State.Drives.Hklm)\SOFTWARE\Microsoft\AMSI\Providers"
 	if (Test-Path -Path $path) {
 		foreach ($item in Get-TrawlerChildItem -Path $path -AsRegistry) {
 			if ($item.PSChildName -in $allowedProviders) {
@@ -75,7 +75,7 @@ function Test-BootVerificationProgram {
 	)
 
 	$State.WriteMessage("Checking BootVerificationProgram")
-	$path = "Registry::$($State.DriveTargets.Hklm)`SYSTEM\CurrentControlSet\Control\BootVerificationProgram"
+	$path = "Registry::$($State.Drives.Hklm)`SYSTEM\CurrentControlSet\Control\BootVerificationProgram"
 	if (-not (Test-Path -Path $path)) {
 		return
 	}
@@ -116,7 +116,7 @@ function Test-NaturalLanguageDevelopmentDLLs {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking NaturalLanguageDevelopment DLLs")
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\CurrentControlSet\Control\ContentIndex\Language"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\CurrentControlSet\Control\ContentIndex\Language"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -166,7 +166,7 @@ function Test-PrintMonitorDLLs {
 		"usbmon.dll",
 		"WSDMon.dll" # Server 2016
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Control\Print\Monitors"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Print\Monitors"
 	if (Test-Path -Path $path) {
 		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		foreach ($item in $items) {
@@ -212,7 +212,7 @@ function Test-MicrosoftTelemetryCommands {
 		"$env:systemroot\Windows\system32\CompatTelRunner.exe -m:generaltel.dll -f:DoCensusRun"
 
 	)
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\TelemetryController"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\TelemetryController"
 	if (-not (Test-Path -Path $path)) {
 		return 
 	}
@@ -250,7 +250,7 @@ function Test-RemoteUACSetting {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking RemoteUAC Setting")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
 	if (-not (Test-Path -Path $path)) {
 		return 
 	}

@@ -19,7 +19,7 @@ function Test-RDPShadowConsent {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking RDP Shadow Consent")
-	$path = "Registry::$($State.DriveTargets.Hklm)SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
 	if (Test-Path -Path $path) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -eq 'Shadow' -and ($_.Value -eq 4 -or $_.Value -eq 2)) {

@@ -23,11 +23,11 @@ function Test-Startups {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Startup Items")
 	$paths = @(
-		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
-		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
-		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx"
-		"$($State.DriveTargets.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices"
+		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
+		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx"
+		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices"
 		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
 		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
 		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
@@ -37,7 +37,7 @@ function Test-Startups {
 	if ($nevermind) {
 		foreach ($tmpbase in $paths) {
 			if ($tmpbase -match "REPLACE.*") {
-				foreach ($p in $State.DriveTargets.HkcuList) {
+				foreach ($p in $State.Drives.CurrentUsers) {
 					$newpath = $tmpbase.Replace("REPLACE", $p)
 					$paths += $newpath
 				}
@@ -53,7 +53,7 @@ function Test-Startups {
 	# Redoing this to only read reg-keys instead of using win32_StartupCommand
 	foreach ($tmpbase in $paths) {
 		if ($tmpbase -match "REPLACE.*") {
-			foreach ($p in $State.DriveTargets.HkcuList) {
+			foreach ($p in $State.Drives.CurrentUsers) {
 				$newpath = $tmpbase.Replace("REPLACE", $p)
 				$paths += $newpath
 			}
@@ -290,7 +290,7 @@ function Test-UserInitMPRScripts {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking UserInitMPRLogonScript")
 	$basepath = "Registry::HKEY_CURRENT_USER\Environment"
-	foreach ($p in $State.DriveTargets.HkcuList) {
+	foreach ($p in $State.Drives.CurrentUsers) {
 		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
 		if (-not (Test-Path -Path $path)) {
 			continue 

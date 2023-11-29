@@ -22,7 +22,7 @@ function Test-Services {
 	$State.WriteMessage("Checking Windows Services")
 
 	#$services = Get-CimInstance -ClassName Win32_Service  | Select-Object Name, PathName, StartMode, Caption, DisplayName, InstallDate, ProcessId, State
-	$service_path = "$($State.DriveTargets.Hklm)SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services"
+	$service_path = "$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Services"
 	$service_list = New-Object -TypeName "System.Collections.ArrayList"
 
 	if (-not (Test-Path -Path "Registry::$service_path")) {
@@ -37,7 +37,7 @@ function Test-Services {
 				Name     = $data.PSChildName
 				PathName = $data.ImagePath
 			}
-			$service.PathName = $service.PathName.Replace("\SystemRoot", "$($State.DriveTargets.AssumedHomeDrive)\Windows")
+			$service.PathName = $service.PathName.Replace("\SystemRoot", "$($State.Drives.AssumedHomeDrive)\Windows")
 			$service_list.Add($service) | Out-Null
 		}
 	}
@@ -63,7 +63,7 @@ function Test-Services {
 			$State.WriteDetection($detection)
 		}
 			
-		if ($service.PathName -match "$($State.DriveTargets.AssumedHomeDrive)\\Windows\\Temp\\.*") {
+		if ($service.PathName -match "$($State.Drives.AssumedHomeDrive)\\Windows\\Temp\\.*") {
 			# Service launching from Windows\Temp
 			$detection = [TrawlerDetection]::new(
 				'Service Launching from Windows Temp Directory',
@@ -158,7 +158,7 @@ function Test-ServicesByRegex {
 	$State.WriteMessage("Checking Service Registry Entries")
 	# Service DLL Inspection
 
-	$path = "{0}SYSTEM\$($State.DriveTargets.CurrentControlSet)\Services" -f $($State.DriveTargets.Hklm)
+	$path = "{0}SYSTEM\$($State.Drives.CurrentControlSet)\Services" -f $($State.Drives.Hklm)
 	if (-not (Test-Path -Path "Registry::$path")) {
 		return
 	}

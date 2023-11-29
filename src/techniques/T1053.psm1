@@ -157,7 +157,7 @@ function Test-ScheduledTasks {
     # TODO - Add Argument Comparison Checks
     $State.WriteMessage("Checking Scheduled Tasks")
 
-    $task_base_path = "$($State.DriveTargets.HomeDrive)\Windows\System32\Tasks"
+    $task_base_path = "$($State.Drives.HomeDrive)\Windows\System32\Tasks"
     $tasks = New-Object -TypeName "System.Collections.ArrayList"
     $author_pattern = '<Author>(?<Author>.*?)<\/Author>'
     $runas_pattern = '<Principal id="(?<RunAs>.*?)">'

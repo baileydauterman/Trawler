@@ -32,11 +32,11 @@ BeforeAll {
     mock Write-Host
     $State.OutputPath = ".\detection_test.csv"
     $State.SnapShotPath = ".\snapshot_test.csv"
-    $State.DriveTargets.Hklm = (Get-PSDrive TestRegistry).Root + "\"
-    $State.DriveTargets.HkcuList = @($($State.DriveTargets.Hklm))
-    $State.DriveTargets.AssumedHomeDrive = "C:"
-    $State.DriveTargets.HomeDrive = "TestDrive:"
-    $State.DriveTargets.ProgramData = "C:\ProgramData"
+    $State.Drives.Hklm = (Get-PSDrive TestRegistry).Root + "\"
+    $State.Drives.CurrentUsers = @($($State.Drives.Hklm))
+    $State.Drives.AssumedHomeDrive = "C:"
+    $State.Drives.HomeDrive = "TestDrive:"
+    $State.Drives.ProgramData = "C:\ProgramData"
 }
 
 Describe "Write-Detection" {
@@ -502,13 +502,13 @@ Describe "Drive-Change" {
 
 Describe "Check-Suspicious-File-Locations" {
     BeforeEach {
-        $State.DriveTargets.HomeDrive = "TestDrive:"
+        $State.Drives.HomeDrive = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 3 detections for suspicious exe files" {
-        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Users\Public\test.exe" -ItemType File -Force
-        $testPath2 = New-Item "$($State.DriveTargets.HomeDrive)\Users\Administrator\test.exe" -ItemType File -Force
-        $testPath3 = New-Item "$($State.DriveTargets.HomeDrive)\Users\Public\hello\test.exe" -ItemType File -Force
+        $testPath = New-Item "$($State.Drives.HomeDrive)\Users\Public\test.exe" -ItemType File -Force
+        $testPath2 = New-Item "$($State.Drives.HomeDrive)\Users\Administrator\test.exe" -ItemType File -Force
+        $testPath3 = New-Item "$($State.Drives.HomeDrive)\Users\Public\hello\test.exe" -ItemType File -Force
         Check-Suspicious-File-Locations
         Should -Invoke -CommandName $State.WriteDetection() -Times 3 -Exactly
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
@@ -523,11 +523,11 @@ Describe "Check-Suspicious-File-Locations" {
 
 Describe "Check-Narrator" {
     BeforeEach {
-        $State.DriveTargets.HomeDrive = "TestDrive:"
+        $State.Drives.HomeDrive = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 1 detection" {
-        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL" -ItemType File -Force
+        $testPath = New-Item "$($State.Drives.HomeDrive)\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL" -ItemType File -Force
         Check-Narrator
         Should -Invoke -CommandName $State.WriteDetection() -Times 1 -Exactly
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
@@ -551,11 +551,11 @@ Describe "Check-MSDTCDll" {
     }
     It "should write 6 detection" {
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleOciLib" -Value "test.dll"
-        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleOciLibPath" -Value "$($State.DriveTargets.AssumedHomeDrive)\Users\Public\test.dll"
+        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleOciLibPath" -Value "$($State.Drives.AssumedHomeDrive)\Users\Public\test.dll"
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleSqlLib" -Value "test.dll"
-        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleSqlLibPath" -Value "$($State.DriveTargets.AssumedHomeDrive)\Users\Public\test.dll"
+        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleSqlLibPath" -Value "$($State.Drives.AssumedHomeDrive)\Users\Public\test.dll"
         Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLib" -Value "test.dll"
-        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLibPath" -Value "$($State.DriveTargets.AssumedHomeDrive)\Users\Public\test.dll"
+        Set-ItemProperty  -Path "$path\MTxOCI" -Name "OracleXaLibPath" -Value "$($State.Drives.AssumedHomeDrive)\Users\Public\test.dll"
         Check-MSDTCDll
         Should -Invoke -CommandName $State.WriteDetection() -Times 6 -Exactly
     }
@@ -563,17 +563,17 @@ Describe "Check-MSDTCDll" {
 
 Describe "Check-Notepad++-Plugins" {
     BeforeEach {
-        $State.DriveTargets.HomeDrive = "TestDrive:"
+        $State.Drives.HomeDrive = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 1 detections" {
-        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Program Files\Notepad++\plugins\test\test.dll" -ItemType File -Force
+        $testPath = New-Item "$($State.Drives.HomeDrive)\Program Files\Notepad++\plugins\test\test.dll" -ItemType File -Force
         Check-Notepad++-Plugins
         Should -Invoke -CommandName $State.WriteDetection() -Times 1 -Exactly
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
     }
     It "should write 0 detections" {
-        New-Item "$($State.DriveTargets.HomeDrive)\Program Files\Notepad++\plugins\Config\nppPluginList.dll" -ItemType File -Force
+        New-Item "$($State.Drives.HomeDrive)\Program Files\Notepad++\plugins\Config\nppPluginList.dll" -ItemType File -Force
         Check-Notepad++-Plugins
         Should -Invoke -CommandName $State.WriteDetection() -Times 0 -Exactly
     }
@@ -581,11 +581,11 @@ Describe "Check-Notepad++-Plugins" {
 
 Describe "Check-OfficeAI" {
     BeforeEach {
-        $State.DriveTargets.HomeDrive = "TestDrive:"
+        $State.Drives.HomeDrive = "TestDrive:"
         Mock Write-Detection
     }
     It "should write 1 detections" {
-        $testPath = New-Item "$($State.DriveTargets.HomeDrive)\Program Files\Microsoft Office\root\Office16\ai.exe" -ItemType File -Force
+        $testPath = New-Item "$($State.Drives.HomeDrive)\Program Files\Microsoft Office\root\Office16\ai.exe" -ItemType File -Force
         Check-OfficeAI
         Should -Invoke -CommandName $State.WriteDetection() -Times 1 -Exactly
         Remove-Item $testPath -Force -ErrorAction SilentlyContinue
@@ -616,9 +616,9 @@ Describe "Check-ContextMenu" {
 
 Describe "Check-RATS" {
     BeforeEach {
-        $State.DriveTargets.HomeDrive = "TestDrive:"
+        $State.Drives.HomeDrive = "TestDrive:"
         Mock Write-Detection
-        New-Item "$($State.DriveTargets.HomeDrive)\Users\test_user" -ItemType File -Force
+        New-Item "$($State.Drives.HomeDrive)\Users\test_user" -ItemType File -Force
     }
     It "should write 0 detections" {
         #Check-RATS
@@ -626,8 +626,8 @@ Describe "Check-RATS" {
     }
     It "should write 3 detections" {
         New-Item "$env_programdata\AMMYY\access.log" -ItemType File -Force
-        New-Item "$($State.DriveTargets.HomeDrive)\Windows\dwrcs" -ItemType Directory -Force
-        New-Item "$($State.DriveTargets.HomeDrive)\Users\test_user\AppData\Local\GoTo" -ItemType Directory -Force
+        New-Item "$($State.Drives.HomeDrive)\Windows\dwrcs" -ItemType Directory -Force
+        New-Item "$($State.Drives.HomeDrive)\Users\test_user\AppData\Local\GoTo" -ItemType Directory -Force
         #Check-RATS
         #Should -Invoke -CommandName $State.WriteDetection(-Times 6 -Exactly)
     }

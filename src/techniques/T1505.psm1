@@ -18,7 +18,7 @@ function Test-TerminalServicesDLL {
 	)
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking TerminalServices DLL")
-	$path = "Registry::$($State.DriveTargets.Hklm)SYSTEM\CurrentControlSet\Services\TermService\Parameters"
+	$path = "Registry::$($State.Drives.Hklm)SYSTEM\CurrentControlSet\Services\TermService\Parameters"
 	if (-not (Test-Path -Path $path)) {
 		continue 
 	}
