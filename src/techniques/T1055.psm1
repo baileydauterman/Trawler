@@ -17,7 +17,7 @@ function Test-DNSServerLevelPluginDLL {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -34,13 +34,18 @@ function Test-DNSServerLevelPluginDLL {
 				continue
 			}
 
-			$detection = [PSCustomObject]@{
-				Name      = 'Review: DNS ServerLevelPluginDLL is active'
-				Risk      = [TrawlerRiskPriority]::Medium
-				Source    = 'Registry'
-				Technique = "T1055.001: Process Injection: Dynamic-link Library Injection"
-				Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", DLL: " + $_.Value
-			}
+			$detection = [TrawlerDetection]::new(
+				'Review: DNS ServerLevelPluginDLL is active',
+				[TrawlerRiskPriority]::Medium,
+				'Registry',
+				"T1055.001: Process Injection: Dynamic-link Library Injection",
+				[PSCustomObject]@{
+					KeyLocation = $path
+					EntryName   = $_.Name
+					DLL         = $_.Value
+				}
+			)
+
 			$State.WriteDetection($detection)
 		}
 	}

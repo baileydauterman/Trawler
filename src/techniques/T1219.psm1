@@ -13,7 +13,7 @@ function Test-RATS {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Drive Retargeting
@@ -184,7 +184,7 @@ function Test-RATS {
 	if (Test-Path "$($State.Drives.HomeDrive)\Users") {
 		$profile_names = Get-ChildItem "$($State.Drives.HomeDrive)\Users" -Directory | Select-Object *
 	}
- else {
+	else {
 		$profile_names = @()
 		Write-Warning "[!] Could not find '$($State.Drives.HomeDrive)\Users'!"
 	}
@@ -232,13 +232,16 @@ function Test-RATS {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Remote Access Tool Artifact'
-					Risk      = [TrawlerRiskPriority]::Medium
-					Source    = 'Software'
-					Technique = "T1219: Remote Access Software"
-					Meta      = "Possible RAT Artifact: $rat_name, Location: $tmppath"
-				}
+				$detection = [TrawlerDetection]::new(
+					'Remote Access Tool Artifact',
+					[TrawlerRiskPriority]::Medium,
+					'Software',
+					"T1219: Remote Access Software",
+					[PSCustomObject]@{
+						PossibleRATArtifact = $rat_name
+						Location = $tmppath
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}

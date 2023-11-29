@@ -13,7 +13,7 @@ function Test-TrustProviderDLL {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Drive Retargeting
@@ -23,23 +23,31 @@ function Test-TrustProviderDLL {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'Dll' -and $_.Value -notin @("C:\Windows\System32\pwrship.dll", "C:\Windows\System32\WindowsPowerShell\v1.0\pwrshsip.dll")) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Potential Hijacking of Trust Provider'
-					Risk      = [TrawlerRiskPriority]::VeryHigh
-					Source    = 'Registry'
-					Technique = "T1553: Subvert Trust Controls"
-					Meta      = "Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'Potential Hijacking of Trust Provider',
+					[TrawlerRiskPriority]::VeryHigh,
+					'Registry',
+					"T1553: Subvert Trust Controls",
+					[PSCustomObject]@{
+						KeyLocation = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}"
+						EntryName   = $_.Name
+						EntryValue  = $_.Value
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 			if ($_.Name -eq 'FuncName' -and $_.Value -ne 'PsVerifyHash') {
-				$detection = [PSCustomObject]@{
-					Name      = 'Potential Hijacking of Trust Provider'
-					Risk      = [TrawlerRiskPriority]::VeryHigh
-					Source    = 'Registry'
-					Technique = "T1553: Subvert Trust Controls"
-					Meta      = "Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'Potential Hijacking of Trust Provider',
+					[TrawlerRiskPriority]::VeryHigh,
+					'Registry',
+					"T1553: Subvert Trust Controls",
+					[PSCustomObject]@{
+						KeyLocation = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{603BCC1F-4B59-4E08-B724-D2C6297EF351}"
+						EntryName   = $_.Name
+						EntryValue  = $_.Value
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -50,7 +58,7 @@ function Test-SuspiciousCertificates {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -158,24 +166,38 @@ function Test-SuspiciousCertificates {
 
 		# Valid Cert, Unknown Signer, Valid in Date, Contains Root/AuthRoot/CertificateAuthority
 		if ($cert_verification_status -eq $true -and $valid_signer -eq $false -and $diff.Hours -ge 0) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Valid Root or CA Certificate Issued by Non-Standard Authority'
-				Risk      = [TrawlerRiskPriority]::Low
-				Source    = 'Certificates'
-				Technique = "T1553: Subvert Trust Controls: Install Root Certificate"
-				Meta      = "Subject Name: " + $cert.SubjectName.Name + ", Friendly Name: " + $cert.FriendlyName + ", Issuer: " + $cert.Issuer + ", Subject: " + $cert.Subject + ", NotValidAfter: " + $cert.NotAfter + ", NotValidBefore: " + $cert.NotBefore
-			}
+			$detection = [TrawlerDetection]::new(
+				'Valid Root or CA Certificate Issued by Non-Standard Authority',
+				[TrawlerRiskPriority]::Low,
+				'Certificates',
+				"T1553: Subvert Trust Controls: Install Root Certificate",
+				[PSCustomObject]@{
+					SubjectName    = $cert.SubjectName.Name
+					FriendlyName   = $cert.FriendlyName
+					Issuer         = $cert.Issuer
+					Subject        = $cert.Subject
+					NotValidAfter  = $cert.NotAfter
+					NotValidBefore = $cert.NotBefore
+				}
+			)
 			$State.WriteDetection($detection)
 			#Write-Host $detection.Meta
 		}
 		if ($cert_verification_status -ne $true -and $valid_signer -eq $false -and $diff.Hours -ge 0) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Invalid Root or CA Certificate Issued by Non-Standard Authority'
-				Risk      = [TrawlerRiskPriority]::Low
-				Source    = 'Certificates'
-				Technique = "T1553: Subvert Trust Controls: Install Root Certificate"
-				Meta      = "Subject Name: " + $cert.SubjectName.Name + ", Friendly Name: " + $cert.FriendlyName + ", Issuer: " + $cert.Issuer + ", Subject: " + $cert.Subject + ", NotValidAfter: " + $cert.NotAfter + ", NotValidBefore: " + $cert.NotBefore
-			}
+			$detection = [TrawlerDetection]::new(
+				'Invalid Root or CA Certificate Issued by Non-Standard Authority',
+				[TrawlerRiskPriority]::Low,
+				'Certificates',
+				"T1553: Subvert Trust Controls: Install Root Certificate",
+				[PSCustomObject]@{
+					SubjectName    = $cert.SubjectName.Name
+					FriendlyName   = $cert.FriendlyName
+					Issuer         = $cert.Issuer
+					Subject        = $cert.Subject
+					NotValidAfter  = $cert.NotAfter
+					NotValidBefore = $cert.NotBefore
+				}
+			)
 			$State.WriteDetection($detection)
 			#Write-Host $detection.Meta
 		}
@@ -186,46 +208,74 @@ function Test-SuspiciousCertificates {
 		if ($cert_verification_status -ne $true -and $valid_signer -eq $false -and $diff.Hours -ge 0) {
 			# Invalid Certs that are still within valid range
 			if ($cert.PSPath.Contains("\Root\")) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Installed Trusted Root Certificate Failed Validation'
-					Risk      = [TrawlerRiskPriority]::Medium
-					Source    = 'Certificates'
-					Technique = "T1553.004: Subvert Trust Controls: Install Root Certificate"
-					Meta      = "Subject Name: " + $cert.SubjectName.Name + ", Friendly Name: " + $cert.FriendlyName + ", Issuer: " + $cert.Issuer + ", Subject: " + $cert.Subject + ", NotValidAfter: " + $cert.NotAfter + ", NotValidBefore: " + $cert.NotBefore
-				}
+				$detection = [TrawlerDetection]::new(
+					'Installed Trusted Root Certificate Failed Validation',
+					[TrawlerRiskPriority]::Medium,
+					'Certificates',
+					"T1553.004: Subvert Trust Controls: Install Root Certificate",
+					[PSCustomObject]@{
+						SubjectName    = $cert.SubjectName.Name
+						FriendlyName   = $cert.FriendlyName
+						Issuer         = $cert.Issuer
+						Subject        = $cert.Subject
+						NotValidAfter  = $cert.NotAfter
+						NotValidBefore = $cert.NotBefore
+					}
+				)
 				$State.WriteDetection($detection)
 				#Write-Host $detection.Meta
 			}
 			elseif ($cert.PSPath.Contains("\AuthRoot\")) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Installed Third-Party Root Certificate Failed Validation'
-					Risk      = [TrawlerRiskPriority]::Low
-					Source    = 'Certificates'
-					Technique = "T1553.004: Subvert Trust Controls: Install Root Certificate"
-					Meta      = "Subject Name: " + $cert.SubjectName.Name + ", Friendly Name: " + $cert.FriendlyName + ", Issuer: " + $cert.Issuer + ", Subject: " + $cert.Subject + ", NotValidAfter: " + $cert.NotAfter + ", NotValidBefore: " + $cert.NotBefore
-				}
+				$detection = [TrawlerDetection]::new(
+					'Installed Third-Party Root Certificate Failed Validation',
+					[TrawlerRiskPriority]::Low,
+					'Certificates',
+					"T1553.004: Subvert Trust Controls: Install Root Certificate",
+					[PSCustomObject]@{
+						SubjectName    = $cert.SubjectName.Name
+						FriendlyName   = $cert.FriendlyName
+						Issuer         = $cert.Issuer
+						Subject        = $cert.Subject
+						NotValidAfter  = $cert.NotAfter
+						NotValidBefore = $cert.NotBefore
+					}
+				)
 				$State.WriteDetection($detection)
 				#Write-Host $detection.Meta
 			}
 			elseif ($cert.PSPath.Contains("\CertificateAuthority\")) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Installed Intermediary Certificate Failed Validation'
-					Risk      = [TrawlerRiskPriority]::Low
-					Source    = 'Certificates'
-					Technique = "T1553.004: Subvert Trust Controls: Install Root Certificate"
-					Meta      = "Subject Name: " + $cert.SubjectName.Name + ", Friendly Name: " + $cert.FriendlyName + ", Issuer: " + $cert.Issuer + ", Subject: " + $cert.Subject + ", NotValidAfter: " + $cert.NotAfter + ", NotValidBefore: " + $cert.NotBefore
-				}
+				$detection = [TrawlerDetection]::new(
+					'Installed Intermediary Certificate Failed Validation',
+					[TrawlerRiskPriority]::Low,
+					'Certificates',
+					"T1553.004: Subvert Trust Controls: Install Root Certificate",
+					[PSCustomObject]@{
+						SubjectName    = $cert.SubjectName.Name
+						FriendlyName   = $cert.FriendlyName
+						Issuer         = $cert.Issuer
+						Subject        = $cert.Subject
+						NotValidAfter  = $cert.NotAfter
+						NotValidBefore = $cert.NotBefore
+					}
+				)
 				$State.WriteDetection($detection)
 				#Write-Host $detection.Meta
 			}
 			else {
-				$detection = [PSCustomObject]@{
-					Name      = 'Installed Certificate Failed Validation'
-					Risk      = [TrawlerRiskPriority]::VeryLow
-					Source    = 'Certificates'
-					Technique = "T1553: Subvert Trust Controls"
-					Meta      = "Subject Name: " + $cert.SubjectName.Name + ", Friendly Name: " + $cert.FriendlyName + ", Issuer: " + $cert.Issuer + ", Subject: " + $cert.Subject + ", NotValidAfter: " + $cert.NotAfter + ", NotValidBefore: " + $cert.NotBefore
-				}
+				$detection = [TrawlerDetection]::new(
+					'Installed Certificate Failed Validation',
+					[TrawlerRiskPriority]::VeryLow,
+					'Certificates',
+					"T1553: Subvert Trust Controls",
+					[PSCustomObject]@{
+						SubjectName    = $cert.SubjectName.Name
+						FriendlyName   = $cert.FriendlyName
+						Issuer         = $cert.Issuer
+						Subject        = $cert.Subject
+						NotValidAfter  = $cert.NotAfter
+						NotValidBefore = $cert.NotBefore
+					}
+				)
 				$State.WriteDetection($detection)
 				#Write-Host $detection.Meta
 			}

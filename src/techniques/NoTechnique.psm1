@@ -2,7 +2,7 @@ function Test-NoTechnique {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 
@@ -13,7 +13,7 @@ function Test-SuspiciousFileLocations {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 
@@ -27,14 +27,13 @@ function Test-SuspiciousFileLocations {
 	foreach ($path in $recursive_paths_to_check) {
 		$items = Get-ChildItem -Path $path -Recurse -ErrorAction SilentlyContinue -Include $suspicious_extensions
 		foreach ($item in $items) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Anomalous File in Suspicious Location'
-				Risk      = [TrawlerRiskPriority]::High
-				Source    = 'Windows'
-				Technique = "N/A"
-				Meta      = "File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
-			}
-			$State.WriteDetection($detection)
+			$State.WriteDetection([TrawlerDetection]::new(
+				'Anomalous File in Suspicious Location',
+				[TrawlerRiskPriority]::High,
+				'Windows',
+				"N/A",
+				($item | Select-Object FullName, CreationTime, LastWriteTime)
+			))
 		}
 	}
 }

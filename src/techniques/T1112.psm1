@@ -70,7 +70,7 @@ function Test-BootVerificationProgram {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 
@@ -110,7 +110,7 @@ function Test-NaturalLanguageDevelopmentDLLs {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -134,13 +134,16 @@ function Test-NaturalLanguageDevelopmentDLLs {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'DLL Override on Natural Language Development Platform'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1112: Modify Registry"
-					Meta      = "Registry Path: " + $item.Name + ", DLL: " + $dll
-				}
+				$detection = [TrawlerDetection]::new(
+					'DLL Override on Natural Language Development Platform',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1112: Modify Registry",
+					[PSCustomObject]@{
+						RegistryPath = $item.Name
+						DLL          = $dll
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -151,7 +154,7 @@ function Test-PrintMonitorDLLs {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -178,13 +181,16 @@ function Test-PrintMonitorDLLs {
 				}
 
 				if ($data.Driver -notin $standard_print_monitors) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Non-Standard Print Monitor DLL'
-						Risk      = [TrawlerRiskPriority]::Medium
-						Source    = 'Registry'
-						Technique = "T1112: Modify Registry"
-						Meta      = "Registry Path: " + $item.Name + ", System32 DLL: " + $data.Driver
-					}
+					$detection = [TrawlerDetection]::new(
+						'Non-Standard Print Monitor DLL',
+						[TrawlerRiskPriority]::Medium,
+						'Registry',
+						"T1112: Modify Registry",
+						[PSCustomObject]@{
+							RegistryPath = $item.Name
+							System32DLL  = $data.Driver
+						}
+					)
 					$State.WriteDetection($detection)
 				}
 			}
@@ -196,7 +202,7 @@ function Test-MicrosoftTelemetryCommands {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 
@@ -244,7 +250,7 @@ function Test-RemoteUACSetting {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting

@@ -13,7 +13,7 @@ function Test-GPOExtensions {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -61,13 +61,16 @@ function Test-GPOExtensions {
 						continue
 					}
 
-					$detection = [PSCustomObject]@{
-						Name      = 'Review: Non-Standard GPO Extension DLL'
-						Risk      = [TrawlerRiskPriority]::Medium
-						Source    = 'Windows GPO Extensions'
-						Technique = "T1484.001: Domain Policy Modification: Group Policy Modification"
-						Meta      = "Key: " + $item.Name + ", DLL: " + $_.Value
-					}
+					$detection = [TrawlerDetection]::new(
+						'Review: Non-Standard GPO Extension DLL',
+						[TrawlerRiskPriority]::Medium,
+						'Windows GPO Extensions',
+						"T1484.001: Domain Policy Modification: Group Policy Modification",
+						[PSCustomObject]@{
+							Key = $item.Name
+							DLL = $_.Value
+						}
+					)
 
 					$State.WriteDetection($detection)
 				}

@@ -13,7 +13,7 @@ function Test-Processes {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -36,36 +36,41 @@ function Test-Processes {
 		}
 
 		if (Test-RemoteAccessTrojanTerms -Value $process.CommandLine) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Running Process has known-RAT Keyword'
-				Risk      = [TrawlerRiskPriority]::Medium
-				Source    = 'Processes'
-				Technique = "T1059: Command and Scripting Interpreter"
-				Meta      = "Process Name: " + $process.ProcessName + ", CommandLine: " + $process.CommandLine + ", Executable: " + $process.ExecutablePath + ", RAT Keyword: " + $term
-			}
+			$detection = [TrawlerDetection]::new(
+				'Running Process has known-RAT Keyword',
+				[TrawlerRiskPriority]::Medium,
+				'Processes',
+				"T1059: Command and Scripting Interpreter",
+				[PSCustomObject]@{
+					ProcessName    = $process.ProcessName
+					CommandLine    = $process.CommandLine
+					ExecutablePath = $process.ExecutablePath
+					RATKeyword     = $term
+				}
+			)
 			$State.WriteDetection($detection)
 		}
 
 		if (Test-IPAddress -Value $process.CommandLine) {
-			$detection = [PSCustomObject]@{
-				Name      = 'IP Address Pattern detected in Process CommandLine'
-				Risk      = [TrawlerRiskPriority]::Medium
-				Source    = 'Processes'
-				Technique = "T1059: Command and Scripting Interpreter"
-				Meta      = "Process Name: " + $process.ProcessName + ", CommandLine: " + $process.CommandLine + ", Executable: " + $process.ExecutablePath
-			}
+			$detection = [TrawlerDetection]::new(
+				'IP Address Pattern detected in Process CommandLine',
+				[TrawlerRiskPriority]::Medium,
+				'Processes',
+				"T1059: Command and Scripting Interpreter",
+				($process | Select-Object ProcessName, CommandLine, Executable)
+			)
 			$State.WriteDetection($detection)
 		}
 		
 		# TODO - Determine if this should be changed to implement allow-listing through a set boolean or stay as-is
 		if (Test-SuspiciousProcessPaths -Value $process.ExecutablePath) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Suspicious Executable Path on Running Process'
-				Risk      = [TrawlerRiskPriority]::High
-				Source    = 'Processes'
-				Technique = "T1059: Command and Scripting Interpreter"
-				Meta      = "Process Name: " + $process.ProcessName + ", CommandLine: " + $process.CommandLine + ", Executable: " + $process.ExecutablePath
-			}
+			$detection = [TrawlerDetection]::new(
+				'Suspicious Executable Path on Running Process',
+				[TrawlerRiskPriority]::High,
+				'Processes',
+				"T1059: Command and Scripting Interpreter",
+				($process | Select-Object ProcessName, CommandLine, Executable)
+			)
 			$State.WriteDetection($detection)
 		}
 	}

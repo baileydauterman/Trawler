@@ -30,7 +30,7 @@ function Test-MSDTCDll {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# https://pentestlab.blog/2020/03/04/persistence-dll-hijacking/
@@ -49,13 +49,18 @@ function Test-MSDTCDll {
 		$data.PSObject.Properties | ForEach-Object {
 			if ($oracleMatches.ContainsKey($_.Name)) {
 				if ($_.Value -ne $matches[$_.Name]) {
-					$detection = [PSCustomObject]@{
-						Name      = 'MSDTC Key/Value Mismatch'
-						Risk      = [TrawlerRiskPriority]::Medium
-						Source    = 'Windows MSDTC'
-						Technique = "T1574: Hijack Execution Flow"
-						Meta      = "Key: " + $path + ", Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Expected Value: " + $matches[$_.Name]
-					}
+					$detection = [TrawlerDetection]::new(
+						'MSDTC Key/Value Mismatch',
+						[TrawlerRiskPriority]::Medium,
+						'Windows MSDTC',
+						"T1574: Hijack Execution Flow",
+						[PSCustomObject]@{
+							KeyLocation   = $path
+							EntryName     = $_.Name
+							EntryValue    = $_.Value
+							ExpectedValue = $matches[$_.Name]
+						}
+					)
 					$State.WriteDetection($detection)
 				}
 			}
@@ -67,7 +72,7 @@ function Test-PeerDistExtensionDll {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Drive Targeting
@@ -78,13 +83,18 @@ function Test-PeerDistExtensionDll {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "PeerdistDllName" -and $_.Value -ne $expected_value) {
-				$detection = [PSCustomObject]@{
-					Name      = 'PeerDist DLL does not match expected value'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Expected Value: $expected_value, Entry Value: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'PeerDist DLL does not match expected value',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation   = $path
+						EntryName     = $_.Name
+						EntryValue    = $_.Value
+						ExpectedValue = $expected_value
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -95,7 +105,7 @@ function Test-InternetSettingsLUIDll {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Drive Retargeting
@@ -106,13 +116,18 @@ function Test-InternetSettingsLUIDll {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "0" -and $_.Value -ne $expected_value) {
-				$detection = [PSCustomObject]@{
-					Name      = 'InternetSettings LUI Error DLL does not match expected value'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Expected Value: $expected_value, Entry Value: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'InternetSettings LUI Error DLL does not match expected value',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation   = $path
+						EntryName     = $_.Name
+						EntryValue    = $_.Value
+						ExpectedValue = $expected_value
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -123,7 +138,7 @@ function Test-BIDDll {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -156,13 +171,17 @@ function Test-BIDDll {
 						}
 					}
 					if ($match -eq $false) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Non-Standard Built-In Diagnostics (BID) DLL'
-							Risk      = [TrawlerRiskPriority]::High
-							Source    = 'Registry'
-							Technique = "T1574: Hijack Execution Flow"
-							Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-						}
+						$detection = [TrawlerDetection]::new(
+							'Non-Standard Built-In Diagnostics (BID) DLL',
+							[TrawlerRiskPriority]::High,
+							'Registry',
+							"T1574: Hijack Execution Flow",
+							[PSCustomObject]@{
+								KeyLocation = $path
+								EntryName   = $_.Name
+								EntryValue  = $_.Value
+							}
+						)
 						$State.WriteDetection($detection)
 					}
 				}
@@ -184,13 +203,17 @@ function Test-WindowsUpdateTestDlls {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Windows Update Test DLL Exists'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'Windows Update Test DLL Exists',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						EntryName   = $_.Name
+						EntryValue  = $_.Value
+					}
+				)
 				$State.WriteDetection($detection)
 				
 			}
@@ -202,7 +225,7 @@ function Test-MiniDumpAuxiliaryDLLs {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -230,13 +253,16 @@ function Test-MiniDumpAuxiliaryDLLs {
 				}
 			}
 			if ($matches_good -eq $false) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Non-Standard MiniDumpAuxiliary DLL'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, DLL: " + $_.Name
-				}
+				$detection = [TrawlerDetection]::new(
+					'Non-Standard MiniDumpAuxiliary DLL',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						DLL         = $_.Name
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -247,7 +273,7 @@ function Test-ExplorerHelperUtilities {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -273,13 +299,17 @@ function Test-ExplorerHelperUtilities {
 						continue
 					}
 
-					$detection = [PSCustomObject]@{
-						Name      = 'Explorer\MyComputer Utility Hijack'
-						Risk      = [TrawlerRiskPriority]::Medium
-						Source    = 'Registry'
-						Technique = "T1574: Hijack Execution Flow"
-						Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", DLL: " + $_.Value
-					}
+					$detection = [TrawlerDetection]::new(
+						'Explorer\MyComputer Utility Hijack',
+						[TrawlerRiskPriority]::Medium,
+						'Registry',
+						"T1574: Hijack Execution Flow",
+						[PSCustomObject]@{
+							KeyLocation = $path
+							EntryName   = $_.Name
+							DLL         = $_.Value
+						}
+					)
 					$State.WriteDetection($detection)
 				}
 			}
@@ -292,7 +322,7 @@ function Test-ProcessModules {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -337,24 +367,38 @@ function Test-ProcessModules {
 					$signature = Get-AuthenticodeSignature $module.FileName
 					if ($signature.Status -ne 'Valid') {
 						$item = Get-ChildItem -Path $module.FileName -File -ErrorAction SilentlyContinue | Select-Object *
-						$detection = [PSCustomObject]@{
-							Name      = 'Suspicious Unsigned DLL with commonly-masqueraded name loaded into running process.'
-							Risk      = [TrawlerRiskPriority]::VeryHigh
-							Source    = 'Processes'
-							Technique = "T1574: Hijack Execution Flow"
-							Meta      = "DLL: " + $module.FileName + ", Process Name: " + $process.ProcessName + ", PID: " + $process.ProcessId + ", Execuable Path: " + $process.ExecutablePath + ", DLL Creation Time: " + $item.CreationTime + ", DLL Last Write Time: " + $item.LastWriteTime
-						}
+						$detection = [TrawlerDetection]::new(
+							'Suspicious Unsigned DLL with commonly-masqueraded name loaded into running process.',
+							[TrawlerRiskPriority]::VeryHigh,
+							'Processes',
+							"T1574: Hijack Execution Flow",
+							[PSCustomObject]@{
+								DLL              = $module.FileName
+								ProcessName      = $process.ProcessName
+								PID              = $process.ProcessId
+								ExecutablePath   = $process.ExecutablePath
+								DLLCreationTime  = $item.CreationTime
+								DLLLastWriteTime = $item.LastWriteTime
+							}
+						)
 						$State.WriteDetection($detection)
 					}
 					else {
 						$item = Get-ChildItem -Path $module.FileName -File -ErrorAction SilentlyContinue | Select-Object *
-						$detection = [PSCustomObject]@{
-							Name      = 'Suspicious DLL with commonly-masqueraded name loaded into running process.'
-							Risk      = [TrawlerRiskPriority]::High
-							Source    = 'Processes'
-							Technique = "T1574: Hijack Execution Flow"
-							Meta      = "DLL: " + $module.FileName + ", Process Name: " + $process.ProcessName + ", PID: " + $process.ProcessId + ", Execuable Path: " + $process.ExecutablePath + ", DLL Creation Time: " + $item.CreationTime + ", DLL Last Write Time: " + $item.LastWriteTime
-						}
+						$detection = [TrawlerDetection]::new(
+							'Suspicious DLL with commonly-masqueraded name loaded into running process.',
+							[TrawlerRiskPriority]::High,
+							'Processes',
+							"T1574: Hijack Execution Flow",
+							[PSCustomObject]@{
+								DLL              = $module.FileName
+								ProcessName      = $process.ProcessName
+								PID              = $process.ProcessId
+								ExecutablePath   = $process.ExecutablePath
+								DLLCreationTime  = $item.CreationTime
+								DLLLastWriteTime = $item.LastWriteTime
+							}
+						)
 						# TODO - This is too noisy to use as-is - these DLLs get loaded into quite a few processes.
 						# $State.WriteDetection($detection)
 					}
@@ -368,7 +412,7 @@ function Test-WindowsUnsignedFiles {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -391,13 +435,13 @@ function Test-WindowsUnsignedFiles {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Unsigned DLL/EXE present in critical OS directory'
-					Risk      = [TrawlerRiskPriority]::VeryHigh
-					Source    = 'Windows'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "File: " + $file.FullName + ", Creation Time: " + $item.CreationTime + ", Last Write Time: " + $item.LastWriteTime
-				}
+				$detection = [TrawlerDetection]::new(
+					'Unsigned DLL/EXE present in critical OS directory',
+					[TrawlerRiskPriority]::VeryHigh,
+					'Windows',
+					"T1574: Hijack Execution Flow",
+					($file | Select-Object FullName, CreationTime, LastWriteTime)
+				)
 				#Write-Host $detection.Meta
 				$State.WriteDetection($detection)
 			}
@@ -409,7 +453,7 @@ function Test-ErrorHandlerCMD {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Support Drive Retargeting
@@ -424,13 +468,16 @@ function Test-ErrorHandlerCMD {
 		$script_content = Get-Content $path
 		foreach ($line_ in $script_content) {
 			if (Test-SuspiciousTerms -Value $line_ -and $script_content_detection -eq $false) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Suspicious Content in ErrorHandler.cmd'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Windows'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "File: $path, Suspicious Line: +$line_"
-				}
+				$detection = [TrawlerDetection]::new(
+					'Suspicious Content in ErrorHandler.cmd',
+					[TrawlerRiskPriority]::High,
+					'Windows',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						File           = $path
+						SuspiciousLine = $line
+					}
+				)
 				$State.WriteDetection($detection)
 				$script_content_detection = $true
 			}
@@ -440,13 +487,15 @@ function Test-ErrorHandlerCMD {
 	}
 
 	if ($script_content_detection -eq $false) {
-		$detection = [PSCustomObject]@{
-			Name      = 'Review: ErrorHandler.cmd Existence'
-			Risk      = [TrawlerRiskPriority]::High
-			Source    = 'Windows'
-			Technique = "T1574: Hijack Execution Flow"
-			Meta      = "File Location: $path"
-		}
+		$detection = [TrawlerDetection]::new(
+			'Review: ErrorHandler.cmd Existence',
+			[TrawlerRiskPriority]::High,
+			'Windows',
+			"T1574: Hijack Execution Flow",
+			[PSCustomObject]@{
+				KeyLocation = $path
+			}
+		)
 		$State.WriteDetection($detection)
 	}
 }
@@ -455,7 +504,7 @@ function Test-KnownManagedDebuggers {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -482,13 +531,16 @@ function Test-KnownManagedDebuggers {
 				}
 			}
 			if ($matches_good -eq $false -and $pass) {
-				$detection = [PSCustomObject]@{
-					Name      = 'Non-Standard KnownManagedDebugging DLL'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, DLL: " + $_.Name
-				}
+				$detection = [TrawlerDetection]::new(
+					'Non-Standard KnownManagedDebugging DLL',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						DLL         = $_.Name
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -499,7 +551,7 @@ function Test-Wow64LayerAbuse {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -514,13 +566,17 @@ function Test-Wow64LayerAbuse {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Non-Standard Wow64\x86 DLL loaded into x86 process'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, Target Process Name: " + $_.Name + " Loaded DLL: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'Non-Standard Wow64\x86 DLL loaded into x86 process',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation       = $path
+						TargetProcessName = $_.Name
+						LoadedDLL         = $_.Value
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -532,7 +588,7 @@ function Test-SEMgrWallet {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# TODO - Implement snapshot skipping
@@ -547,13 +603,17 @@ function Test-SEMgrWallet {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Potential SEMgr Wallet DLL Hijack'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, Entry: " + $_.Name + " Loaded DLL: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'Potential SEMgr Wallet DLL Hijack',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						EntryName   = $_.Name
+						LoadedValue = $_.Value
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -564,7 +624,7 @@ function Test-WERRuntimeExceptionHandlers {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -603,13 +663,16 @@ function Test-WERRuntimeExceptionHandlers {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Potential WER Helper Hijack'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, DLL: " + $_.Name
-				}
+				$detection = [TrawlerDetection]::new(
+					'Potential WER Helper Hijack',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						DLL         = $_.Name
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -621,7 +684,7 @@ function Test-TerminalServicesInitialProgram {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -648,13 +711,17 @@ function Test-TerminalServicesInitialProgram {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'TerminalServices InitialProgram Active'
-					Risk      = [TrawlerRiskPriority]::Medium
-					Source    = 'Registry'
-					Technique = "T1574: Hijack Execution Flow"
-					Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", DLL: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'TerminalServices InitialProgram Active',
+					[TrawlerRiskPriority]::Medium,
+					'Registry',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						EntryName   = $_.Name
+						DLL         = $_.Value
+					}
+				)
 				$State.WriteDetection($detection)
 			}
 		}
@@ -666,7 +733,7 @@ function Test-EventViewerMSC {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -717,7 +784,7 @@ function Test-RDPStartupPrograms {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -738,13 +805,18 @@ function Test-RDPStartupPrograms {
 							continue
 						}
 
-						$detection = [PSCustomObject]@{
-							Name      = 'Non-Standard RDP Startup Program'
-							Risk      = [TrawlerRiskPriority]::Medium
-							Source    = 'Registry'
-							Technique = "T1574: Hijack Execution Flow"
-							Meta      = "Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value + ", Abnormal Package: " + $package
-						}
+						$detection = [TrawlerDetection]::new(
+							'Non-Standard RDP Startup Program',
+							[TrawlerRiskPriority]::Medium,
+							'Registry',
+							"T1574: Hijack Execution Flow",
+							[PSCustomObject]@{
+								KeyLocation     = $path
+								EntryName       = $_.Name
+								EntryValue      = $_.Value
+								AbnormalPackage = $package
+							}
+						)
 						$State.WriteDetection($detection)
 					}
 				}
@@ -762,7 +834,7 @@ function Test-PATHHijacks {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -792,13 +864,13 @@ function Test-PATHHijacks {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Possible PATH Binary Hijack - same name as SYS32 binary in earlier PATH entry'
-					Risk      = [TrawlerRiskPriority]::VeryHigh
-					Source    = 'PATH'
-					Technique = "T1574.007: Hijack Execution Flow: Path Interception by PATH Environment Variable"
-					Meta      = "File: " + $bin.FullName + ", Creation Time: " + $bin.CreationTime + ", Last Write Time: " + $bin.LastWriteTime
-				}
+				$detection = [TrawlerDetection]::new(
+					'Possible PATH Binary Hijack - same name as SYS32 binary in earlier PATH entry',
+					[TrawlerRiskPriority]::VeryHigh,
+					'PATH',
+					"T1574.007: Hijack Execution Flow: Path Interception by PATH Environment Variable",
+					($bin | Select-Object FullName, CreationTime, LastWriteTime)
+				)
 
 				$State.WriteDetection($detection)
 			}
@@ -814,7 +886,7 @@ function Test-ServiceHijacks {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 
@@ -854,13 +926,17 @@ function Test-ServiceHijacks {
 					$base_path += $path
 					$test_path = $base_path + ".exe"
 					if (Test-Path $test_path) {
-						$detection = [PSCustomObject]@{
-							Name      = 'Possible Service Path Hijack via Unquoted Path'
-							Risk      = [TrawlerRiskPriority]::High
-							Source    = 'Services'
-							Technique = "T1574.009: Create or Modify System Process: Windows Service"
-							Meta      = "Service Name: " + $service.Name + ", Service Path: " + $service.PathName + ", Suspicious File: " + $test_path
-						}
+						$detection = [TrawlerDetection]::new(
+							'Possible Service Path Hijack via Unquoted Path',
+							[TrawlerRiskPriority]::High,
+							'Services',
+							"T1574.009: Create or Modify System Process: Windows Service",
+							[PSCustomObject]@{
+								ServiceName    = $service.Name
+								ServicePath    = $service.Path
+								SuspiciousFile = $test_path
+							}
+						)
 						$State.WriteDetection($detection)
 					}
 					$base_path += " "

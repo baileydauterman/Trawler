@@ -1,10 +1,10 @@
 function Test-T1098 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-RDPShadowConsent $State
 }
@@ -13,7 +13,7 @@ function Test-RDPShadowConsent {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -27,13 +27,17 @@ function Test-RDPShadowConsent {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'RDP Shadowing without Consent is Enabled'
-					Risk      = [TrawlerRiskPriority]::High
-					Source    = 'Registry'
-					Technique = "T1098: Account Manipulation"
-					Meta      = "Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				}
+				$detection = [TrawlerDetection]::new(
+					'RDP Shadowing without Consent is Enabled',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1098: Account Manipulation",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						EntryName   = $_.Name
+						EntryKey    = $_.Value
+					}
+				)
 				
 				$State.WriteDetection($detection)
 			}

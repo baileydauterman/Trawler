@@ -13,7 +13,7 @@ function Test-BITS {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -38,13 +38,19 @@ function Test-BITS {
 			continue
 		}
 
-		$detection = [PSCustomObject]@{
-			Name      = 'BITS Item Review'
-			Risk      = [TrawlerRiskPriority]::Low
-			Source    = 'BITS'
-			Technique = "T1197: BITS Jobs"
-			Meta      = "Item Name: " + $item.DisplayName + ", TransferType: " + $item.TransferType + ", Job State: " + $item.JobState + ", User: " + $item.OwnerAccount + ", Command: " + $cmd
-		}
+		$detection = [TrawlerDetection]::new(
+			'BITS Item Review',
+			[TrawlerRiskPriority]::Low,
+			'BITS',
+			"T1197: BITS Jobs",
+			[PSCustomObject]@{
+				ItemName     = $item.DisplayName
+				TransferType = $item.TransferType
+				JobState     = $item.JobState
+				User         = $item.OwnerAccount
+				Command      = $cmd
+			}
+		)
 		$State.WriteDetection($detection)
 	}
 }

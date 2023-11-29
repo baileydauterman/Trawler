@@ -3,7 +3,7 @@ function Build-ComHashTables {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 

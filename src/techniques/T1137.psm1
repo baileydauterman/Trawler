@@ -16,7 +16,7 @@ function Test-OfficeGlobalDotName {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -39,13 +39,17 @@ function Test-OfficeGlobalDotName {
 						continue
 					}
 
-					$detection = [PSCustomObject]@{
-						Name      = 'Persistence via Office GlobalDotName'
-						Risk      = [TrawlerRiskPriority]::VeryHigh
-						Source    = 'Office'
-						Technique = "T1137.001: Office Application Office Template Macros"
-						Meta      = "Key Location: HKCU\software\microsoft\office\$version.0\word\options, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					}
+					$detection = [TrawlerDetection]::new(
+						'Persistence via Office GlobalDotName',
+						[TrawlerRiskPriority]::VeryHigh,
+						'Office',
+						"T1137.001: Office Application Office Template Macros",
+						[PSCustomObject]@{
+							KeyLocation = "HKCU\software\microsoft\office\$version.0\word\options"
+							EntryName   = $_.Name
+							EntryValue  = $_.Value
+						}
+					)
 					$State.WriteDetection($detection)
 				}
 			}
@@ -57,7 +61,7 @@ function Test-OfficeTest {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Drive Retargeting
@@ -71,13 +75,17 @@ function Test-OfficeTest {
 		}
 
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
-			$detection = [PSCustomObject]@{
-				Name      = 'Persistence via Office test\Special\Perf Key'
-				Risk      = [TrawlerRiskPriority]::VeryHigh
-				Source    = 'Office'
-				Technique = "T1137.002: Office Application Startup: Office Test"
-				Meta      = "Key Location: HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf: " + $_.Name + ", Entry Value: " + $_.Value
-			}
+			$detection = [TrawlerDetection]::new(
+				'Persistence via Office test\Special\Perf Key',
+				[TrawlerRiskPriority]::VeryHigh,
+				'Office',
+				"T1137.002: Office Application Startup: Office Test",
+				[PSCustomObject]@{
+					KeyLocation = "HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf"
+					EntryName   = $_.Name
+					EntryValue  = $_.Value
+				}
+			)
 			$State.WriteDetection($detection)
 		}
 	}
@@ -85,13 +93,17 @@ function Test-OfficeTest {
 	$path = "Registry::$($State.Drives.Hklm)Software\Microsoft\Office test\Special\Perf"
 	if (Test-Path -Path $path) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
-			$detection = [PSCustomObject]@{
-				Name      = 'Persistence via Office test\Special\Perf Key'
-				Risk      = [TrawlerRiskPriority]::VeryHigh
-				Source    = 'Office'
-				Technique = "T1137.002: Office Application Startup: Office Test"
-				Meta      = "Key Location: HKEY_LOCAL_MACHINE\Software\Microsoft\Office test\Special\Perf, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-			}
+			$detection = [TrawlerDetection]::new(
+				'Persistence via Office test\Special\Perf Key',
+				[TrawlerRiskPriority]::VeryHigh,
+				'Office',
+				"T1137.002: Office Application Startup: Office Test",
+				[PSCustomObject]@{
+					KeyLocation = "HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf"
+					EntryName   = $_.Name
+					EntryValue  = $_.Value
+				}
+			)
 
 			$State.WriteDetection($detection)
 		}
@@ -102,7 +114,7 @@ function Test-OutlookStartup {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -118,13 +130,15 @@ function Test-OutlookStartup {
 		return
 	}
 
-	$detection = [PSCustomObject]@{
-		Name      = 'Potential Persistence via Outlook Application Startup'
-		Risk      = [TrawlerRiskPriority]::Medium
-		Source    = 'Office'
-		Technique = "T1137.006: Office Application Startup: Add-ins"
-		Meta      = "File: " + $path
-	}
+	$detection = [TrawlerDetection]::new(
+		'Potential Persistence via Outlook Application Startup',
+		[TrawlerRiskPriority]::Medium,
+		'Office',
+		"T1137.006: Office Application Startup: Add-ins",
+		[PSCustomObject]@{
+			File = $path
+		}
+	)
 
 	$State.WriteDetection($detection)
 }
@@ -134,7 +148,7 @@ function Test-OfficeTrustedLocations {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -189,13 +203,15 @@ function Test-OfficeTrustedLocations {
 
 					if ('{0}' -f $data.Path -notin $default_trusted_locations) {
 						$p = $data.Path
-						$detection = [PSCustomObject]@{
-							Name      = 'Non-Standard Office Trusted Location'
-							Risk      = [TrawlerRiskPriority]::Medium
-							Source    = 'Office'
-							Technique = "T1137.006: Office Application Startup: Add-ins"
-							Meta      = "Location: $p"
-						}
+						$detection = [TrawlerDetection]::new(
+							'Non-Standard Office Trusted Location',
+							[TrawlerRiskPriority]::Medium,
+							'Office',
+							"T1137.006: Office Application Startup: Add-ins",
+							[PSCustomObject]@{
+								Location = $p
+							}
+						)
 						$State.WriteDetection($detection)
 						# TODO - Still working on this - can't read registry without expanding the variables right now
 						# https://github.com/PowerShell/PowerShell/issues/16812
@@ -218,13 +234,13 @@ function Test-OfficeTrustedLocations {
 					continue
 				}
 
-				$detection = [PSCustomObject]@{
-					Name      = 'Potential Persistence via Office Startup Addin'
-					Risk      = [TrawlerRiskPriority]::Medium
-					Source    = 'Office'
-					Technique = "T1137.006: Office Application Startup: Add-ins"
-					Meta      = "File: " + $item.FullName + ", Last Write Time: " + $item.LastWriteTime
-				}
+				$detection = [TrawlerDetection]::new(
+					'Potential Persistence via Office Startup Addin',
+					[TrawlerRiskPriority]::Medium,
+					'Office',
+					"T1137.006: Office Application Startup: Add-ins",
+					($item | Select-Object FullName, LastWriteTime)
+				)
 
 				$State.WriteDetection($detection)
 			}

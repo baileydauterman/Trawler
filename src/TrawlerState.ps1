@@ -567,6 +567,10 @@ class TrawlerState {
     # Write out a message from Trawler
     #>
     [void] WriteMessage([string]$message) {
+        if ($this.Quiet) {
+            return
+        }
+
         Write-Host "[+] $message"
     }
 
@@ -574,6 +578,10 @@ class TrawlerState {
     # Display the logo in the console
     #>
     [void] WriteLogo() {
+        if ($this.Quiet) {
+            return
+        }
+        
         $logo = "
   __________  ___ _       ____    __________ 
  /_  __/ __ \/   | |     / / /   / ____/ __ \
@@ -588,8 +596,8 @@ class TrawlerState {
     }
 
     $Detections = [System.Collections.ArrayList]::new()
-    $OutputWritable = (Test-Path $this.OutputPath)
-    $SnapShotWritable = (Test-Path $this.SnapShotPath)
+    $OutputWritable
+    $SnapShotWritable
     $AllowedVulns
     $Drives = [PSCustomObject]@{
         HomeDrive         = ""

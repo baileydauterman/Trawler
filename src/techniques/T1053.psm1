@@ -281,26 +281,26 @@ function Test-ScheduledTasks {
 
         if (Test-RemoteAccessTrojanTerms -Value $task.Execute -or Test-RemoteAccessTrojanTerms -Value $task.Arguments) {
             # Service has a suspicious launch pattern matching a known RAT
-            $detection = [PSCustomObject]@{
-                Name      = 'Scheduled Task has known-RAT Keyword'
-                Risk      = [TrawlerRiskPriority]::Medium
-                Source    = 'Scheduled Tasks'
-                Technique = "T1053: Scheduled Task/Job"
-                Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs + ", RAT Keyword: " + $term
-            }
+            $detection = [TrawlerDetection]::new(
+                'Scheduled Task has known-RAT Keyword',
+                [TrawlerRiskPriority]::Medium,
+                'Scheduled Tasks',
+                "T1053: Scheduled Task/Job",
+                ($task | Select-Object TaskName, Execute, Arguments, Author, RunAs)
+            )
             $State.WriteDetection($detection)
         }
 
         # Task Running as SYSTEM
         if ($task.RunAs -eq "SYSTEM" -and $exe_match -eq $false -and $task.Arguments -notin $default_task_args) {
             # Current Task Executable Path is non-standard
-            $detection = [PSCustomObject]@{
-                Name      = 'Non-Standard Scheduled Task Running as SYSTEM'
-                Risk      = [TrawlerRiskPriority]::High
-                Source    = 'Scheduled Tasks'
-                Technique = "T1053: Scheduled Task/Job"
-                Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
-            }
+            $detection = [TrawlerDetection]::new(
+                'Non-Standard Scheduled Task Running as SYSTEM',
+                [TrawlerRiskPriority]::High,
+                'Scheduled Tasks',
+                "T1053: Scheduled Task/Job",
+                ($task | Select-Object TaskName, Execute, Arguments, Author, RunAs)
+            )
             $State.WriteDetection($detection)
             continue
         }
@@ -308,13 +308,13 @@ function Test-ScheduledTasks {
         # Detection - Task contains an IP Address
         if (Test-IPAddress -Value $task.Execute) {
             # Task Contains an IP Address
-            $detection = [PSCustomObject]@{
-                Name      = 'Scheduled Task contains an IP Address'
-                Risk      = [TrawlerRiskPriority]::High
-                Source    = 'Scheduled Tasks'
-                Technique = "T1053: Scheduled Task/Job"
-                Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
-            }
+            $detection = [TrawlerDetection]::new(
+                'Scheduled Task contains an IP Address',
+                [TrawlerRiskPriority]::High,
+                'Scheduled Tasks',
+                "T1053: Scheduled Task/Job",
+                ($task | Select-Object TaskName, Execute, Arguments, Author, RunAs)
+            )
             $State.WriteDetection($detection)
         }
         # TODO - Task contains domain-pattern
@@ -322,13 +322,13 @@ function Test-ScheduledTasks {
         # Task has suspicious terms
         $suspicious_keyword_regex = ".*(regsvr32.exe | downloadstring | mshta | frombase64 | tobase64 | EncodedCommand | DownloadFile | certutil | csc.exe | ieexec.exe | wmic.exe).*"
         if ($task.Execute -match $suspicious_keyword_regex -or $task.Arguments -match $suspicious_keyword_regex) {
-            $detection = [PSCustomObject]@{
-                Name      = 'Scheduled Task contains suspicious keywords'
-                Risk      = [TrawlerRiskPriority]::High
-                Source    = 'Scheduled Tasks'
-                Technique = "T1053: Scheduled Task/Job"
-                Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
-            }
+            $detection = [TrawlerDetection]::new(
+                'Scheduled Task contains suspicious keywords',
+                [TrawlerRiskPriority]::High,
+                'Scheduled Tasks',
+                "T1053: Scheduled Task/Job",
+                ($task | Select-Object TaskName, Execute, Arguments, Author, RunAs)
+            )
             $State.WriteDetection($detection)
         }
         # Detection - User Created Tasks
@@ -337,24 +337,24 @@ function Test-ScheduledTasks {
                 if ((($task.Author.Split('\')).count - 1) -eq 1) {
                     if ($task.RunAs -eq "SYSTEM") {
                         # Current Task Executable Path is non-standard
-                        $detection = [PSCustomObject]@{
-                            Name      = 'User-Created Task running as SYSTEM'
-                            Risk      = [TrawlerRiskPriority]::High
-                            Source    = 'Scheduled Tasks'
-                            Technique = "T1053: Scheduled Task/Job"
-                            Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
-                        }
+                        $detection = [TrawlerDetection]::new(
+                            'User-Created Task running as SYSTEM',
+                            [TrawlerRiskPriority]::High,
+                            'Scheduled Tasks',
+                            "T1053: Scheduled Task/Job",
+                            ($task | Select-Object TaskName, Execute, Arguments, Author, RunAs)
+                        )
                         $State.WriteDetection($detection)
                         continue
                     }
                     # Single '\' in author most likely indicates it is a user-made task
-                    $detection = [PSCustomObject]@{
-                        Name      = 'User Created Task'
-                        Risk      = [TrawlerRiskPriority]::Low
-                        Source    = 'Scheduled Tasks'
-                        Technique = "T1053: Scheduled Task/Job"
-                        Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs
-                    }
+                    $detection = [TrawlerDetection]::new(
+                        'User Created Task',
+                        [TrawlerRiskPriority]::Low,
+                        'Scheduled Tasks',
+                        "T1053: Scheduled Task/Job",
+                        ($task | Select-Object TaskName, Execute, Arguments, Author, RunAs)
+                    )
                     $State.WriteDetection($detection)
                 }
             }
@@ -362,13 +362,13 @@ function Test-ScheduledTasks {
         # Non-Standard EXE Path with Non-Default Arguments
         if ($exe_match -eq $false -and $task.Arguments -notin $TaskDefaults.Arguments) {
             # Current Task Executable Path is non-standard
-            $detection = [PSCustomObject]@{
-                Name      = 'Non-Standard Scheduled Task Executable'
-                Risk      = [TrawlerRiskPriority]::Low
-                Source    = 'Scheduled Tasks'
-                Technique = "T1053: Scheduled Task/Job"
-                Meta      = "Task Name: " + $task.TaskName + ", Task Executable: " + $task.Execute + ", Arguments: " + $task.Arguments + ", Task Author: " + $task.Author + ", RunAs: " + $task.RunAs + ", UserId: " + $task.UserId
-            }
+            $detection = [TrawlerDetection]::new(
+                'Non-Standard Scheduled Task Executable',
+                [TrawlerRiskPriority]::Low,
+                'Scheduled Tasks',
+                "T1053: Scheduled Task/Job",
+                ($task | Select-Object TaskName, Execute, Arguments, Author, RunAs)
+            )
             $State.WriteDetection($detection)
         }
     }

@@ -1,10 +1,10 @@
 function Test-T1071 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-Connections $State
 }
@@ -13,7 +13,7 @@ function Test-Connections {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -46,8 +46,8 @@ function Test-Connections {
 		$proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue | Select-Object Name, Path
 
 		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($conn.RemoteAddress, $conn.RemoteAddress, 'Connections'), $true)) {
-							continue
-						}
+			continue
+		}
 
 		if ($loadsnapshot -and (Assert-IsAllowed $allowlist_remote_addresses $conn.RemoteAddress $conn.RemoteAddress)) {
 			continue
@@ -55,42 +55,59 @@ function Test-Connections {
 
 		if ($conn.State -eq 'Listen' -and $conn.LocalPort -gt 1024) {
 			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($proc.Name, $proc.Path, 'ProcessConnections'), $true)) {
-							continue
-						}
-
-			if ($loadsnapshot -and (Assert-IsAllowed $allowlist_listeningprocs $proc.Name $proc.Path)) {
 				continue
 			}
 
-			$detection = [PSCustomObject]@{
-				Name      = 'Process Listening on Ephemeral Port'
-				Risk      = [TrawlerRiskPriority]::VeryLow
-				Source    = 'Network Connections'
-				Technique = "T1071: Application Layer Protocol"
-				Meta      = "Local Port: " + $conn.LocalPort + ", PID: " + $conn.OwningProcess + ", Process Name: " + $proc.Name + ", Process Path: " + $proc.Path
-			}
+			$detection = [TrawlerDetection]::new(
+				'Process Listening on Ephemeral Port',
+				[TrawlerRiskPriority]::VeryLow,
+				'Network Connections',
+				"T1071: Application Layer Protocol",
+				[PSCustomObject]@{
+					LocalPort   = $conn.LocalPort
+					PID         = $conn.OwningProcess
+					ProcessName = $proc.Name
+					ProcessPath = $proc.ProcessPath
+				}
+			)
 			$State.WriteDetection($detection)
 		}
+
 		if ($conn.State -eq 'Established' -and ($conn.LocalPort -in $suspicious_ports -or $conn.RemotePort -in $suspicious_ports) -and $proc.Name -notin $allow_listed_process_names) {
-			$detection = [PSCustomObject]@{
-				Name      = 'Established Connection on Suspicious Port'
-				Risk      = [TrawlerRiskPriority]::Low
-				Source    = 'Network Connections'
-				Technique = "T1071: Application Layer Protocol"
-				Meta      = "Local Port: " + $conn.LocalPort + ", Remote Port: " + $conn.RemotePort + ", Remote Address: " + $conn.RemoteAddress + ", PID: " + $conn.OwningProcess + ", Process Name: " + $proc.Name + ", Process Path: " + $proc.Path
-			}
+			$detection = [TrawlerDetection]::new(
+				'Established Connection on Suspicious Port',
+				[TrawlerRiskPriority]::Low,
+				'Network Connections',
+				"T1071: Application Layer Protocol",
+				[PSCustomObject]@{
+					LocalPort     = $conn.LocalPort
+					RemotePort    = $conn.RemotePort
+					RemoteAddress = $conn.RemoteAddress
+					PID           = $conn.OwningProcess
+					ProcessName   = $proc.Name
+					ProcessPath   = $proc.ProcessPath
+				}
+			)
 			$State.WriteDetection($detection)
 		}
+
 		if ($proc.Path) {
 			foreach ($path in $suspicious_process_paths) {
 				if (($proc.Path).ToLower() -match $path) {
-					$detection = [PSCustomObject]@{
-						Name      = 'Process running from suspicious path has Network Connection'
-						Risk      = [TrawlerRiskPriority]::High
-						Source    = 'Network Connections'
-						Technique = "T1071: Application Layer Protocol"
-						Meta      = "Local Port: " + $conn.LocalPort + ", Remote Port: " + $conn.RemotePort + ", Remote Address: " + $conn.RemoteAddress + ", PID: " + $conn.OwningProcess + ", Process Name: " + $proc.Name + ", Process Path: " + $proc.Path
-					}
+					$detection = [TrawlerDetection]::new(
+						'Process running from suspicious path has Network Connection',
+						[TrawlerRiskPriority]::High,
+						'Network Connections',
+						"T1071: Application Layer Protocol",
+						[PSCustomObject]@{
+							LocalPort     = $conn.LocalPort
+							RemotePort    = $conn.RemotePort
+							RemoteAddress = $conn.RemoteAddress
+							PID           = $conn.OwningProcess
+							ProcessName   = $proc.Name
+							ProcessPath   = $proc.ProcessPath
+						}
+					)
 					$State.WriteDetection($detection)
 				}
 			}

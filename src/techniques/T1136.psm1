@@ -1,10 +1,10 @@
 function Test-T1136 {
 	[CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [TrawlerState]
-        $State
-    )
+	param (
+		[Parameter(Mandatory)]
+		[TrawlerState]
+		$State
+	)
 
 	Test-Users $State
 }
@@ -13,7 +13,7 @@ function Test-Users {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	# Supports Dynamic Snapshotting
@@ -34,20 +34,25 @@ function Test-Users {
 		$admin_user = Get-LocalUser -SID $admin.SID | Select-Object AccountExpires, Description, Enabled, FullName, PasswordExpires, UserMayChangePassword, PasswordLastSet, LastLogon, Name, SID, PrincipalSource
 
 		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($admin.name, $admin.name, "Users"), $true)) {
-							continue
-						}
+			continue
+		}
 
 		if ($loadsnapshot -and (Assert-IsAllowed $allowlist_users $admin.nam $admin.name)) {
 			continue
 		}
 
-		$detection = [PSCustomObject]@{
-			Name      = 'Local Administrator Account'
-			Risk      = [TrawlerRiskPriority]::Medium
-			Source    = 'Users'
-			Technique = "T1136: Create Account"
-			Meta      = "Name: " + $admin.Name + ", Last Logon: " + $admin_user.LastLogon + ", Enabled: " + $admin_user.Enabled
-		}
+		$detection = [TrawlerDetection]::new(
+			'Local Administrator Account',
+			[TrawlerRiskPriority]::Medium,
+			'Users',
+			"T1136: Create Account",
+			[PSCustomObject]@{
+				Name      = $admin.Name
+				LastLogon = $admin_user.LastLogon
+				Enabled   = $admin_user.Enabled
+			}
+		)
+
 		$State.WriteDetection($detection)
 	}
     
