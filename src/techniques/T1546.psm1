@@ -56,8 +56,7 @@ function Test-AppPaths {
 	}
 
 	foreach ($item in Get-TrawlerChildItem -Path $path -AsRegistry) {
-		$data = Get-TrawlerItemProperty -Path $item.Name -AsRegistry
-		$data.PSObject.Properties | ForEach-Object {
+		Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -ne '(default)') {
 				continue
 			}
@@ -172,12 +171,9 @@ function Test-ContextMenu {
 	$State.WriteMessage("Checking Context Menu Handlers")
 
 	$path = "$($State.Drives.Hklm)SOFTWARE\Classes\*\shellex\ContextMenuHandlers"
-	if (Test-Path -LiteralPath "Registry::$path") {
-		$items = Get-ChildItem -LiteralPath "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			$data = Get-ItemProperty -LiteralPath $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			$data.PSObject.Properties | ForEach-Object {
+	if ($State.TestPathAsRegistry($path)) {
+		foreach ($item in Get-TrawlerChildItem $path -AsRegistry) {
+			Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -match ".*\.dll.*") {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'ContextMenuHandlers'))) {
 						continue
@@ -196,25 +192,25 @@ function Test-ContextMenu {
 		}
 	}
 
-	$basepath = "HKEY_CURRENT_USER\SOFTWARE\Classes\*\shellex\ContextMenuHandlers"
+	$basepath = "{0}\SOFTWARE\Classes\*\shellex\ContextMenuHandlers"
 	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -LiteralPath "Registry::$path") {
-			$items = Get-ChildItem -LiteralPath "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			foreach ($item in $items) {
-				$path = "Registry::" + $item.Name
-				$data = Get-ItemProperty -LiteralPath $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-				$data.PSObject.Properties | ForEach-Object {
-					if ($_.Name -eq '(Default)' -and $_.Value -match ".*\.dll.*") {
-						$detection = [TrawlerDetection]::new(
-							'DLL loaded in ContextMenuHandler',
-							[TrawlerRiskPriority]::Medium,
-							'Windows Context Menu',
-							"T1546: Event Triggered Execution",
-							"Key: " + $item.Name + ", DLL: " + $_.Value
-						)
-						$State.WriteDetection($detection)
-					}
+		$path = $basepath -f $p
+
+		if (-not $State.TestPathAsRegistry($path)) {
+			continue 
+		}
+
+		foreach ($item in Get-TrawlerChildItem $path -AsRegistry) {
+			Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
+				if ($_.Name -eq '(Default)' -and $_.Value -match ".*\.dll.*") {
+					$detection = [TrawlerDetection]::new(
+						'DLL loaded in ContextMenuHandler',
+						[TrawlerRiskPriority]::Medium,
+						'Windows Context Menu',
+						"T1546: Event Triggered Execution",
+						"Key: " + $item.Name + ", DLL: " + $_.Value
+					)
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -343,18 +339,19 @@ function Test-DebuggerHijacks {
 			}
 			elseif (($_.Name -in '(default)' -and $match -eq $false -and $_.Value -ne "$($State.Drives.AssumedHomeDrive)\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\WINDOWS\system32\pdm.dll`"")) {
 				$match = $true
-			} elseif ($_.Name -in 'Debugger', 'ReflectDebugger') {
+			}
+			elseif ($_.Name -in 'Debugger', 'ReflectDebugger') {
 				$match = $true
 			}
 
 			if ($match) {
 				$State.WriteDetection([TrawlerDetection]::new(
-					'Potential AeDebug Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				))
+						'Potential AeDebug Hijacking',
+						[TrawlerRiskPriority]::High,
+						'Registry',
+						"T1546: Event Triggered Execution",
+						"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
+					))
 			}
 		}
 	}
