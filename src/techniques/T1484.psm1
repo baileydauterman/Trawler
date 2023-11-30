@@ -57,7 +57,7 @@ function Test-GPOExtensions {
 			$path = "Registry::" + $item.Name
 			Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 				if ($_.Name -eq 'DllName' -and $_.Value -notin $gpo_dll_allowlist) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'GPOExtensions'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'GPOExtensions'))) {
 						continue
 					}
 

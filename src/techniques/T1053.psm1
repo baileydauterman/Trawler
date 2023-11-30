@@ -264,7 +264,7 @@ function Test-ScheduledTasks {
 
     foreach ($task in $tasks) {
         # Allowlist Logic
-        if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($task.TaskName, $task.Execute, "Scheduled Tasks"), $true)) {
+        if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($task.TaskName, $task.Execute, "Scheduled Tasks"))) {
             continue
         }
 

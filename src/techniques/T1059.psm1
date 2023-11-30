@@ -27,7 +27,7 @@ function Test-Processes {
 	$State.WriteMessage("Checking Running Processes")
 	$processes = Get-CimInstance -ClassName Win32_Process | Select-Object ProcessName, CreationDate, CommandLine, ExecutablePath, ParentProcessId, ProcessId
 	foreach ($process in $processes) {
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($process.ProcessName, $process.ExecutablePath, "Processes"), $true)) {
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($process.ProcessName, $process.ExecutablePath, "Processes"))) {
 			continue
 		}
 

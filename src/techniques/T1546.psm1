@@ -24,8 +24,7 @@ function Test-T1546 {
 	Test-ScreenSaverEXE $State
 	Test-WMIConsumers $State
 	Test-NetSHDLLs $State
-	Test-UtilmanHijack $State
-	Test-SethcHijack $State
+	Test-KnownHijacks $State
 	Test-ModifiedWindowsAccessibilityFeature $State
 	Test-AppCertDLLs $State
 	Test-AppInitDLLs $State
@@ -77,7 +76,7 @@ function Test-AppPaths {
 				contine
 			}
 
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'AppPaths'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'AppPaths'))) {
 				continue
 			}
 
@@ -110,7 +109,7 @@ function Test-CommandAutoRunProcessors {
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
-			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'), $true)) {
+			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'))) {
 				continue
 			}
 			
@@ -137,7 +136,7 @@ function Test-CommandAutoRunProcessors {
 
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
-			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'), $true)) {
+			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'))) {
 				continue
 			}
 			
@@ -180,7 +179,7 @@ function Test-ContextMenu {
 			$data = Get-ItemProperty -LiteralPath $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 			$data.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -match ".*\.dll.*") {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'ContextMenuHandlers'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'ContextMenuHandlers'))) {
 						continue
 					}
 
@@ -268,7 +267,7 @@ function Test-DiskCleanupHandlers {
 					if ($target_prog -in $default_cleanup_handlers) {
 						continue
 					}
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $target_prog, 'DiskCleanupHandlers'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $target_prog, 'DiskCleanupHandlers'))) {
 						continue
 					}
 
@@ -299,178 +298,80 @@ function Test-DebuggerHijacks {
 	# allowtable_debuggers
 	# Debugger Hijacks
 	# AeDebug 32
-	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -in 'Debugger') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-					continue
-				}
+	$knownPaths = @(
+		"{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug"	
+		"{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
+		"{0}SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug"
+		"{0}SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
+		"{0}SOFTWARE\Microsoft\.NETFramework"
+		"{0}SOFTWARE\Wow6432Node\Microsoft\.NETFramework"
+		"{0}SOFTWARE\Classes\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
+		"{0}SOFTWARE\Microsoft\Windows\Windows Error Reporting\Hangs"
+		"{0}SOFTWARE\Classes\CLSID\{78A51822-51F4-11D0-8F20-00805F2CD064}\InprocServer32"
+	)
 
+	foreach ($path in $knownPaths) {
+		$path = $path -f $State.Drives.Hklm
+
+		if (-not $State.TestPathAsRegistry($path)) {
+			continue
+		}
+
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'))) {
+				continue
 			}
-			if ($_.Name -eq 'Debugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
-				$detection = [TrawlerDetection]::new(
+
+			$match = $false
+			if ($_.Name -eq 'Debugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p") {
+				$match = $true
+			}
+			elseif ($_.Name -eq 'ProtectedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $match -eq $false) {
+				$match = $true
+			}
+			elseif ($_.Name -eq 'Debugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $match -eq $false) {
+				$match = $true
+			}
+			elseif ($_.Name -eq 'ProtectedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $match -eq $false) {
+				$match = $true
+			}
+			elseif ($_.Name -eq 'DbgManagedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" PID %d APPDOM %d EXTEXT `"%s`" EVTHDL %d" -and $match -eq $false) {
+				$match = $true
+			}
+			elseif ($_.Name -eq '@' -and ($_.Value -ne "`"$env:homedrive\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$env:homedrive\Program Files\Microsoft Script Debugger\msscrdbg.exe`"") -and $match -eq $false) {
+				$match = $true
+			}
+			elseif (($_.Name -in '(default)' -and $match -eq $false -and $_.Value -ne "$($State.Drives.AssumedHomeDrive)\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\WINDOWS\system32\pdm.dll`"")) {
+				$match = $true
+			} elseif ($_.Name -in 'Debugger', 'ReflectDebugger') {
+				$match = $true
+			}
+
+			if ($match) {
+				$State.WriteDetection([TrawlerDetection]::new(
 					'Potential AeDebug Hijacking',
 					[TrawlerRiskPriority]::High,
 					'Registry',
 					"T1546: Event Triggered Execution",
 					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
-	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'ProtectedDebugger') {
-				Write-SnapshotMessage -Key $path -Value $_.Value-Source 'Debuggers'
-
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					$pass = $true
-				}
-			}
-			if ($_.Name -eq 'ProtectedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
-				$detection = [TrawlerDetection]::new(
-					'Potential AeDebug Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
+				))
 			}
 		}
 	}
 
-	# AeDebug 64
-	$path = "$($State.Drives.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'Debugger') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
+	$basepath = "{0}\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
+	foreach ($p in $State.Drives.CurrentUsers) {
+		$path = $basepath -f $p
+		if (-not $State.TestPathAsRegistry($path)) {
+			continue
+		}
+		
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
+			if ($_.Name -eq '@' -and ($_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'))) {
 					continue
 				}
 
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					$pass = $true
-				}
-			}
-			if ($_.Name -eq 'Debugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
-				$detection = [TrawlerDetection]::new(
-					'Potential AeDebug Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
-	$path = "$($State.Drives.Hklm)SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebugProtected"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'ProtectedDebugger') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-					continue
-				}
-
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					$pass = $true
-				}
-			}
-			if ($_.Name -eq 'ProtectedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" -p %ld -e %ld -j 0x%p" -and $pass -eq $false) {
-				$detection = [TrawlerDetection]::new(
-					'Potential AeDebug Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
-
-	# .NET 32
-	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\.NETFramework"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'DbgManagedDebugger') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-					continue
-				}
-
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					$pass = $true
-				}
-			}
-			if ($_.Name -eq 'DbgManagedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" PID %d APPDOM %d EXTEXT `"%s`" EVTHDL %d" -and $pass -eq $false) {
-				$detection = [TrawlerDetection]::new(
-					'Potential .NET Debugger Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
-	# .NET 64
-	$path = "$($State.Drives.Hklm)SOFTWARE\Wow6432Node\Microsoft\.NETFramework"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'DbgManagedDebugger') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-					continue
-				}
-
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					$pass = $true
-				}
-			}
-			if ($_.Name -eq 'DbgManagedDebugger' -and $_.Value -ne "`"$env:homedrive\Windows\system32\vsjitdebugger.exe`" PID %d APPDOM %d EXTEXT `"%s`" EVTHDL %d" -and $pass -eq $false) {
-				$detection = [TrawlerDetection]::new(
-					'Potential .NET Debugger Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
-	# Microsoft Script Debugger
-	$path = "$($State.Drives.Hklm)SOFTWARE\Classes\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq '@') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-					continue
-				}
-
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					$pass = $true
-				}
-			}
-			if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$env:homedrive\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$env:homedrive\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
 				$detection = [TrawlerDetection]::new(
 					'Potential Microsoft Script Debugger Hijacking',
 					[TrawlerRiskPriority]::High,
@@ -482,88 +383,8 @@ function Test-DebuggerHijacks {
 			}
 		}
 	}
-	$basepath = "HKEY_CLASSES_ROOT\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CLASSES_ROOT", $p)
-		if (Test-Path -Path "Registry::$path") {
-			$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-			$item.PSObject.Properties | ForEach-Object {
-				if ($_.Name -eq '@') {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-						continue
-					}
-
-					if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-						$pass = $true
-					}
-				}
-				if ($_.Name -eq '@' -and $pass -eq $false -and ($_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
-					$detection = [TrawlerDetection]::new(
-						'Potential Microsoft Script Debugger Hijacking',
-						[TrawlerRiskPriority]::High,
-						'Registry',
-						"T1546: Event Triggered Execution",
-						"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					)
-					$State.WriteDetection($detection)
-				}
-			}
-		}
-	}
-	# Process Debugger
-	$path = "$($State.Drives.Hklm)SOFTWARE\Classes\CLSID\{78A51822-51F4-11D0-8F20-00805F2CD064}\InprocServer32"
-	$pass = $false
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq '(default)') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-					continue
-				}
-
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					$pass = $true
-				}
-			}
-			if (($_.Name -in '(default)' -and $pass -eq $false -and $_.Value -ne "$($State.Drives.AssumedHomeDrive)\Program Files\Common Files\Microsoft Shared\VS7Debug\pdm.dll") -or ($_.Name -eq '@' -and $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\WINDOWS\system32\pdm.dll`"")) {
-				$detection = [TrawlerDetection]::new(
-					'Potential Process Debugger Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
-	# WER Debuggers
-	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\Windows Error Reporting\Hangs"
-	if (Test-Path -Path "Registry::$path") {
-		$item = Get-TrawlerItemProperty -Path $path -AsRegistry
-		$item.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'Debugger') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'), $true)) {
-					continue
-				}
-
-				if (Test-Debugger-Hijack-Allowlist $path $_.Value) {
-					continue
-				}
-			}
-			if ($_.Name -in 'Debugger', 'ReflectDebugger') {
-				$detection = [TrawlerDetection]::new(
-					'Potential WER Debugger Hijacking',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546: Event Triggered Execution",
-					"Key Location: $path, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
 }
+
 
 function Test-DisableLowILProcessIsolation {
 	[CmdletBinding()]
@@ -576,6 +397,7 @@ function Test-DisableLowILProcessIsolation {
 	# Supports Drive Retargeting
 	# Supports Snapshotting
 	$State.WriteMessage("Checking for COM Objects running without Low Integrity Isolation")
+
 	$path = "$($State.Drives.Hklm)Software\Classes\CLSID"
 	$allowlist = @(
 		"@C:\\Program Files\\Microsoft Office\\Root\\VFS\\ProgramFilesCommonX64\\Microsoft Shared\\Office16\\oregres\.dll.*"
@@ -583,42 +405,43 @@ function Test-DisableLowILProcessIsolation {
 		"@C:\\Windows\\system32\\mssvp\.dll.*"
 		"@C:\\Program Files\\Common Files\\System\\wab32res\.dll.*"
 	)
-	if (Test-Path -LiteralPath "Registry::$path") {
-		$items = Get-TrawlerChildItem "Registry::$path"
-		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			$data = Get-TrawlerItemProperty $path
-			$data.PSObject.Properties | ForEach-Object {
-				if ($_.Name -eq 'DisableLowILProcessIsolation' -and $_.Value -eq 1) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $item.Name, 'DisableLowIL'), $true)) {
-						continue
-					}
+
+	if (-not ($State.TestPathAsRegistry($path))) {
+		return
+	}
+
+	foreach ($item in Get-TrawlerChildItem $path -AsRegistry) {
+		Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
+			if ($_.Name -eq 'DisableLowILProcessIsolation' -and $_.Value -eq 1) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $item.Name, 'DisableLowIL'))) {
+					continue
+				}
 					
-					if ($data.DisplayName) {
-						$displayname = $data.DisplayName
-					}
-					else {
-						$displayname = ""
-					}
+				if ($data.DisplayName) {
+					$displayname = $data.DisplayName
+				}
+				else {
+					$displayname = ""
+				}
 
-					$pass = $false
+				$pass = $false
 
-					foreach ($allow in $allowlist) {
-						if ($displayname -match $allow) {
-							$pass = $true
-							break
-						}
+				foreach ($allow in $allowlist) {
+					if ($displayname -match $allow) {
+						$pass = $true
+						break
 					}
-					if ($pass -eq $false) {
-						$detection = [TrawlerDetection]::new(
-							'COM Object Registered with flag disabling low-integrity process isolation',
-							[TrawlerRiskPriority]::Medium,
-							'Registry',
-							"T1546: Event Triggered Execution",
-							"Key: " + $item.Name + ", Display Name: " + $displayname
-						)
-						$State.WriteDetection($detection)
-					}
+				}
+
+				if ($pass -eq $false) {
+					$detection = [TrawlerDetection]::new(
+						'COM Object Registered with flag disabling low-integrity process isolation',
+						[TrawlerRiskPriority]::Medium,
+						'Registry',
+						"T1546: Event Triggered Execution",
+						"Key: " + $item.Name + ", Display Name: " + $displayname
+					)
+					$State.WriteDetection($detection)
 				}
 			}
 		}
@@ -637,17 +460,22 @@ function Test-Narrator {
 	# https://pentestlab.blog/2020/03/04/persistence-dll-hijacking/
 	$State.WriteMessage("Checking Narrator MSTTSLocEnUS.dll Presence")
 	$basepath = "$($State.Drives.HomeDrive)\Windows\System32\Speech\Engines\TTS\MSTTSLocEnUS.DLL"
-	if (Test-Path $basepath) {
-		$item = Get-Item -Path $basepath -ErrorAction SilentlyContinue | Select-Object *
-		$detection = [TrawlerDetection]::new(
-			'Narrator Missing DLL is Present',
-			[TrawlerRiskPriority]::Medium,
-			'Windows Narrator',
-			"T1546: Event Triggered Execution",
-			"File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
-		)
-		$State.WriteDetection($detection)
+
+	if (-not (Test-Path $basepath)) {
+		return 
 	}
+
+	$item = Get-Item -Path $basepath -ErrorAction SilentlyContinue | Select-Object FullName, CreationTime, LastWriteTime
+
+	$detection = [TrawlerDetection]::new(
+		'Narrator Missing DLL is Present',
+		[TrawlerRiskPriority]::Medium,
+		'Windows Narrator',
+		"T1546: Event Triggered Execution",
+			($item | Select-Object FullName, CreationTime, LastWriteTime)
+	)
+
+	$State.WriteDetection($detection)
 }
 
 function Test-NotepadPlusPlusPlugins {
@@ -660,37 +488,45 @@ function Test-NotepadPlusPlusPlugins {
 	# https://pentestlab.blog/2022/02/14/persistence-notepad-plugins/
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Notepad++ Plugins")
+
 	$basepaths = @(
-		"$($State.Drives.HomeDrive)\Program Files\Notepad++\plugins"
-		"$($State.Drives.HomeDrive)\Program Files (x86)\Notepad++\plugins"
+		"{0}\Program Files\Notepad++\plugins"
+		"{0}\Program Files (x86)\Notepad++\plugins"
 	)
+
 	$allowlisted = @(
 		".*\\Config\\nppPluginList\.dll"
 		".*\\mimeTools\\mimeTools\.dll"
 		".*\\NppConverter\\NppConverter\.dll"
 		".*\\NppExport\\NppExport\.dll"
 	)
+
 	foreach ($basepath in $basepaths) {
-		if (Test-Path $basepath) {
-			$dlls = Get-ChildItem -Path $basepath -File -Filter "*.dll" -Recurse -ErrorAction SilentlyContinue
-			#Write-Host $dlls
-			foreach ($item in $dlls) {
-				$match = $false
-				foreach ($allow_match in $allowlisted) {
-					if ($item.FullName -match $allow_match) {
-						$match = $true
-					}
+		$basepath = $basepath -f $State.Drives.HomeDrive
+		if (-not (Test-Path $basepath)) {
+			continue 
+		}
+		
+		$dlls = Get-ChildItem -Path $basepath -File -Filter "*.dll" -Recurse -ErrorAction SilentlyContinue
+
+		foreach ($item in $dlls) {
+			$match = $false
+
+			foreach ($allow_match in $allowlisted) {
+				if ($item.FullName -match $allow_match) {
+					$match = $true
 				}
-				if ($match -eq $false) {
-					$detection = [TrawlerDetection]::new(
-						'Non-Default Notepad++ Plugin DLL',
-						[TrawlerRiskPriority]::Medium,
-						'Notepad++',
-						"T1546: Event Triggered Execution",
-						"File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
-					)
-					$State.WriteDetection($detection)
-				}
+			}
+
+			if ($match -eq $false) {
+				$detection = [TrawlerDetection]::new(
+					'Non-Default Notepad++ Plugin DLL',
+					[TrawlerRiskPriority]::Medium,
+					'Notepad++',
+					"T1546: Event Triggered Execution",
+					($item | Select-Object FullName, CreationTime, LastWriteTime)
+				)
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -707,23 +543,28 @@ function Test-OfficeAI {
 	# https://twitter.com/Laughing_Mantis/status/1645268114966470662
 	$State.WriteMessage("Checking Office AI.exe Presence")
 	$basepath = "$($State.Drives.HomeDrive)\Program Files\Microsoft Office\root\Office*"
-	if (Test-Path $basepath) {
-		$path = "$($State.Drives.HomeDrive)\Program Files\Microsoft Office\root"
-		$dirs = Get-ChildItem -Path $path -Directory -Filter "Office*" -ErrorAction SilentlyContinue
-		foreach ($dir in $dirs) {
-			$ai = $dir.FullName + "\ai.exe"
-			if (Test-Path $ai) {
-				$item = Get-Item -Path $ai -ErrorAction SilentlyContinue | Select-Object *
-				$detection = [TrawlerDetection]::new(
-					'AI.exe in Office Directory',
-					[TrawlerRiskPriority]::Medium,
-					'Windows Context Menu',
-					"T1546: Event Triggered Execution",
-					"File: " + $item.FullName + ", Created: " + $item.CreationTime + ", Last Modified: " + $item.LastWriteTime
-				)
-				$State.WriteDetection($detection)
-			}
+	if (-not (Test-Path $basepath)) {
+		return 
+	}
+	
+	$path = "$($State.Drives.HomeDrive)\Program Files\Microsoft Office\root"
+	foreach ($dir in Get-ChildItem -Path $path -Directory -Filter "Office*" -ErrorAction SilentlyContinue) {
+		$ai = $dir.FullName + "\ai.exe"
+		if (-not (Test-Path $ai)) {
+			continue 
 		}
+
+		$item = Get-Item -Path $ai -ErrorAction SilentlyContinue | Select-Object FullName, CreationTime, LastWriteTime
+
+		$detection = [TrawlerDetection]::new(
+			'AI.exe in Office Directory',
+			[TrawlerRiskPriority]::Medium,
+			'Windows Context Menu',
+			"T1546: Event Triggered Execution",
+			($item)
+		)
+
+		$State.WriteDetection($detection)
 	}
 }
 
@@ -742,11 +583,11 @@ function Test-UninstallStrings {
 		return 
 	}
 
-	foreach ($item in Get-TrawlerItemData -Path $path -ItemType ChildItem) {
-		$data = Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry
+	foreach ($item in Get-TrawlerChildItem -Path $path) {
+		$data = Get-TrawlerItemProperty -Path $path -AsRegistry
 
 		if ($data.UninstallString -and (Test-SuspiciousTerms -Value $data.UninstallString)) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.UninstallString, 'UninstallString'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.UninstallString, 'UninstallString'))) {
 				continue
 			}
 
@@ -761,7 +602,7 @@ function Test-UninstallStrings {
 		}
 
 		if ($data.QuietUninstallString -and (Test-SuspiciousTerms -Value $data.QuietUninstallString)) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.QuietUninstallString, 'QuietUninstallString'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.QuietUninstallString, 'QuietUninstallString'))) {
 				continue
 			}
 
@@ -793,16 +634,15 @@ function Test-PolicyManager {
 	)
 	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\PolicyManager\default"
 	if (Test-Path -Path $path) {
-		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
+		foreach ($item in Get-TrawlerChildItem -Path $path) {
 			$path = "Registry::" + $item.Name
-			$items_ = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			foreach ($subkey in $items_) {
+			foreach ($subkey in Get-TrawlerChildItem -Path $path) {
 				$subpath = "Registry::" + $subkey.Name
-				$data = Get-ItemProperty -Path $subpath | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+				$data = Get-TrawlerItemProperty -Path $subpath
+
 				if ($data.PreCheckDLLPath) {
 					if ($data.PreCheckDLLPath -notin $allow_listed_values) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($subkey.Name, $data.PreCheckDLLPath, 'PolicyManagerPreCheck'), $true)) {
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($subkey.Name, $data.PreCheckDLLPath, 'PolicyManagerPreCheck'))) {
 							continue
 						}
 
@@ -816,8 +656,9 @@ function Test-PolicyManager {
 						$State.WriteDetection($detection)
 					}
 				}
+
 				if ($data.transportDllPath) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($subkey.Name, $data.transportDllPath, 'PolicyManagerTransport'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($subkey.Name, $data.transportDllPath, 'PolicyManagerTransport'))) {
 						continue
 					}
 
@@ -848,16 +689,16 @@ function Test-WindowsLoadKey {
 	# TODO - Add Snapshot Skipping
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Windows Load")
-	$basepath = "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
+	$basepath = "{0}\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
 	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
+		$path = $basepath -f $p
 		if (-not (Test-Path -Path "Registry::$path")) {
 			continue 
 		}
 
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -in 'Load') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WindowsLoad'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WindowsLoad'))) {
 					continue
 				}
 
@@ -885,6 +726,7 @@ function Test-AutoDialDLL {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Autodial DLL")
 	$path = "Registry::$($State.Drives.Hklm)SYSTEM\CurrentControlSet\Services\WinSock2\Parameters"
+
 	if (-not (Test-Path -Path $path)) {
 		return 
 	}
@@ -912,10 +754,10 @@ function Test-HTMLHelpDLL {
 	)
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking HTML Help (.chm) DLL")
-	$basepath = "HKEY_CURRENT_USER\Software\Microsoft\HtmlHelp Author"
+	$basepath = "{0}\Software\Microsoft\HtmlHelp Author"
 	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (-not (Test-Path -Path "Registry::$path")) {
+		$path = $basepath -f $p
+		if (-not ($State.TestPathAsRegistry($path))) {
 			continue 
 		}
 
@@ -950,6 +792,7 @@ function Test-AssociationHijack {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking File Associations")
 	$homedrive = $($State.Drives.AssumedHomeDrive)
+
 	$value_regex_lookup = @{
 		accesshtmlfile            = "`"$homedrive\\Program Files\\Microsoft Office\\Root\\Office.*\\MSACCESS.EXE`"";
 		batfile                   = '"%1" %';
@@ -994,7 +837,7 @@ function Test-AssociationHijack {
 							}
 
 							$exe = $_.Value
-							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'), $true)) {
+							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'))) {
 								continue
 							}
 
@@ -1044,61 +887,62 @@ function Test-AssociationHijack {
 	}
 
 	$basepath = "Registry::$($State.Drives.Hklm)SOFTWARE\Classes"
-	if (Test-Path -Path $basepath) {
-		$items = Get-ChildItem -Path $basepath | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
-			$path = $item.Name
-			if ($path.EndsWith('file')) {
-				$basefile = $path.Split("\")[-1]
-				$open_path = $path + "\shell\open\command"
-				if (Test-Path -Path "Registry::$open_path") {
-					Get-TrawlerItemData -Path $open_path -ItemType ItemProperty -AsRegistry | ForEach-Object {
-						if ($_.Name -eq '(default)') {
-							#Write-Host $open_path $_.Value
-							$exe = $_.Value
+	if (-not (Test-Path -Path $basepath)) {
+		return 
+	}
 
-							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'), $true)) {
-								continue
-							}
+	foreach ($item in Get-TrawlerChildItem -Path $basepath) {
+		$path = $item.Name
+		if ($path.EndsWith('file')) {
+			$basefile = $path.Split("\")[-1]
+			$open_path = $path + "\shell\open\command"
+			if (Test-Path -Path "Registry::$open_path") {
+				Get-TrawlerItemData -Path $open_path -ItemType ItemProperty -AsRegistry | ForEach-Object {
+					if ($_.Name -eq '(default)') {
+						#Write-Host $open_path $_.Value
+						$exe = $_.Value
 
-							if ($value_regex_lookup.ContainsKey($basefile)) {
-								if ($exe -notmatch $value_regex_lookup[$basefile]) {
-									$detection = [TrawlerDetection]::new(
-										'Possible File Association Hijack - Mismatch on Expected Value',
-										[TrawlerRiskPriority]::High,
-										'Registry',
-										"T1546.001: Event Triggered Execution: Change Default File Association",
-										"FileType: " + $open_path + ", Expected Association: " + $value_regex_lookup[$basefile] + ", Current Association: " + $exe
-									)
-									$State.WriteDetection($detection)
-									return
-								}
-								else {
-									return
-								}
-							}
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'))) {
+							continue
+						}
 
-							if ($exe -match ".*\.exe.*\.exe") {
+						if ($value_regex_lookup.ContainsKey($basefile)) {
+							if ($exe -notmatch $value_regex_lookup[$basefile]) {
 								$detection = [TrawlerDetection]::new(
-									'Possible File Association Hijack - Multiple EXEs',
+									'Possible File Association Hijack - Mismatch on Expected Value',
 									[TrawlerRiskPriority]::High,
 									'Registry',
 									"T1546.001: Event Triggered Execution: Change Default File Association",
-									"FileType: " + $open_path + ", Current Association: " + $exe
+									"FileType: " + $open_path + ", Expected Association: " + $value_regex_lookup[$basefile] + ", Current Association: " + $exe
 								)
 								$State.WriteDetection($detection)
 								return
 							}
-							if (Test-SuspiciousTerms -Value $exe) {
-								$detection = [TrawlerDetection]::new(
-									'Possible File Association Hijack - Suspicious Keywords',
-									[TrawlerRiskPriority]::High,
-									'Registry',
-									"T1546.001: Event Triggered Execution: Change Default File Association",
-									"FileType: " + $open_path + ", Current Association: " + $exe
-								)
-								$State.WriteDetection($detection)
+							else {
+								return
 							}
+						}
+
+						if ($exe -match ".*\.exe.*\.exe") {
+							$detection = [TrawlerDetection]::new(
+								'Possible File Association Hijack - Multiple EXEs',
+								[TrawlerRiskPriority]::High,
+								'Registry',
+								"T1546.001: Event Triggered Execution: Change Default File Association",
+								"FileType: " + $open_path + ", Current Association: " + $exe
+							)
+							$State.WriteDetection($detection)
+							return
+						}
+						if (Test-SuspiciousTerms -Value $exe) {
+							$detection = [TrawlerDetection]::new(
+								'Possible File Association Hijack - Suspicious Keywords',
+								[TrawlerRiskPriority]::High,
+								'Registry',
+								"T1546.001: Event Triggered Execution: Change Default File Association",
+								"FileType: " + $open_path + ", Current Association: " + $exe
+							)
+							$State.WriteDetection($detection)
 						}
 					}
 				}
@@ -1120,22 +964,23 @@ function Test-ScreenSaverEXE {
 	)
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking ScreenSaver exe")
-	$basepath = "Registry::HKEY_CURRENT_USER\Control Panel\Desktop"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -Path $path) {
-			$items = Get-TrawlerItemProperty -Path $path
-			$items.PSObject.Properties | ForEach-Object {
-				if ($_.Name -eq "SCRNSAVE.exe") {
-					$detection = [TrawlerDetection]::new(
-						'Potential Persistence via ScreenSaver Executable Hijack',
-						[TrawlerRiskPriority]::High,
-						'Registry',
-						"T1546.002: Event Triggered Execution: Screensaver",
-						"Key Location: HKCU\Control Panel\Desktop, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					)
-					$State.WriteDetection($detection)
-				}
+	$basepath = "{0}\Control Panel\Desktop"
+	foreach ($userDrive in $State.Drives.CurrentUsers) {
+		$path = $basepath -f $userDrive
+		if (-not ($State.TestPathAsRegistry($path))) {
+			continue 
+		}
+
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
+			if ($_.Name -eq "SCRNSAVE.exe") {
+				$detection = [TrawlerDetection]::new(
+					'Potential Persistence via ScreenSaver Executable Hijack',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1546.002: Event Triggered Execution: Screensaver",
+					"Key Location: HKCU\Control Panel\Desktop, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
+				)
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -1162,12 +1007,13 @@ function Test-WMIConsumers {
 		$State.WriteMessage("Skipping WMI Analysis - No Drive Retargeting [yet]")
 		return
 	}
+
 	$State.WriteMessage("Checking WMI Consumers")
 	$consumers = Get-WMIObject -Namespace root\Subscription -Class __EventConsumer | Select-Object *
 
 	foreach ($consumer in $consumers) {
 		if ($consumer.ScriptingEngine) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($consumer.Name, $consumer.ScriptFileName, 'WMI Consumers'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($consumer.Name, $consumer.ScriptFileName, 'WMI Consumers'))) {
 				continue
 			}
 
@@ -1181,7 +1027,7 @@ function Test-WMIConsumers {
 			$State.WriteDetection($detection)
 		}
 		if ($consumer.CommandLineTemplate) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($consumer.Name, $consumer.CommandLineTemplate, 'WMI Consumers'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($consumer.Name, $consumer.CommandLineTemplate, 'WMI Consumers'))) {
 				continue
 			}
 			
@@ -1235,25 +1081,27 @@ function Test-NetSHDLLs {
 		"wshelper.dll",
 		"wwancfg.dll"
 	)
-	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Netsh"
-	if (Test-Path -Path $path) {
-		$items = Get-TrawlerItemProperty -Path $path
-		$items.PSObject.Properties | ForEach-Object {
-			if ($_.Value -notin $standard_netsh_dlls) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'NetshDLLs'), $true)) {
-					continue
-				}
 
-				$detection = [TrawlerDetection]::new(
-					'Potential Persistence via Netsh Helper DLL Hijack',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546.007: Event Triggered Execution: Netsh Helper DLL",
-					"Key Location: HKLM\SOFTWARE\Microsoft\Netsh, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Netsh"
+
+	if (Test-Path -Path $path) {
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
+			if ($_.Value -in $standard_netsh_dlls) {
+				continue
 			}
-			
+
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'NetshDLLs'))) {
+				continue
+			}
+
+			$detection = [TrawlerDetection]::new(
+				'Potential Persistence via Netsh Helper DLL Hijack',
+				[TrawlerRiskPriority]::High,
+				'Registry',
+				"T1546.007: Event Triggered Execution: Netsh Helper DLL",
+				"Key Location: HKLM\SOFTWARE\Microsoft\Netsh, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
+			)
+			$State.WriteDetection($detection)
 		}
 	}
 }
@@ -1262,48 +1110,35 @@ function Test-NetSHDLLs {
 # Start T1546.008
 #>
 
-function Test-UtilmanHijack {
+function Test-KnownHijacks {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
 		[object]
 		$State
 	)
-	# TODO - Add Better Details
-	# Supports Drive Retargeting
-	$State.WriteMessage("Checking utilman.exe")
-	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\utilman.exe"
-	if (Test-Path -Path $path) {
+
+	$State.WriteMessage("Checking Known Hijacks")
+
+	$knownHijackPaths = @(
+		"{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\utilman.exe"
+		"{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe"
+	)
+
+	foreach ($path in $knownHijackPaths) {
+		$path = $path -f $State.Drives.Hklm
+		if (-not ($State.TestPathAsRegistry($path))) {
+			continue
+		}
+
 		$detection = [TrawlerDetection]::new(
 			'Potential utilman.exe Registry Persistence',
 			[TrawlerRiskPriority]::High,
 			'Registry',
 			"T1546.008: Event Triggered Execution: Accessibility Features",
-			"Review Data for Key: HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\utilman.exe"
+			"Review Data for Key: $path"
 		)
-		$State.WriteDetection($detection)
-	}
-}
 
-function Test-SethcHijack {
-	[CmdletBinding()]
-	param (
-		[Parameter()]
-		[object]
-		$State
-	)
-	# TODO - Add Better Details
-	# Supports Drive Retargeting
-	$State.WriteMessage("Checking sethc.exe")
-	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe"
-	if (Test-Path -Path $path) {
-		$detection = [TrawlerDetection]::new(
-			'Potential sethc.exe Registry Persistence',
-			[TrawlerRiskPriority]::High,
-			'Registry',
-			"T1546.008: Event Triggered Execution: Accessibility Features",
-			"Review Data for Key: HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe"
-		)
 		$State.WriteDetection($detection)
 	}
 }
@@ -1318,17 +1153,20 @@ function Test-ModifiedWindowsAccessibilityFeature {
 	# TODO - Consider allow-listing here
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Accessibility Binaries")
-	$files_to_check = @(
-		"$($State.Drives.HomeDrive)\Program Files\Common Files\microsoft shared\ink\HID.dll"
-		"$($State.Drives.HomeDrive)\Windows\System32\AtBroker.exe",
-		"$($State.Drives.HomeDrive)\Windows\System32\DisplaySwitch.exe",
-		"$($State.Drives.HomeDrive)\Windows\System32\Magnify.exe",
-		"$($State.Drives.HomeDrive)\Windows\System32\Narrator.exe",
-		"$($State.Drives.HomeDrive)\Windows\System32\osk.exe",
-		"$($State.Drives.HomeDrive)\Windows\System32\sethc.exe",
-		"$($State.Drives.HomeDrive)\Windows\System32\utilman.exe"
+
+	$knownFiles = @(
+		"{0}\Program Files\Common Files\microsoft shared\ink\HID.dll"
+		"{0}\Windows\System32\AtBroker.exe",
+		"{0}\Windows\System32\DisplaySwitch.exe",
+		"{0}\Windows\System32\Magnify.exe",
+		"{0}\Windows\System32\Narrator.exe",
+		"{0}\Windows\System32\osk.exe",
+		"{0}\Windows\System32\sethc.exe",
+		"{0}\Windows\System32\utilman.exe"
 	)
-	foreach ($file in $files_to_check) { 
+
+	foreach ($file in $knownFiles) { 
+		$file = $file -f $State.Drives.HomeDrive
 		$fdata = Get-Item $file -ErrorAction SilentlyContinue | Select-Object CreationTime, LastWriteTime
 		if ($fdata.CreationTime) {
 			if ($fdata.CreationTime.ToString() -ne $fdata.LastWriteTime.ToString()) {
@@ -1337,7 +1175,11 @@ function Test-ModifiedWindowsAccessibilityFeature {
 					[TrawlerRiskPriority]::High,
 					'Windows',
 					"T1546.008: Event Triggered Execution: Accessibility Features",
-					"File: " + $file + ", Created: " + $fdata.CreationTime + ", Modified: " + $fdata.LastWriteTime
+					[PSCustomObject]@{
+						File     = $file
+						Created  = $fdata.CreationTime
+						Modified = $fdata.LastWriteTime
+					}
 				)
 				$State.WriteDetection($detection)
 			}
@@ -1365,7 +1207,7 @@ function Test-AppCertDLLs {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Value -notin $standard_appcert_dlls) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppCertDLLs'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppCertDLLs'))) {
 					continue
 				}
 
@@ -1397,12 +1239,21 @@ function Test-AppInitDLLs {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking AppInit DLLs")
-	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
-	if (Test-Path -Path $path) {
-		$items = Get-TrawlerItemProperty -Path $path
-		$items.PSObject.Properties | ForEach-Object {
+	$knownPaths = @(
+		"{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
+		"{0}Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows"
+	)
+
+	foreach ($path in $knownPaths) {
+		$path = $path -f $State.Drives.Hklm
+
+		if (-not ($State.TestPathAsRegistry($path))) {
+			continue
+		}
+
+		Get-TrawlerItemData -Path $Path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -eq 'AppInit_DLLs' -and $_.Value -ne '') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppInitDLLs'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppInitDLLs'))) {
 					continue
 				}
 
@@ -1411,33 +1262,15 @@ function Test-AppInitDLLs {
 					[TrawlerRiskPriority]::Medium,
 					'Registry',
 					"T1546.010: Event Triggered Execution: AppInit DLLs",
-					"Key Location: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-			
-		}
-	}
-	$path = "Registry::$($State.Drives.Hklm)Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows"
-	if (Test-Path -Path $path) {
-		$items = Get-TrawlerItemProperty -Path $path
-		$items.PSObject.Properties | ForEach-Object {
-			if ($_.Name -eq 'AppInit_DLLs' -and $_.Value -ne '') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppInitDLLs'), $true)) {
-					continue
-				}
-
-				$detection = [TrawlerDetection]::new(
-					'Potential AppInit DLL Persistence',
-					[TrawlerRiskPriority]::Medium,
-					'Registry',
-					"T1546.010: Event Triggered Execution: AppInit DLLs",
-					"Key Location: HKEY_LOCAL_MACHINE\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
+					[PSCustomObject]@{
+						KeyLocation = $path
+						EntryName   = $_.Name
+						EntryValue  = $_.Value
+					}
 				)
 				$State.WriteDetection($detection)
 			}
 		}
-		
 	}
 }
 
@@ -1455,27 +1288,34 @@ function Test-ApplicationShims {
 
 	$State.WriteMessage("Checking Application Shims")
 	# TODO - Also check HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Custom
-	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB"
-	if (-not (Test-Path -Path $path)) {
-		return 
-	}
-	$items = Get-TrawlerItemProperty -Path $path
-	$items.PSObject.Properties | ForEach-Object {
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppShims'), $true)) {
-			continue
-		}
+	$knownPaths = @(
+		"{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB"
+		"{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Custom"
+	)
 
-		$State.WriteDetection([TrawlerDetection]::new(
-				'Potential Application Shimming Persistence',
-				[TrawlerRiskPriority]::High,
-				'Registry',
-				"T1546.011: Event Triggered Execution: Application Shimming",
-				[PSCustomObject]@{
-					KeyLocation = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\InstalledSDB"
-					EntryName   = $_.Name
-					EntryValue  = $_.Value
-				}
-			))
+	foreach ($path in $knownPaths) {
+		$path = $path -f $State.Drives.Hklm
+		if (-not ($State.TestPathAsRegistry($path))) {
+			return 
+		}
+		
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppShims'))) {
+				continue
+			}
+	
+			$State.WriteDetection([TrawlerDetection]::new(
+					'Potential Application Shimming Persistence',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1546.011: Event Triggered Execution: Application Shimming",
+					[PSCustomObject]@{
+						KeyLocation = $path
+						EntryName   = $_.Name
+						EntryValue  = $_.Value
+					}
+				))
+		}
 	}
 }
 
@@ -1493,26 +1333,30 @@ function Test-IFEO {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Image File Execution Options")
-	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options"
-	if (Test-Path -Path $path) {
-		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			$data = Get-TrawlerItemProperty -Path $path
-			if ($data.Debugger) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Debugger, 'IFEO'), $true)) {
-					continue
-				}
+	$path = "Registry::{0}SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options" -f $($State.Drives.Hklm)
+	if (-not (Test-Path -Path $path)) {
+		continue 
+	}
 
-				$detection = [TrawlerDetection]::new(
-					'Potential Image File Execution Option Debugger Injection',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546.012: Event Triggered Execution: Image File Execution Options Injection",
-					"Registry Path: " + $item.Name + ", Debugger: " + $data.Debugger
-				)
-				$State.WriteDetection($detection)
+	foreach ($item in Get-TrawlerChildItem -Path $path) {
+		$data = Get-TrawlerItemProperty -Path $item.Name -AsRegistry
+		if ($data.Debugger) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Debugger, 'IFEO'))) {
+				continue
 			}
+
+			$detection = [TrawlerDetection]::new(
+				'Potential Image File Execution Option Debugger Injection',
+				[TrawlerRiskPriority]::High,
+				'Registry',
+				"T1546.012: Event Triggered Execution: Image File Execution Options Injection",
+				[PSCustomObject]@{
+					RegistryPath = $item.name
+					Debugger     = $data.Debugger
+				}
+			)
+
+			$State.WriteDetection($detection)
 		}
 	}
 }
@@ -1569,31 +1413,36 @@ function Test-SilentProcessExitMonitoring {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking SilentProcessExit Monitoring")
-	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit"
-	if (Test-Path -Path $path) {
-		$items = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			$data = Get-TrawlerItemProperty -Path $path
-			if ($data.MonitorProcess) {
-				if ($data.ReportingMode -eq $null) {
-					$data.ReportingMode = 'NA'
-				}
-
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.MonitorProcess, 'SilentProcessExit'), $true)) {
-					continue
-				}
-
-				#allowtable_silentprocessexit
-				$detection = [TrawlerDetection]::new(
-					'Process Launched on SilentProcessExit',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546.012: Event Triggered Execution: Image File Execution Options Injection",
-					"Monitored Process: " + $item.Name + ", Launched Process: " + $data.MonitorProcess + ", Reporting Mode: " + $data.ReportingMode
-				)
-				$State.WriteDetection($detection)
+	$path = "Registry::{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit" -f $($State.Drives.Hklm)
+	if (-not (Test-Path -Path $path)) {
+		return 
+	}
+	
+	foreach ($item in Get-TrawlerChildItem -Path $path) {
+		$data = Get-TrawlerItemProperty -Path $item.Name -AsRegistry
+		if ($data.MonitorProcess) {
+			if ($data.ReportingMode) {
+				$data.ReportingMode = 'NA'
 			}
+
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.MonitorProcess, 'SilentProcessExit'))) {
+				continue
+			}
+
+			#allowtable_silentprocessexit
+			$detection = [TrawlerDetection]::new(
+				'Process Launched on SilentProcessExit',
+				[TrawlerRiskPriority]::High,
+				'Registry',
+				"T1546.012: Event Triggered Execution: Image File Execution Options Injection",
+				[PSCustomObject]@{
+					MonitoredProcess = $item.Name
+					LaunchedProcess  = $data.MonitorProcess
+					ReportingMode    = $data.ReportingMode
+				}
+			)
+
+			$State.WriteDetection($detection)
 		}
 	}
 }
@@ -1619,72 +1468,63 @@ function Test-PowerShellProfiles {
 	# $HOME\Documents\PowerShell\Profile.ps1
 	# $HOME\Documents\PowerShell\Microsoft.PowerShell_profile.ps1
 	$State.WriteMessage("Checking PowerShell Profiles")
+
+	$knownPowerShellProfilePaths = @(
+		"{0}\Users\{1}\Documents\WindowsPowerShell\profile.ps1"
+		"{0}\Users\{1}\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
+		"{0}\Users\{1}\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+	)
+
+	$retrievedPowerShellProfiles = [System.Collections.ArrayList]::new()
+
 	if ($drivechange) {
 		# TODO - Investigate whether these paths can be retrieved from the HKLM HIVE dynamically
-		$alluserallhost = "$($State.Drives.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
-		$allusercurrenthost = "$($State.Drives.HomeDrive)\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1"
+		$retrievedPowerShellProfiles.AddRange(@(
+				"{0}\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
+				"{0}\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1"
+			))
 	}
- else {
-		$PROFILE | Select-Object AllUsersAllHosts, AllUsersCurrentHost, CurrentUserAllHosts, CurrentUserCurrentHost | Out-Null
-		$alluserallhost = $PROFILE.AllUsersAllHosts
-		$allusercurrenthost = $PROFILE.AllUsersCurrentHost
-	}
-
-	if (Test-Path $alluserallhost) {
-		$detection = [TrawlerDetection]::new(
-			'Review: Global Custom PowerShell Profile',
-			[TrawlerRiskPriority]::Medium,
-			'PowerShell',
-			"T1546.013: Event Triggered Execution: PowerShell Profile",
-			"Profile: " + $PROFILE.AllUsersAllHosts
-		)
-		$State.WriteDetection($detection)
-	}
-	if (Test-Path $allusercurrenthost) {
-		$detection = [TrawlerDetection]::new(
-			'Review: Global Custom PowerShell Profile',
-			[TrawlerRiskPriority]::Medium,
-			'PowerShell',
-			"T1546.013: Event Triggered Execution: PowerShell Profile",
-			"Profile: " + $PROFILE.AllUsersCurrentHost
-		)
-		$State.WriteDetection($detection)
+	else {
+		$retrievedPowerShellProfiles.AddRange(@(
+				$PROFILE.AllUsersAllHosts
+				$PROFILE.AllUsersCurrentHost
+			))
 	}
 
-	$profile_names = Get-ChildItem "$($State.Drives.HomeDrive)\Users" -Attributes Directory | Select-Object Name
-	foreach ($name in $profile_names) {
-		$path1 = "$($State.Drives.HomeDrive)\Users\$name\Documents\WindowsPowerShell\profile.ps1"
-		$path2 = "$($State.Drives.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
-		$path3 = "$($State.Drives.HomeDrive)\Users\$name\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-		if (Test-Path $path1) {
-			$detection = [TrawlerDetection]::new(
-				'Review: Custom PowerShell Profile',
-				[TrawlerRiskPriority]::Medium,
-				'PowerShell',
-				"T1546.013: Event Triggered Execution: PowerShell Profile",
-				"Profile: " + $path1
-			)
-			$State.WriteDetection($detection)
+	foreach ($path in $retrievedPowerShellProfiles) {
+		$path = $path -f $($State.Drives.HomeDrive)
+
+		if (-not (Test-Path -Path $path)) {
+			continue
 		}
-		if (Test-Path $path2) {
-			$detection = [TrawlerDetection]::new(
-				'Review: Custom PowerShell Profile',
+
+		$State.WriteDetection([TrawlerDetection]::new(
+				'Review: Global Custom PowerShell Profile',
 				[TrawlerRiskPriority]::Medium,
 				'PowerShell',
 				"T1546.013: Event Triggered Execution: PowerShell Profile",
-				"Profile: " + $path2
-			)
-			$State.WriteDetection($detection)
-		}
-		if (Test-Path $path3) {
-			$detection = [TrawlerDetection]::new(
-				'Review: Custom PowerShell Profile',
-				[TrawlerRiskPriority]::Medium,
-				'PowerShell',
-				"T1546.013: Event Triggered Execution: PowerShell Profile",
-				"Profile: " + $path3
-			)
-			$State.WriteDetection($detection)
+				"Profile: " + $path
+			))
+	}
+
+	foreach ($name in Get-ChildItem "$($State.Drives.HomeDrive)\Users" -Directory | Select-Object Name) {
+		foreach ($path in $knownPowerShellProfilePaths) {
+			$path = $path -f $($State.Drives.HomeDrive), $name
+
+			if (-not (Test-Path -Path $path)) {
+				continue 
+			}
+
+			$State.WriteDetection([TrawlerDetection]::new(
+					'Review: Custom PowerShell Profile',
+					[TrawlerRiskPriority]::Medium,
+					'PowerShell',
+					"T1546.013: Event Triggered Execution: PowerShell Profile",
+					[PSCustomObject]@{
+						User        = $name
+						ProfilePath = $path
+					}
+				))
 		}
 	}
 }
@@ -1721,7 +1561,7 @@ function Test-ComHijacks {
 					continue
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
 					continue
 				}
 
@@ -1768,43 +1608,36 @@ function Test-WellKnownCOM {
 	# TODO - Add the same HKLM Check
 	$State.WriteMessage("Checking well-known COM hijacks")
 
-	# shell32.dll Hijack
-	$basepath = "Registry::HKEY_CURRENT_USER\Software\Classes\CLSID\{42aedc87-2188-41fd-b9a3-0c966feabec1}\InprocServer32"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -Path $path) {
-			$items = Get-TrawlerItemProperty -Path $path
-			$items.PSObject.Properties | ForEach-Object {
-				$detection = [TrawlerDetection]::new(
-					'Potential shell32.dll Hijack for Persistence',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
-					"Key Location: HKCU\\Software\\Classes\\CLSID\\{42aedc87-2188-41fd-b9a3-0c966feabec1}\\InprocServer32, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
-	# WBEM Subsystem
-	$basepath = "Registry::HKEY_CURRENT_USER\Software\Classes\CLSID\{F3130CDB-AA52-4C3A-AB32-85FFC23AF9C1}\InprocServer32"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -Path $path) {
-			$items = Get-TrawlerItemProperty -Path $path
-			$items.PSObject.Properties | ForEach-Object {
-				$detection = [TrawlerDetection]::new(
-					'Potential WBEM Subsystem Hijack for Persistence',
-					[TrawlerRiskPriority]::High,
-					'Registry',
-					"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
-					"Key Location: HKCU\\Software\\Classes\\CLSID\\{F3130CDB-AA52-4C3A-AB32-85FFC23AF9C1}\\InprocServer32, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-				)
-				$State.WriteDetection($detection)
-			}
-		}
-	}
+	$knownUUIDs = @(
+		"{42aedc87-2188-41fd-b9a3-0c966feabec1}" # shell32.dll Hijack
+		"{F3130CDB-AA52-4C3A-AB32-85FFC23AF9C1}" # WBEM Subsystem
+	)
 
+	$basepath = "Registry::{0}\Software\Classes\CLSID\{1}\InprocServer32"
+
+	foreach ($userDrive in $State.Drives.CurrentUsers) {
+		foreach ($uuid in $knownUUIDs) {
+			$path = $basepath -f $userDrive, $uuid
+
+			if (-not (Test-Path -Path $path)) {
+				continue
+			}
+
+			Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
+				$State.WriteDetection([TrawlerDetection]::new(
+						'Potential WBEM Subsystem Hijack for Persistence',
+						[TrawlerRiskPriority]::High,
+						'Registry',
+						"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
+						[PSCustomObject]@{
+							KeyLocation = $path.Trim("Registry::")
+							EntryName   = $_.Name
+							EntryValue  = $_.Value
+						}
+					))
+			}
+		}
+	}
 }
 
 function Find-IfValueExistsInComTables {
@@ -1893,7 +1726,7 @@ function Test-COM-Hijacks {
 					$datum = Get-ItemProperty $path
 					$datum.PSObject.Properties | ForEach-Object {
 						if ($_.Name -eq '(Default)') {
-							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'), $true)) {
+							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
 								continue
 							}
 
@@ -1966,7 +1799,7 @@ function Test-COM-Hijacks {
 						$datum = Get-ItemProperty $path
 						$datum.PSObject.Properties | ForEach-Object {
 							if ($_.Name -eq '(Default)') {
-								if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'), $true)) {
+								if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
 									continue
 								}
 
@@ -2033,7 +1866,7 @@ function Test-FolderOpen {
 			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq 'DelegateExecute') {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'FolderOpen'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'FolderOpen'))) {
 						continue
 					}
 

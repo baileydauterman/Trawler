@@ -331,6 +331,13 @@ class TrawlerState {
     }
 
     <#
+    # Test the path with the registry prefix
+    #>
+    [bool] TestPathAsRegistry([string]$path) {
+        return Test-Path -Path "Registry::$path"
+    }
+
+    <#
     # Offload loaded hives
     #>
     [void] Cleanup() {
@@ -611,7 +618,6 @@ class TrawlerState {
 }
 
 class TrawlerSnapShotData {
-    <# Define the class. Try constructors, properties, or methods. #>
     [string]$Key
     [string]$Value
     [string]$Source

@@ -228,7 +228,7 @@ function Test-RATS {
 
 		foreach ($tmppath in $paths) {
 			if (Test-Path $tmppath) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($rat_name, $tmppath, 'RATS'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($rat_name, $tmppath, 'RATS'))) {
 					continue
 				}
 

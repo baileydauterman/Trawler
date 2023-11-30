@@ -45,7 +45,7 @@ function Test-Connections {
 
 		$proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue | Select-Object Name, Path
 
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($conn.RemoteAddress, $conn.RemoteAddress, 'Connections'), $true)) {
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($conn.RemoteAddress, $conn.RemoteAddress, 'Connections'))) {
 			continue
 		}
 
@@ -54,7 +54,7 @@ function Test-Connections {
 		}
 
 		if ($conn.State -eq 'Listen' -and $conn.LocalPort -gt 1024) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($proc.Name, $proc.Path, 'ProcessConnections'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($proc.Name, $proc.Path, 'ProcessConnections'))) {
 				continue
 			}
 

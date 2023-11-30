@@ -35,7 +35,7 @@ function Test-OfficeGlobalDotName {
 			
 			Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 				if ($_.Name -eq "GlobalDotName") {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'GlobalDotName'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'GlobalDotName'))) {
 						continue
 					}
 
@@ -126,7 +126,7 @@ function Test-OutlookStartup {
 		return 
 	}
 
-	if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $item.FullName, 'Outlook'), $true)) {
+	if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $item.FullName, 'Outlook'))) {
 		return
 	}
 
@@ -197,7 +197,7 @@ function Test-OfficeTrustedLocations {
 						"C:\Users\$actual_current_user\AppData\Roaming\Microsoft\Word\Startup"
 					)
 
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Path, $data.Path, 'OfficeTrustedLocations'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Path, $data.Path, 'OfficeTrustedLocations'))) {
 						continue
 					}
 
@@ -230,7 +230,7 @@ function Test-OfficeTrustedLocations {
 					continue
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.FullName, $item.FullName, 'OfficeAddins'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.FullName, $item.FullName, 'OfficeAddins'))) {
 					continue
 				}
 

@@ -30,7 +30,7 @@ function Test-DNSServerLevelPluginDLL {
 
 	Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 		if ($_.Name -eq 'ServerLevelPluginDll' -and $_.Value -ne '""') {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'DNSPlugin'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'DNSPlugin'))) {
 				continue
 			}
 

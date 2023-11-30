@@ -159,7 +159,7 @@ function Test-BIDDll {
 			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq ":Path") {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'BIDDLL'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'BIDDLL'))) {
 						continue
 					}
 
@@ -199,7 +199,7 @@ function Test-WindowsUpdateTestDlls {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in "EventerHookDll", "AllowTestEngine", "AlternateServiceStackDLLPath") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'WinUpdateTestDLL'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'WinUpdateTestDLL'))) {
 					continue
 				}
 
@@ -241,7 +241,7 @@ function Test-MiniDumpAuxiliaryDLLs {
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'MiniDumpAuxiliaryDLL'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'MiniDumpAuxiliaryDLL'))) {
 				continue
 			}
 
@@ -295,7 +295,7 @@ function Test-ExplorerHelperUtilities {
 			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -ne '""' -and $_.Value -notin $allowlisted_explorer_util_paths) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'ExplorerHelpers'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'ExplorerHelpers'))) {
 						continue
 					}
 
@@ -360,7 +360,7 @@ function Test-ProcessModules {
 		if ($modules) {
 			foreach ($module in $modules) {
 				if ($module.ModuleName -in $suspicious_unsigned_dll_names) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($module.FileName, $module.FileName, 'Modules'), $true)) {
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($module.FileName, $module.FileName, 'Modules'))) {
 						continue
 					}
 
@@ -430,8 +430,7 @@ function Test-WindowsUnsignedFiles {
 		foreach ($file in $files) {
 			$sig = Get-AuthenticodeSignature $file.FullName
 			if ($sig.Status -ne 'Valid') {
-				$item = Get-ChildItem -Path $file.FullName -File -ErrorAction SilentlyContinue | Select-Object *
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($file.FullName, $file.FullName, 'UnsignedWindows'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($file.FullName, $file.FullName, 'UnsignedWindows'))) {
 					continue
 				}
 
@@ -519,7 +518,7 @@ function Test-KnownManagedDebuggers {
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'KnownManagedDebuggers'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'KnownManagedDebuggers'))) {
 				continue
 			}
 
@@ -562,7 +561,7 @@ function Test-Wow64LayerAbuse {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -ne "(Default)") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WOW64Compat'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WOW64Compat'))) {
 					continue
 				}
 
@@ -599,7 +598,7 @@ function Test-SEMgrWallet {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "DllName" -and $_.Value -notin "", "SEMgrSvc.dll") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'SEMgr'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'SEMgr'))) {
 					continue
 				}
 
@@ -659,7 +658,7 @@ function Test-WERRuntimeExceptionHandlers {
 			}
 
 			if ($_.Name -ne "(Default)" -and $verified_match -eq $false) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'WERHandlers'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'WERHandlers'))) {
 					continue
 				}
 
@@ -707,7 +706,7 @@ function Test-TerminalServicesInitialProgram {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq 'InitialProgram' -and $_.Value -ne "") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'TerminalServicesIP'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'TerminalServicesIP'))) {
 					continue
 				}
 
@@ -761,7 +760,7 @@ function Test-EventViewerMSC {
 				continue 
 			}
 
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, "MSCHijack"), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, "MSCHijack"))) {
 				continue
 			}
 
@@ -801,7 +800,7 @@ function Test-RDPStartupPrograms {
 				$packages = $_.Value.Split(",")
 				foreach ($package in $packages) {
 					if ($package -notin $allowed_rdp_startups) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'RDPStartup'), $true)) {
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'RDPStartup'))) {
 							continue
 						}
 
@@ -850,7 +849,7 @@ function Test-PATHHijacks {
 		$items = Get-ItemProperty -Path $path_reg | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "Path") {
-				$path_entries = $_.Value
+				$path_entries += $_.Value
 			}
 		}
 	}
@@ -860,7 +859,7 @@ function Test-PATHHijacks {
 		$path_bins = Get-ChildItem -File -Path $path -ErrorAction SilentlyContinue -Filter "*.exe"
 		foreach ($bin in $path_bins) {
 			if ($bin.Name -in $system32_bins) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($bin.FullName, $bin.Name, 'PATHHijack'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($bin.FullName, $bin.Name, 'PATHHijack'))) {
 					continue
 				}
 

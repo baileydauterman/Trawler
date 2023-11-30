@@ -15,9 +15,9 @@
     # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
     NestedModules    = @(
         "./Trawler.psm1"
-        "./helpers/data-grabbers.psm1"
-        "./helpers/data-comparers.psm1"
-        "./data/build-data.psm1"
+        "./helpers/TrawlerDataGrabbers.psm1"
+        "./helpers/TrawlerDataComparers.psm1"
+        "./data/TrawlerDataBuilders.psm1"
         "./techniques/NoTechnique.psm1"
         "./techniques/T1037.psm1"
         "./techniques/T1053.psm1"
@@ -43,4 +43,3 @@
         './TrawlerState.ps1' # adds necessary classes to memory
     )
 }
-

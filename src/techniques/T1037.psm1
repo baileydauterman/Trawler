@@ -62,7 +62,7 @@ function Test-Startups {
 	$startups = @()
 
 	foreach ($item in $startups) {
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $item.Command, 'Startup'), $true)) {
+		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $item.Command, 'Startup'))) {
 			continue
 		}
 
@@ -82,7 +82,7 @@ function Test-Startups {
 		}
 
 		Get-TrawlerItemPropertyObjectProperties -Path $path | ForEach-Object {
-			if ($_.Name -eq "(Default)" -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'Startup'), $true)) {
+			if ($_.Name -eq "(Default)" -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'Startup'))) {
 				continue
 			}
 			
@@ -166,7 +166,7 @@ function Test-GPOScripts {
 					$script_location = $path_lookup[$script_type] + $cmdline
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($script_location, $script_location, 'GPOScripts'), $true)) {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($script_location, $script_location, 'GPOScripts'))) {
 					$cmdline = $null
 					$params = $null
 					continue
@@ -254,7 +254,7 @@ function Test-TerminalProfiles {
 
 						$userTerminalSettings = "$dir\LocalState\settings.json"
 
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($userTerminalSettings, $exe, "TerminalUserProfile"), $true)) {
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($userTerminalSettings, $exe, "TerminalUserProfile"))) {
 							continue
 						}
 
@@ -301,7 +301,7 @@ function Test-UserInitMPRScripts {
 				continue 
 			}
 				
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'UserInitMPR'), $true)) {
+			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'UserInitMPR'))) {
 				continue
 			}
 
