@@ -22,57 +22,28 @@ function Test-Startups {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Startup Items")
+
+	$variablePaths = @(
+		"{0}\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+		"{0}\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+		"{0}\SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
+		"{0}\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx"
+		"{0}\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices"
+	)
+
 	$paths = @(
 		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
 		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
 		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
 		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx"
 		"$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices"
-		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
-		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunEx"
-		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx"
-		"REPLACE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices"
 	)
-	if ($nevermind) {
-		foreach ($tmpbase in $paths) {
-			if ($tmpbase -match "REPLACE.*") {
-				foreach ($p in $State.Drives.CurrentUsers) {
-					$newpath = $tmpbase.Replace("REPLACE", $p)
-					$paths += $newpath
-				}
-			}
-		}
-		$startups = @()
-	}
- else {
-		$startups = Get-CimInstance -ClassName Win32_StartupCommand | Select-Object Command, Location, Name, User
-		#$statups = @()
 
-	}
 	# Redoing this to only read reg-keys instead of using win32_StartupCommand
-	foreach ($tmpbase in $paths) {
-		if ($tmpbase -match "REPLACE.*") {
-			foreach ($p in $State.Drives.CurrentUsers) {
-				$newpath = $tmpbase.Replace("REPLACE", $p)
-				$paths += $newpath
-			}
+	foreach ($tmpbase in $variablePaths) {
+		foreach ($p in $State.GetFormattedUserPaths($tmpbase)) {
+			$paths += $p
 		}
-	}
-	$startups = @()
-
-	foreach ($item in $startups) {
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $item.Command, 'Startup'))) {
-			continue
-		}
-
-		$State.WriteDetection([TrawlerDetection]::new(
-				'Startup Item Review',
-				[TrawlerRiskPriority]::Low,
-				'Startup',
-				"T1037.005: Boot or Logon Initialization Scripts: Startup Items",
-				($item | Select-Object Location, Name, Command, User)
-			))
 	}
 
 	foreach ($path_ in $paths) {
@@ -81,7 +52,7 @@ function Test-Startups {
 			continue
 		}
 
-		Get-TrawlerItemPropertyObjectProperties -Path $path | ForEach-Object {
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -eq "(Default)" -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'Startup'))) {
 				continue
 			}
@@ -194,6 +165,7 @@ function Test-GPOScripts {
 				}
 				catch {
 				}
+
 				# no suspicious lines but should still be investigated
 				if (-not $script_content_detection) {
 					$State.WriteDetection([TrawlerDetection]::new(
@@ -230,8 +202,8 @@ function Test-TerminalProfiles {
 
 	foreach ($user in Get-ChildItem ($State.ToTargetDrivePath("Users")) -Directory) {
 		$userPath = $base_path.replace("_USER_", $user.Name)
-		$terminalDirs = Get-ChildItem $userPath -Filter "Microsoft.WindowsTerminal*" -ErrorAction SilentlyContinue
-		foreach ($dir in $terminalDirs) {
+
+		foreach ($dir in Get-ChildItem $userPath -Filter "Microsoft.WindowsTerminal*" -ErrorAction SilentlyContinue) {
 			if (-not (Test-Path "$dir\LocalState\settings.json")) {
 				continue
 			}
@@ -244,31 +216,33 @@ function Test-TerminalProfiles {
 			$defaultGUID = $terminalSettings.defaultProfile
 			foreach ($profile_list in $terminalSettings.profiles) {
 				foreach ($profile in $profile_list.List) {
-					if ($profile.guid -eq $defaultGUID) {
-						if ($profile.commandline) {
-							$exe = $profile.commandline
-						}
-						else {
-							$exe = $profile.name
-						}
-
-						$userTerminalSettings = "$dir\LocalState\settings.json"
-
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($userTerminalSettings, $exe, "TerminalUserProfile"))) {
-							continue
-						}
-
-						$State.WriteDetection([TrawlerDetection]::new(
-								'Windows Terminal launching command on login',
-								[TrawlerRiskPriority]::Medium,
-								'Terminal',
-								"T1037: Boot or Logon Initialization Scripts",
-								[PSCustomObject]@{
-									File    = $userTerminalSettings
-									Command = $exe
-								}
-							))
+					if ($profile.guid -ne $defaultGUID) {
+						continue 
 					}
+
+					if ($profile.commandline) {
+						$exe = $profile.commandline
+					}
+					else {
+						$exe = $profile.name
+					}
+
+					$userTerminalSettings = "$dir\LocalState\settings.json"
+
+					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($userTerminalSettings, $exe, "TerminalUserProfile"))) {
+						continue
+					}
+
+					$State.WriteDetection([TrawlerDetection]::new(
+							'Windows Terminal launching command on login',
+							[TrawlerRiskPriority]::Medium,
+							'Terminal',
+							"T1037: Boot or Logon Initialization Scripts",
+							[PSCustomObject]@{
+								File    = $userTerminalSettings
+								Command = $exe
+							}
+						))
 				}
 			}
 		}
@@ -289,13 +263,10 @@ function Test-UserInitMPRScripts {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking UserInitMPRLogonScript")
-	$basepath = "Registry::HKEY_CURRENT_USER\Environment"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (-not (Test-Path -Path $path)) {
-			continue 
-		}
-		
+
+	$basepath = "Registry::{0}\Environment"
+
+	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -ne 'UserInitMprLogonScript') {
 				continue 

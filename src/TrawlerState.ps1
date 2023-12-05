@@ -419,6 +419,8 @@ class TrawlerState {
             $this.Drives.Hkcr = "HKEY_CLASSES_ROOT\"
             $this.Drives.CurrentControlSet = "CurrentControlSet"
         }
+
+        $this.Drives.CurrentUsers += "HKEY_CURRENT_USER"
     }
 
     <#
@@ -426,6 +428,29 @@ class TrawlerState {
     #>
     [string] ToTargetDrivePath([string[]]$pathSegments) {
         return [System.IO.Path]::Combine($this.Drives.HomeDrive, $pathSegments)
+    }
+
+    <#
+    # Takes in a path that takes a formatted string. Formats the path with the found users in the $this.Drives.CurrentUsers variables.
+    # Checks all output paths and only returns the paths that exist.
+    #>
+    [string[]] GetFormattedUserPaths([string]$formatPath, [bool]$checkExists = $true) {
+        $returnValues = [System.Collections.ArrayList]::new()
+
+        foreach ($user in $this.Drives.CurrentUsers) {
+            $tempPath = $formatPath -f $user
+
+            if (-not $checkExists) {
+                $returnValues.Add($tempPath) | Out-Null
+                continue
+            }
+
+            if (Test-Path $tempPath) {
+                $returnValues.Add($tempPath) | Out-Null
+            }
+        }
+
+        return $returnValues
     }
 
     [void] LoadHive([string]$hiveName, [string]$hivePath, [string]$hiveRoot) {

@@ -106,8 +106,7 @@ function Test-CommandAutoRunProcessors {
 	$path = "Registry::$($State.Drives.Hklm)`SOFTWARE\Microsoft\Command Processor"
 
 	if (Test-Path -Path $path) {
-		$items = Get-TrawlerItemProperty -Path $path
-		$items.PSObject.Properties | ForEach-Object {
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'))) {
 				continue
 			}
@@ -126,15 +125,9 @@ function Test-CommandAutoRunProcessors {
 		}
 	}
 
-	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Command Processor"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (-not (Test-Path -Path $path)) {
-			continue 
-		}
-
-		$items = Get-TrawlerItemProperty -Path $path
-		$items.PSObject.Properties | ForEach-Object {
+	$basepath = "Registry::{0}\SOFTWARE\Microsoft\Command Processor"
+	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'))) {
 				continue
 			}
@@ -193,13 +186,8 @@ function Test-ContextMenu {
 	}
 
 	$basepath = "{0}\SOFTWARE\Classes\*\shellex\ContextMenuHandlers"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath -f $p
 
-		if (-not $State.TestPathAsRegistry($path)) {
-			continue 
-		}
-
+	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
 		foreach ($item in Get-TrawlerChildItem $path -AsRegistry) {
 			Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -match ".*\.dll.*") {
@@ -242,13 +230,13 @@ function Test-DiskCleanupHandlers {
 		"C:\Windows\system32\scavengeui.dll",
 		"C:\Windows\System32\fhcleanup.dll"
 	)
+
 	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\"
+
 	if (Test-Path -LiteralPath "Registry::$path") {
 		$items = Get-TrawlerChildItem "Registry::$path"
 		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			$data = Get-TrawlerItemProperty $path
-			$data.PSObject.Properties | ForEach-Object {
+			Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
 				if ($_.Name -eq '(Default)') {
 					$target_prog = ''
 					$tmp_path = "$($State.Drive.Hkcr)CLSID\$($_.Value)\InProcServer32"
@@ -260,9 +248,11 @@ function Test-DiskCleanupHandlers {
 							}
 						}
 					}
+
 					if ($target_prog -in $default_cleanup_handlers) {
 						continue
 					}
+
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $target_prog, 'DiskCleanupHandlers'))) {
 						continue
 					}
@@ -357,12 +347,8 @@ function Test-DebuggerHijacks {
 	}
 
 	$basepath = "{0}\CLSID\{834128A2-51F4-11D0-8F20-00805F2CD064}\LocalServer32"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath -f $p
-		if (-not $State.TestPathAsRegistry($path)) {
-			continue
-		}
-		
+
+	foreach ($pa in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -eq '@' -and ($_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'))) {
@@ -687,12 +673,7 @@ function Test-WindowsLoadKey {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Windows Load")
 	$basepath = "{0}\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath -f $p
-		if (-not (Test-Path -Path "Registry::$path")) {
-			continue 
-		}
-
+	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -in 'Load') {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WindowsLoad'))) {
@@ -752,12 +733,7 @@ function Test-HTMLHelpDLL {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking HTML Help (.chm) DLL")
 	$basepath = "{0}\Software\Microsoft\HtmlHelp Author"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath -f $p
-		if (-not ($State.TestPathAsRegistry($path))) {
-			continue 
-		}
-
+	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
 		foreach ($item in Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry) {
 			if ($item.Name -eq 'location') {
 				$detection = [TrawlerDetection]::new(
@@ -818,64 +794,61 @@ function Test-AssociationHijack {
 	}
 
 	# This specifically uses the list of CLASSES associated with each user, rather than the user hives directly
-	$basepath = "Registry::HKEY_CURRENT_USER"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -Path $path) {
-			foreach ($item in Get-TrawlerChildItem -Path $path) {
-				$path = $item.Name
-				if ($path.EndsWith('file')) {
-					$basefile = $path.Split("\")[-1]
-					$open_path = $path + "\shell\open\command"
-					if (Test-Path -Path "Registry::$open_path") {
-						Get-TrawlerItemData -Path $open_path -ItemType ItemProperty -AsRegistry | ForEach-Object {
-							if ($_.Name -ne '(default)') {
-								continue 
-							}
+	$basepath = "Registry::{0}"
+	foreach ($p in $State.GetFormattedUserPaths($basepath)) {
+		foreach ($item in Get-TrawlerChildItem -Path $path) {
+			$path = $item.Name
+			if ($path.EndsWith('file')) {
+				$basefile = $path.Split("\")[-1]
+				$open_path = $path + "\shell\open\command"
+				if (Test-Path -Path "Registry::$open_path") {
+					Get-TrawlerItemData -Path $open_path -ItemType ItemProperty -AsRegistry | ForEach-Object {
+						if ($_.Name -ne '(default)') {
+							continue 
+						}
 
-							$exe = $_.Value
-							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'))) {
-								continue
-							}
+						$exe = $_.Value
+						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'))) {
+							continue
+						}
 
-							if ($value_regex_lookup.ContainsKey($basefile)) {
-								if ($exe -notmatch $value_regex_lookup[$basefile]) {
-									$detection = [TrawlerDetection]::new(
-										'Possible File Association Hijack - Mismatch on Expected Value',
-										[TrawlerRiskPriority]::High,
-										'Registry',
-										"T1546.001: Event Triggered Execution: Change Default File Association",
-										"FileType: " + $open_path + ", Expected Association: " + $value_regex_lookup[$basefile] + ", Current Association: " + $exe
-									)
-									$State.WriteDetection($detection)
-									return
-								}
-								else {
-									return
-								}
-							}
-
-							if ($exe -match ".*\.exe.*\.exe") {
+						if ($value_regex_lookup.ContainsKey($basefile)) {
+							if ($exe -notmatch $value_regex_lookup[$basefile]) {
 								$detection = [TrawlerDetection]::new(
-									'Possible File Association Hijack - Multiple EXEs',
+									'Possible File Association Hijack - Mismatch on Expected Value',
 									[TrawlerRiskPriority]::High,
 									'Registry',
 									"T1546.001: Event Triggered Execution: Change Default File Association",
-									"FileType: " + $open_path + ", Current Association: " + $exe
+									"FileType: " + $open_path + ", Expected Association: " + $value_regex_lookup[$basefile] + ", Current Association: " + $exe
 								)
 								$State.WriteDetection($detection)
 								return
 							}
-							if (Test-SuspiciousTerms -Value $exe) {
-								$detection = [TrawlerDetection]::new(
-									'Possible File Association Hijack - Suspicious Keywords',
-									[TrawlerRiskPriority]::High,
-									'Registry',
-									"T1546.001: Event Triggered Execution: Change Default File Association",
-									"FileType: " + $open_path + ", Current Association: " + $exe
-								)
-								$State.WriteDetection($detection)
+							else {
+								return
 							}
+						}
+
+						if ($exe -match ".*\.exe.*\.exe") {
+							$detection = [TrawlerDetection]::new(
+								'Possible File Association Hijack - Multiple EXEs',
+								[TrawlerRiskPriority]::High,
+								'Registry',
+								"T1546.001: Event Triggered Execution: Change Default File Association",
+								"FileType: " + $open_path + ", Current Association: " + $exe
+							)
+							$State.WriteDetection($detection)
+							return
+						}
+						if (Test-SuspiciousTerms -Value $exe) {
+							$detection = [TrawlerDetection]::new(
+								'Possible File Association Hijack - Suspicious Keywords',
+								[TrawlerRiskPriority]::High,
+								'Registry',
+								"T1546.001: Event Triggered Execution: Change Default File Association",
+								"FileType: " + $open_path + ", Current Association: " + $exe
+							)
+							$State.WriteDetection($detection)
 						}
 					}
 				}
@@ -962,12 +935,7 @@ function Test-ScreenSaverEXE {
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking ScreenSaver exe")
 	$basepath = "{0}\Control Panel\Desktop"
-	foreach ($userDrive in $State.Drives.CurrentUsers) {
-		$path = $basepath -f $userDrive
-		if (-not ($State.TestPathAsRegistry($path))) {
-			continue 
-		}
-
+	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -eq "SCRNSAVE.exe") {
 				$detection = [TrawlerDetection]::new(
@@ -1782,61 +1750,60 @@ function Test-COM-Hijacks {
 			$default_hkcu_com_server_lookups["$new_name"] = $hash.Value
 		}
 	}
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = "$p\CLSID"
-		if (Test-Path -Path "Registry::$path") {
-			$items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			foreach ($item in $items) {
-				$path = "Registry::" + $item.Name
-				$children = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-				foreach ($child in $children) {
-					$path = "Registry::" + $child.Name
-					$data = Get-Item -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-					if ($data.Name -match '.*InprocServer32') {
-						$datum = Get-ItemProperty $path
-						$datum.PSObject.Properties | ForEach-Object {
-							if ($_.Name -eq '(Default)') {
-								if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
-									continue
-								}
 
-								$verified_match = $false
+	$basePath = "Registry::{0}\CLSID"
 
-								if ($default_hkcu_com_lookups.ContainsKey($data.Name)) {
-									try {
-										if ($_.Value -match $default_hkcu_com_lookups[$data.Name]) {
-											$verified_match = $true
-										}
-									}
-									catch {
-										Write-Reportable-Issue "Regex Error while parsing string: $($default_hkcu_com_lookups[$data.Name])"
+	foreach ($path in $State.GetFormattedUserPaths($basePath)) {
+		foreach ($item in Get-TrawlerChildItem -Path $path) {
+			$path = "Registry::" + $item.Name
+			$children = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			foreach ($child in $children) {
+				$path = "Registry::" + $child.Name
+				$data = Get-Item -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+				if ($data.Name -match '.*InprocServer32') {
+					$datum = Get-ItemProperty $path
+					$datum.PSObject.Properties | ForEach-Object {
+						if ($_.Name -eq '(Default)') {
+							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
+								continue
+							}
+
+							$verified_match = $false
+
+							if ($default_hkcu_com_lookups.ContainsKey($data.Name)) {
+								try {
+									if ($_.Value -match $default_hkcu_com_lookups[$data.Name]) {
+										$verified_match = $true
 									}
 								}
+								catch {
+									Write-Reportable-Issue "Regex Error while parsing string: $($default_hkcu_com_lookups[$data.Name])"
+								}
+							}
 
-								if ($default_hkcu_com_server_lookups.ContainsKey($data.Name) -and $verified_match -ne $true) {
-									$regex = $default_hkcu_com_server_lookups[$data.Name]
-									try {
-										if ($_.Value -match $regex) {
-											$verified_match = $true
-										}
-									}
-									catch {
-										Write-ReportableMessage -Message "Error while parsing string with Regex" -AdditionalInformation "String: $($_.Value)`n`tRegex: $($regex)"
+							if ($default_hkcu_com_server_lookups.ContainsKey($data.Name) -and $verified_match -ne $true) {
+								$regex = $default_hkcu_com_server_lookups[$data.Name]
+								try {
+									if ($_.Value -match $regex) {
+										$verified_match = $true
 									}
 								}
+								catch {
+									Write-ReportableMessage -Message "Error while parsing string with Regex" -AdditionalInformation "String: $($_.Value)`n`tRegex: $($regex)"
+								}
+							}
 
-								if ($verified_match -ne $true -or $_.Value -match "$env:homedrive\\Users\\(public|administrator|guest).*") {
+							if ($verified_match -ne $true -or $_.Value -match "$env:homedrive\\Users\\(public|administrator|guest).*") {
 
-									$detection = [TrawlerDetection]::new(
-										'Potential COM Hijack',
-										[TrawlerRiskPriority]::Medium,
-										'Registry',
-										"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
-										"Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
-									)
+								$detection = [TrawlerDetection]::new(
+									'Potential COM Hijack',
+									[TrawlerRiskPriority]::Medium,
+									'Registry',
+									"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
+									"Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
+								)
 									
-									$State.WriteDetection($detection)
-								}
+								$State.WriteDetection($detection)
 							}
 						}
 					}
@@ -1856,26 +1823,22 @@ function Test-FolderOpen {
 	# Supports Dynamic Snapshotting
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking FolderOpen Command")
-	$basepath = "Registry::HKEY_CURRENT_USER\Software\Classes\Folder\shell\open\command"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -Path $path) {
-			$items = Get-TrawlerItemProperty -Path $path
-			$items.PSObject.Properties | ForEach-Object {
-				if ($_.Name -eq 'DelegateExecute') {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'FolderOpen'))) {
-						continue
-					}
-
-					$detection = [TrawlerDetection]::new(
-						'Potential Folder Open Hijack for Persistence',
-						[TrawlerRiskPriority]::High,
-						'Registry',
-						"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
-						"Key Location: HKCU\Software\Classes\Folder\shell\open\command, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
-					)
-					$State.WriteDetection($detection)
+	$basepath = "Registry::{0}\Software\Classes\Folder\shell\open\command"
+	foreach ($p in $State.GetFormattedUserPaths($basepath)) {
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
+			if ($_.Name -eq 'DelegateExecute') {
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'FolderOpen'))) {
+					continue
 				}
+
+				$detection = [TrawlerDetection]::new(
+					'Potential Folder Open Hijack for Persistence',
+					[TrawlerRiskPriority]::High,
+					'Registry',
+					"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
+					"Key Location: HKCU\Software\Classes\Folder\shell\open\command, Entry Name: " + $_.Name + ", Entry Value: " + $_.Value
+				)
+				$State.WriteDetection($detection)
 			}
 		}
 	}

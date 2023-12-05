@@ -81,21 +81,21 @@ function Test-RATS {
 
 	$application_logpaths = @{
 		"Action1"                           = ""
-		"AmmyAdmin (Log 1)"                 = "$env_programdata\AMMYY\access.log"
-		"AmmyAdmin (Dir 1)"                 = "$env_programdata\AMMYY"
-		"AnyDesk (Dir 1)"                   = "$env_programdata\AnyDesk"
+		"AmmyAdmin (Log 1)"                 = "$($State.Drives.ProgramData)\AMMYY\access.log"
+		"AmmyAdmin (Dir 1)"                 = "$($State.Drives.ProgramData)\AMMYY"
+		"AnyDesk (Dir 1)"                   = "$($State.Drives.ProgramData)\AnyDesk"
 		"AnyDesk (Dir 2)"                   = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\AnyDesk"
-		"AnyDesk (Log 1)"                   = "$env_programdata\AnyDesk\ad.trace"
-		"AnyDesk (Log 2)"                   = "$env_programdata\AnyDesk\connection_trace.txt"
+		"AnyDesk (Log 1)"                   = "$($State.Drives.ProgramData)\AnyDesk\ad.trace"
+		"AnyDesk (Log 2)"                   = "$($State.Drives.ProgramData)\AnyDesk\connection_trace.txt"
 		"AnyDesk (Log 3)"                   = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\AnyDesk\ad.trace"
-		"AnyDesk (Log 4)"                   = "$env_programdata\AnyDesk\ad_svc.trace"
+		"AnyDesk (Log 4)"                   = "$($State.Drives.ProgramData)\AnyDesk\ad_svc.trace"
 		"AnyDesk (Log 5)"                   = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\AnyDesk\*.conf"
 		"AnyDesk (Reg 1)"                   = "Registry::{0}SYSTEM\*\Services\AnyDesk" -f $($State.Drives.Hklm)
 		"AnyDesk (Reg 2)"                   = "Registry::{0}SOFTWARE\Clients\Media\AnyDesk" -f $($State.Drives.Hklm)
 		"AnyScreen"                         = ""
 		"Bomgar\BeyondTrust (Dir 1)"        = "$($State.Drives.HomeDrive)\Program Files\Bomgar"
 		"Bomgar\BeyondTrust (Dir 2)"        = "$($State.Drives.HomeDrive)\Program Files (x86)\Bomgar"
-		"Bomgar\BeyondTrust (Dir 3)"        = "$env_programdata\BeyondTrust"
+		"Bomgar\BeyondTrust (Dir 3)"        = "$($State.Drives.ProgramData)\BeyondTrust"
 		"Atera\SplashTop (Log 1)"           = "$($State.Drives.HomeDrive)\Program Files\ATERA Networks\AteraAgent\Packages\AgentPackageRunCommandInteractive\log.txt"
 		"Atera\SplashTop (Log 2)"           = "$($State.Drives.HomeDrive)\Program Files (x86)\Splashtop\Splashtop Remote\Server\log\*.txt"
 		"Atera\SplashTop (Dir 1)"           = "$($State.Drives.HomeDrive)\Program Files\ATERA Networks\AteraAgent"
@@ -109,7 +109,7 @@ function Test-RATS {
 		"Atera\SplashTop (Reg 8)"           = "Registry::{0}SYSTEM\*\Control\SafeBoot\Network\SplashtopRemoteService" -f $($State.Drives.Hklm)
 		"Atera\SplashTop (Reg 9)"           = "Registry::{0}SOFTWARE\Microsoft\Windows NT\CurrentVersion\Print\Printers\Splashtop PDF Remote Printer" -f $($State.Drives.Hklm)
 		"Atera\SplashTop (Reg 10)"          = "Registry::{0}SOFTWARE\WOW6432Node\Splashtop Inc.\Splashtop Remote Server\ClientInfo" -f $($State.Drives.Hklm)
-		"ConnectWise\ScreenConnect (Dir 1)" = "$env_programdata\ScreenConnect*"
+		"ConnectWise\ScreenConnect (Dir 1)" = "$($State.Drives.ProgramData)\ScreenConnect*"
 		"ConnectWise\ScreenConnect (Dir 2)" = "$($State.Drives.HomeDrive)\Program Files (x86)\ScreenConnect*"
 		"ConnectWise\ScreenConnect (Dir 3)" = "$($State.Drives.HomeDrive)\Program Files\ScreenConnect*"
 		"ConnectWise\ScreenConnect (Dir 4)" = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\Temp\ScreenConnect*"
@@ -117,61 +117,61 @@ function Test-RATS {
 		"ConnectWise\ScreenConnect (Dir 6)" = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\Documents\ConnectWiseControl"
 		"DameWare (Dir 1)"                  = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\temp\dwrrcc downloads"
 		"DameWare (Dir 2)"                  = "$($State.Drives.HomeDrive)\Windows\dwrcs"
-		"Dameware (Dir 3)"                  = "$env_programdata\DameWare"
+		"Dameware (Dir 3)"                  = "$($State.Drives.ProgramData)\DameWare"
 		"DameWare (Dir 4)"                  = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\DameWare Development"
-		"Dameware (Dir 5)"                  = "$env_programdata\DameWare Development"
+		"Dameware (Dir 5)"                  = "$($State.Drives.ProgramData)\DameWare Development"
 		"GetScreen (Dir 1)"                 = "$($State.Drives.HomeDrive)\Program Files\Getscreen.me"
-		"GetScreen (Dir 2)"                 = "$env_programdata\Getscreen.me"
-		"Iperius (Dir 1)"                   = "$env_programdata\iperius*"
+		"GetScreen (Dir 2)"                 = "$($State.Drives.ProgramData)\Getscreen.me"
+		"Iperius (Dir 1)"                   = "$($State.Drives.ProgramData)\iperius*"
 		"Iperius (Dir 2)"                   = "$($State.Drives.HomeDrive)\Program Files\iperius*"
-		"Kaseya VSA (Dir 1)"                = "$env_programdata\Kaseya*"
+		"Kaseya VSA (Dir 1)"                = "$($State.Drives.ProgramData)\Kaseya*"
 		"Kaseya VSA (Dir 2)"                = "$($State.Drives.HomeDrive)\Program Files (x86)\Kaseya*"
 		"Kaseya VSA (Dir 3)"                = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\Kaseya*"
 		"LogMeIn (Dir 1)"                   = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\LogMeInIgnition*"
 		"NinjaOne"                          = ""
 		"Pulseway (Dir 1)"                  = "$($State.Drives.HomeDrive)\Users\*\AppData\Roaming\Pulseway Remote Control"
 		"Pulseway (Reg 1)"                  = "Registry::HKCU\Software\MMSOFT Design\Pulseway\Remote Desktop"
-		"Pulseway (Reg 2)"                  = "Registry::{0}Software\MMSOFT Design\Pulseway\Remote Desktop" -f $($State.Drives.Hklm)
+		"Pulseway (Reg 2)"                  = "Registry::$($State.Drives.Hklm)Software\MMSOFT Design\Pulseway\Remote Desktop"
 		"Radmin (Dir 1)"                    = "$($State.Drives.HomeDrive)\Program Files\Radmin*"
 		"Radmin (Dir 2)"                    = "$($State.Drives.HomeDrive)\Program Files (x86)\Radmin*"
-		"RealVNC (Dir 1)"                   = "$env_programdata\RealVBC-Service"
-		"RealVNC (Log 1)"                   = "$env_programdata\RealVBC-Service\vncserver.log"
-		"RealVNC (Log 2)"                   = "$env_programdata\RealVBC-Service\vncserver.log.bak"
+		"RealVNC (Dir 1)"                   = "$($State.Drives.ProgramData)\RealVBC-Service"
+		"RealVNC (Log 1)"                   = "$($State.Drives.ProgramData)\RealVBC-Service\vncserver.log"
+		"RealVNC (Log 2)"                   = "$($State.Drives.ProgramData)\RealVBC-Service\vncserver.log.bak"
 		"Remote Desktop Manager (Dir 1)"    = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\Devolutions\RemoteDesktopManager"
 		"Remote Desktop Manager (Dir 2)"    = "$($State.Drives.HomeDrive)\Program Files (x86)\Devolutions\Remote Desktop Manager"
 		"Remote Desktop Manager (Dir 3)"    = "$($State.Drives.HomeDrive)\Program Files\Devolutions\Remote Desktop Manager"
-		"RemotePC (Dir 1)"                  = "$env_programdata\RemotePC*"
+		"RemotePC (Dir 1)"                  = "$($State.Drives.ProgramData)\RemotePC*"
 		"RemotePC (Dir 2)"                  = "$($State.Drives.HomeDrive)\Program Files (x86)\RemotePC*"
 		"RemotePC (Dir 3)"                  = "$($State.Drives.HomeDrive)\Program Files\RemotePC*"
 		"RemotePC (Dir 4)"                  = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\RemotePC*"
-		"RemoteToPC (Dir 1)"                = "$env_programdata\RemoteToPC*"
+		"RemoteToPC (Dir 1)"                = "$($State.Drives.ProgramData)\RemoteToPC*"
 		"RemoteToPC (Dir 2)"                = "$($State.Drives.HomeDrive)\Program Files (x86)\RemoteToPC*"
 		"RemoteToPC (Dir 3)"                = "$($State.Drives.HomeDrive)\Program Files\RemoteToPC*"
 		"RemoteToPC (Dir 4)"                = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\RemoteToPC*"
 		"Remote Utilities (Dir 1)"          = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\Remote Utilities Agent"
 		"Remote Utilities (Dir 2)"          = "$($State.Drives.HomeDrive)\Program Files (x86)\Remote Utilities*"
 		"Remote Utilities (Dir 3)"          = "$($State.Drives.HomeDrive)\Program Files\Remote Utilities*"
-		"Remote Utilities (Dir 4)"          = "$env_programdata\Remote Utilities*"
-		"ScreenMeet (Dir 1)"                = "$env_programdata\Projector Inc\ScreenMeet*"
+		"Remote Utilities (Dir 4)"          = "$($State.Drives.ProgramData)\Remote Utilities*"
+		"ScreenMeet (Dir 1)"                = "$($State.Drives.ProgramData)\Projector Inc\ScreenMeet*"
 		"ShowMyPC (Dir 1)"                  = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\Temp\ShowMyPC"
 		"ShowMyPC (Dir 2)"                  = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\ShowMyPC"
 		"SightCall"                         = ""
 		"Surfly"                            = ""
-		"Syncro (Dir 1)"                    = "$env_programdata\Syncro"
+		"Syncro (Dir 1)"                    = "$($State.Drives.ProgramData)\Syncro"
 		"Syncro (Dir 2)"                    = "$($State.Drives.HomeDrive)\Program Files\RepairTech\Syncro"
 		"TightVNC (Log 1)"                  = "$($State.Drives.HomeDrive)\Windows\System32\config\systemprofile\AppData\Roaming\TightVNC\tvnserver.log"
-		"TightVNC (Log 2)"                  = "$env_programdata\TightVNC\tvnserver.log"
+		"TightVNC (Log 2)"                  = "$($State.Drives.ProgramData)\TightVNC\tvnserver.log"
 		"TeamViewer (Log 1)"                = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\TeamViewer\Connections.txt"
 		"TeamViewer (Log 2)"                = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\Temp\TeamViewer\Connections_incoming.txt"
 		"TeamViewer (Log 3)"                = "$($State.Drives.HomeDrive)\Program Files\TeamViewer\Connections_incoming.txt"
 		"TeamViewer (Log 4)"                = "$($State.Drives.HomeDrive)\Program Files\TeamViewer\TeamViewer*_Logfile.log"
 		"TeamViewer (Log 5)"                = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Local\TeamViewer\Logs\TeamViewer*_Logfile.log"
 		"TeamViewer (Log 6)"                = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\TeamViewer\TeamViewer*_Logfile.log"
-		"TeamViewer (Reg 1)"                = "Registry::{0}SOFTWARE\TeamViewer" -f $($State.Drives.Hklm)
-		"TeamViewer (Reg 2)"                = "Registry::{0}SYSTEM\*\Services\TeamViewer" -f $($State.Drives.Hklm)
+		"TeamViewer (Reg 1)"                = "Registry::$($State.Drives.Hklm)SOFTWARE\TeamViewer"
+		"TeamViewer (Reg 2)"                = "Registry::$($State.Drives.Hklm)SYSTEM\*\Services\TeamViewer"
 		#"TeamViewer (Reg 3)" = "Registry::{0}SYSTEM\ControlSet001\Services\TeamViewer" -f $($State.Drives.Hklm)
-		"UltraVNC (Log 1)"                  = "$env_programdata\uvnc bvba\WinVNC.log"
-		"UltraVNC (Log 2)"                  = "$env_programdata\uvnc bvba\mslogon.log"
+		"UltraVNC (Log 1)"                  = "$($State.Drives.ProgramData)\uvnc bvba\WinVNC.log"
+		"UltraVNC (Log 2)"                  = "$($State.Drives.ProgramData)\uvnc bvba\mslogon.log"
 		"UltraViewer (Dir 1)"               = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\UltraViewer"
 		"XMReality"                         = ""
 		"Viewabo"                           = ""
@@ -194,9 +194,11 @@ function Test-RATS {
 		$paths = @()
 		$checked_path = $item.Value
 		$rat_name = $item.Name
+		
 		if ($checked_path -eq "") {
 			continue
 		}
+
 		if ($profile_names.Count -ne 0) {
 			foreach ($user in $profile_names) {
 				if ($checked_path -match ".*USER_REPLACE.*") {
@@ -242,6 +244,7 @@ function Test-RATS {
 						Location = $tmppath
 					}
 				)
+				
 				$State.WriteDetection($detection)
 			}
 		}

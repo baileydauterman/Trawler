@@ -25,14 +25,8 @@ function Test-OfficeGlobalDotName {
 	# TODO - Cleanup Path Referencing, Add more versions?
 	$office_versions = @(14, 15, 16)
 	foreach ($version in $office_versions) {
-		$basepath = "Registry::HKEY_CURRENT_USER\software\microsoft\office\$version.0\word\options"
-		foreach ($p in $State.Drives.CurrentUsers) {
-			$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-			
-			if (-not (Test-Path -Path $path)) {
-				continue 
-			}
-			
+		$basepath = "Registry::{0}\software\microsoft\office\$version.0\word\options"
+		foreach ($p in $State.GetFormattedUserPaths($basepath)) {
 			Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 				if ($_.Name -eq "GlobalDotName") {
 					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'GlobalDotName'))) {
@@ -66,14 +60,8 @@ function Test-OfficeTest {
 	)
 	# Supports Drive Retargeting
 	$State.WriteMessage("Checking Office test usage")
-	$basepath = "Registry::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-
-		if (-not (Test-Path -Path $path)) {
-			continue 
-		}
-
+	$basepath = "Registry::{0}\Software\Microsoft\Office test\Special\Perf"
+	foreach ($p in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			$detection = [TrawlerDetection]::new(
 				'Persistence via Office test\Special\Perf Key',
@@ -159,64 +147,62 @@ function Test-OfficeTrustedLocations {
 	$profile_names = Get-ChildItem "$($State.Drives.HomeDrive)\Users" -Attributes Directory | Select-Object *
 	$actual_current_user = $env:USERNAME
 	$user_pattern = "$($State.Drives.AssumedHomeDrive)\\Users\\(.*?)\\.*"
-	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\16.0\Word\Security\Trusted Locations"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$path = $basepath.Replace("HKEY_CURRENT_USER", $p)
-		if (Test-Path -Path $path) {
-			$items = Get-TrawlerItemData -Path $path -ItemType ChildItem
-			$possible_paths = New-Object -TypeName "System.Collections.ArrayList"
+	$basepath = "Registry::{0}\SOFTWARE\Microsoft\Office\16.0\Word\Security\Trusted Locations"
 
-			foreach ($item in $items) {
-				$data = Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry
-				if ($data.Path) {
-					$possible_paths.Add($data.Path) | Out-Null
-					$currentcaptureduser = [regex]::Matches($data.Path, $user_pattern).Groups.Captures.Value
+	foreach ($p in $State.GetFormattedUserPaths($basepath)) {
+		$items = Get-TrawlerItemData -Path $path -ItemType ChildItem
+		$possible_paths = New-Object -TypeName "System.Collections.ArrayList"
 
-					if ($currentcaptureduser) {
-						$current_user = $currentcaptureduser[1]
-					}
-					else {
-						$current_user = 'NO_USER_FOUND_IN_PATH'
-					}
+		foreach ($item in $items) {
+			$data = Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry
+			if ($data.Path) {
+				$possible_paths.Add($data.Path) | Out-Null
+				$currentcaptureduser = [regex]::Matches($data.Path, $user_pattern).Groups.Captures.Value
 
-					if ($data.Path.Contains($current_user)) {
-						foreach ($user in $profile_names) {
-							$new_path = $data.Path.replace($current_user, $user.Name)
-							#Write-Host $new_path
-							if ($possible_paths -notcontains $new_path) {
-								$possible_paths.Add($new_path) | Out-Null
-							}
+				if ($currentcaptureduser) {
+					$current_user = $currentcaptureduser[1]
+				}
+				else {
+					$current_user = 'NO_USER_FOUND_IN_PATH'
+				}
+
+				if ($data.Path.Contains($current_user)) {
+					foreach ($user in $profile_names) {
+						$new_path = $data.Path.replace($current_user, $user.Name)
+						#Write-Host $new_path
+						if ($possible_paths -notcontains $new_path) {
+							$possible_paths.Add($new_path) | Out-Null
 						}
 					}
+				}
 
 
-					$default_trusted_locations = @(
-						"C:\Users\$actual_current_user\AppData\Roaming\Microsoft\Templates"
-						"C:\Program Files\Microsoft Office\root\Templates\"
-						"C:\Program Files (x86)\Microsoft Office\root\Templates\"
-						"C:\Users\$actual_current_user\AppData\Roaming\Microsoft\Word\Startup"
+				$default_trusted_locations = @(
+					"C:\Users\$actual_current_user\AppData\Roaming\Microsoft\Templates"
+					"C:\Program Files\Microsoft Office\root\Templates\"
+					"C:\Program Files (x86)\Microsoft Office\root\Templates\"
+					"C:\Users\$actual_current_user\AppData\Roaming\Microsoft\Word\Startup"
+				)
+
+				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Path, $data.Path, 'OfficeTrustedLocations'))) {
+					continue
+				}
+
+				if ($data.Path -notin $default_trusted_locations) {
+					$p = $data.Path
+					$detection = [TrawlerDetection]::new(
+						'Non-Standard Office Trusted Location',
+						[TrawlerRiskPriority]::Medium,
+						'Office',
+						"T1137.006: Office Application Startup: Add-ins",
+						[PSCustomObject]@{
+							Location = $p
+						}
 					)
-
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Path, $data.Path, 'OfficeTrustedLocations'))) {
-						continue
-					}
-
-					if ('{0}' -f $data.Path -notin $default_trusted_locations) {
-						$p = $data.Path
-						$detection = [TrawlerDetection]::new(
-							'Non-Standard Office Trusted Location',
-							[TrawlerRiskPriority]::Medium,
-							'Office',
-							"T1137.006: Office Application Startup: Add-ins",
-							[PSCustomObject]@{
-								Location = $p
-							}
-						)
-						$State.WriteDetection($detection)
-						# TODO - Still working on this - can't read registry without expanding the variables right now
-						# https://github.com/PowerShell/PowerShell/issues/16812
-						#
-					}
+					$State.WriteDetection($detection)
+					# TODO - Still working on this - can't read registry without expanding the variables right now
+					# https://github.com/PowerShell/PowerShell/issues/16812
+					#
 				}
 			}
 		}

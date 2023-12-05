@@ -19,7 +19,7 @@ function Test-ScheduledTasks {
 
     begin {
         $State.WriteMessage("Checking Scheduled Tasks")
-        $task_base_path = "$($State.TargetDrive)\Windows\System32\Tasks"
+        $task_base_path = "$($State.Drives.HomeDrive)\Windows\System32\Tasks"
         $tasks = New-Object -TypeName "System.Collections.ArrayList"
         
     }

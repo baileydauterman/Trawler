@@ -693,18 +693,12 @@ function Test-TerminalServicesInitialProgram {
 		"Registry::$($State.Drives.Hklm)SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
 		"Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Terminal Server\WinStations\RDP-Tcp"
 	)
-	$basepath = "Registry::HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-	foreach ($p in $State.Drives.CurrentUsers) {
-		$paths += $basepath.Replace("HKEY_CURRENT_USER", $p)
-	}
+
+	$basepath = "Registry::{0}\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+	$paths += $State.GetFormattedUserPaths($basepath)
 
 	foreach ($path in $paths) {
-		if (-not (Test-Path -Path $path)) {
-			continue
-		}
-
-		$items = Get-TrawlerItemProperty -Path $path
-		$items.PSObject.Properties | ForEach-Object {
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -eq 'InitialProgram' -and $_.Value -ne "") {
 				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'TerminalServicesIP'))) {
 					continue
@@ -721,6 +715,7 @@ function Test-TerminalServicesInitialProgram {
 						DLL         = $_.Value
 					}
 				)
+
 				$State.WriteDetection($detection)
 			}
 		}
