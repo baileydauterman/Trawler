@@ -82,14 +82,37 @@ function Test-SuspiciousProcessPaths {
         $Value
     )
 
+    $Value = ($Value | Out-String).Trim()
+
     foreach ($path in $TrawlerSuspiciousProcessPaths) {
-        if ($Value -match $path -or $path -match $Value) {
+        if ($Value -match $path) {
             return $true
         }
     }
 
     return $false
 }
+
+function Test-TrawlerSuspiciousPorts {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string[]]
+        $Values
+    )
+
+    foreach ($value in $values) {
+        foreach ($port in $TrawlerSuspiciousPorts) {
+            if ($value -eq $port) {
+                return $true
+            }
+        }
+    }
+
+    return $false
+}
+
+$TrawlerSuspiciousPorts = @(20, 21, 22, 23, 25, 137, 139, 445, 3389, 443)
 
 $TrawlerIPv4Pattern = '.*((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).*'
 $TrawlerIPv6Pattern = '.*:(?::[a-f\d]{1,4}){0,5}(?:(?::[a-f\d]{1,4}){1,2}|:(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})))|[a-f\d]{1,4}:(?:[a-f\d]{1,4}:(?:[a-f\d]{1,4}:(?:[a-f\d]{1,4}:(?:[a-f\d]{1,4}:(?:[a-f\d]{1,4}:(?:[a-f\d]{1,4}:(?:[a-f\d]{1,4}|:)|(?::(?:[a-f\d]{1,4})?|(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))))|:(?:(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))|[a-f\d]{1,4}(?::[a-f\d]{1,4})?|))|(?::(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))|:[a-f\d]{1,4}(?::(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))|(?::[a-f\d]{1,4}){0,2})|:))|(?:(?::[a-f\d]{1,4}){0,2}(?::(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))|(?::[a-f\d]{1,4}){1,2})|:))|(?:(?::[a-f\d]{1,4}){0,3}(?::(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))|(?::[a-f\d]{1,4}){1,2})|:))|(?:(?::[a-f\d]{1,4}){0,4}(?::(?:(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2})\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}))|(?::[a-f\d]{1,4}){1,2})|:)).*'
@@ -184,14 +207,14 @@ $TrawlerRATTerms = @(
 )
 
 $TrawlerSuspiciousProcessPaths = @(
-	".*\\users\\administrator\\.*",
-	".*\\users\\default\\.*",
-	".*\\users\\public\\.*",
-	".*\\windows\\debug\\.*",
-	".*\\windows\\fonts\\.*",
-	".*\\windows\\media\\.*",
-	".*\\windows\\repair\\.*",
-	".*\\windows\\servicing\\.*",
-	".*\\windows\\temp\\.*",
-	".*recycle.bin.*"
+    ".*\\users\\administrator\\.*",
+    ".*\\users\\default\\.*",
+    ".*\\users\\public\\.*",
+    ".*\\windows\\debug\\.*",
+    ".*\\windows\\fonts\\.*",
+    ".*\\windows\\media\\.*",
+    ".*\\windows\\repair\\.*",
+    ".*\\windows\\servicing\\.*",
+    ".*\\windows\\temp\\.*",
+    ".*recycle.bin.*"
 )

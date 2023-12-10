@@ -33,7 +33,7 @@ function Test-Users {
 	foreach ($admin in $local_admins) {
 		$admin_user = Get-LocalUser -SID $admin.SID | Select-Object AccountExpires, Description, Enabled, FullName, PasswordExpires, UserMayChangePassword, PasswordLastSet, LastLogon, Name, SID, PrincipalSource
 
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($admin.name, $admin.name, "Users"))) {
+		if ($State.IsExemptBySnapShot($admin.name, $admin.name, "Users")) {
 			continue
 		}
 

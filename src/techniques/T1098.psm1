@@ -23,7 +23,7 @@ function Test-RDPShadowConsent {
 	if (Test-Path -Path $path) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -eq 'Shadow' -and ($_.Value -eq 4 -or $_.Value -eq 2)) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'RDPShadow'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'RDPShadow')) {
 					continue
 				}
 

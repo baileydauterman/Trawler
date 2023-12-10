@@ -159,7 +159,7 @@ function Test-BIDDll {
 			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq ":Path") {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'BIDDLL'))) {
+					if ($State.IsExemptBySnapShot($path, $_.Value, 'BIDDLL')) {
 						continue
 					}
 
@@ -199,7 +199,7 @@ function Test-WindowsUpdateTestDlls {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in "EventerHookDll", "AllowTestEngine", "AlternateServiceStackDLLPath") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'WinUpdateTestDLL'))) {
+				if ($State.IsExemptBySnapShot($path, $_.Value, 'WinUpdateTestDLL')) {
 					continue
 				}
 
@@ -241,7 +241,7 @@ function Test-MiniDumpAuxiliaryDLLs {
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'MiniDumpAuxiliaryDLL'))) {
+			if ($State.IsExemptBySnapShot($path, $_.Name, 'MiniDumpAuxiliaryDLL')) {
 				continue
 			}
 
@@ -295,7 +295,7 @@ function Test-ExplorerHelperUtilities {
 			$items = Get-TrawlerItemProperty -Path $path
 			$items.PSObject.Properties | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -ne '""' -and $_.Value -notin $allowlisted_explorer_util_paths) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'ExplorerHelpers'))) {
+					if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'ExplorerHelpers')) {
 						continue
 					}
 
@@ -355,54 +355,43 @@ function Test-ProcessModules {
 		"WptsExtensions.dll"
 		"fveapi.dll"
 	)
+
 	foreach ($process in $processes) {
 		$modules = Get-Process -id $process.ProcessId -ErrorAction SilentlyContinue  | Select-Object -ExpandProperty modules -ErrorAction SilentlyContinue | Select-Object Company, FileName, ModuleName
 		if ($modules) {
 			foreach ($module in $modules) {
-				if ($module.ModuleName -in $suspicious_unsigned_dll_names) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($module.FileName, $module.FileName, 'Modules'))) {
-						continue
-					}
-
-					$signature = Get-AuthenticodeSignature $module.FileName
-					if ($signature.Status -ne 'Valid') {
-						$item = Get-ChildItem -Path $module.FileName -File -ErrorAction SilentlyContinue | Select-Object *
-						$detection = [TrawlerDetection]::new(
-							'Suspicious Unsigned DLL with commonly-masqueraded name loaded into running process.',
-							[TrawlerRiskPriority]::VeryHigh,
-							'Processes',
-							"T1574: Hijack Execution Flow",
-							[PSCustomObject]@{
-								DLL              = $module.FileName
-								ProcessName      = $process.ProcessName
-								PID              = $process.ProcessId
-								ExecutablePath   = $process.ExecutablePath
-								DLLCreationTime  = $item.CreationTime
-								DLLLastWriteTime = $item.LastWriteTime
-							}
-						)
-						$State.WriteDetection($detection)
-					}
-					else {
-						$item = Get-ChildItem -Path $module.FileName -File -ErrorAction SilentlyContinue | Select-Object *
-						$detection = [TrawlerDetection]::new(
-							'Suspicious DLL with commonly-masqueraded name loaded into running process.',
-							[TrawlerRiskPriority]::High,
-							'Processes',
-							"T1574: Hijack Execution Flow",
-							[PSCustomObject]@{
-								DLL              = $module.FileName
-								ProcessName      = $process.ProcessName
-								PID              = $process.ProcessId
-								ExecutablePath   = $process.ExecutablePath
-								DLLCreationTime  = $item.CreationTime
-								DLLLastWriteTime = $item.LastWriteTime
-							}
-						)
-						# TODO - This is too noisy to use as-is - these DLLs get loaded into quite a few processes.
-						# $State.WriteDetection($detection)
-					}
+				if ($module.ModuleName -notin $suspicious_unsigned_dll_names) {
+					continue 
 				}
+				
+				if ($State.IsExemptBySnapShot($module.FileName, $module.FileName, 'Modules')) {
+					continue
+				}
+
+				$signature = Get-AuthenticodeSignature $module.FileName
+
+				if ($signature.State -eq "Valid") {
+					continue
+				}
+
+				$item = Get-ChildItem -Path $module.FileName -File -ErrorAction SilentlyContinue | Select-Object *
+
+				$detection = [TrawlerDetection]::new(
+					'Suspicious Unsigned DLL with commonly-masqueraded name loaded into running process.',
+					[TrawlerRiskPriority]::VeryHigh,
+					'Processes',
+					"T1574: Hijack Execution Flow",
+					[PSCustomObject]@{
+						DLL              = $module.FileName
+						ProcessName      = $process.ProcessName
+						PID              = $process.ProcessId
+						ExecutablePath   = $process.ExecutablePath
+						DLLCreationTime  = $item.CreationTime
+						DLLLastWriteTime = $item.LastWriteTime
+					}
+				)
+
+				$State.WriteDetection($detection)
 			}
 		}
 	}
@@ -419,31 +408,33 @@ function Test-WindowsUnsignedFiles {
 	# Supports Drive Retargeting - Not actually sure if this will work though
 	$State.WriteMessage("Checking Unsigned Files")
 	$scan_paths = @(
-		"$($State.Drives.HomeDrive)\Windows",
-		"$($State.Drives.HomeDrive)\Windows\System32",
-		"$($State.Drives.HomeDrive)\Windows\System"
-		"$($State.Drives.HomeDrive)\Windows\temp"
+		"{0}\Windows",
+		"{0}\Windows\System32",
+		"{0}\Windows\System"
+		"{0}\Windows\temp"
 	)
 	#allowlist_unsignedfiles
-	foreach ($path in $scan_paths) {
-		$files = Get-ChildItem -Path $path -File -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".dll", ".exe" } | Select-Object *
+	foreach ($path in $State.GetFormattedTargetDrivePaths($scan_paths)) {
+		$files = Get-ChildItem -Path $path -File -ErrorAction SilentlyContinue | Where-Object { $_.extension -in ".dll", ".exe" } | Select-Object FullName, CreationTime, LastWriteTime
 		foreach ($file in $files) {
 			$sig = Get-AuthenticodeSignature $file.FullName
-			if ($sig.Status -ne 'Valid') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($file.FullName, $file.FullName, 'UnsignedWindows'))) {
-					continue
-				}
-
-				$detection = [TrawlerDetection]::new(
-					'Unsigned DLL/EXE present in critical OS directory',
-					[TrawlerRiskPriority]::VeryHigh,
-					'Windows',
-					"T1574: Hijack Execution Flow",
-					($file | Select-Object FullName, CreationTime, LastWriteTime)
-				)
-				#Write-Host $detection.Meta
-				$State.WriteDetection($detection)
+			if ($sig.Status -eq 'Valid') {
+				continue 
 			}
+
+			if ($State.IsExemptBySnapShot($file.FullName, $file.FullName, 'UnsignedWindows')) {
+				continue
+			}
+
+			$detection = [TrawlerDetection]::new(
+				'Unsigned DLL/EXE present in critical OS directory',
+				[TrawlerRiskPriority]::VeryHigh,
+				'Windows',
+				"T1574: Hijack Execution Flow",
+				$file
+			)
+
+			$State.WriteDetection($detection)
 		}
 	}
 }
@@ -518,7 +509,7 @@ function Test-KnownManagedDebuggers {
 	if (Test-Path -Path $path) {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'KnownManagedDebuggers'))) {
+			if ($State.IsExemptBySnapShot($path, $_.Name, 'KnownManagedDebuggers')) {
 				continue
 			}
 
@@ -561,7 +552,7 @@ function Test-Wow64LayerAbuse {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -ne "(Default)") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WOW64Compat'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'WOW64Compat')) {
 					continue
 				}
 
@@ -598,7 +589,7 @@ function Test-SEMgrWallet {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -eq "DllName" -and $_.Value -notin "", "SEMgrSvc.dll") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'SEMgr'))) {
+				if ($State.IsExemptBySnapShot($path, $_.Value, 'SEMgr')) {
 					continue
 				}
 
@@ -658,7 +649,7 @@ function Test-WERRuntimeExceptionHandlers {
 			}
 
 			if ($_.Name -ne "(Default)" -and $verified_match -eq $false) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Name, 'WERHandlers'))) {
+				if ($State.IsExemptBySnapShot($path, $_.Name, 'WERHandlers')) {
 					continue
 				}
 
@@ -700,7 +691,7 @@ function Test-TerminalServicesInitialProgram {
 	foreach ($path in $paths) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -eq 'InitialProgram' -and $_.Value -ne "") {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'TerminalServicesIP'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'TerminalServicesIP')) {
 					continue
 				}
 
@@ -755,7 +746,7 @@ function Test-EventViewerMSC {
 				continue 
 			}
 
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, "MSCHijack"))) {
+			if ($State.IsExemptBySnapShot($_.Name, $_.Value, "MSCHijack")) {
 				continue
 			}
 
@@ -795,7 +786,7 @@ function Test-RDPStartupPrograms {
 				$packages = $_.Value.Split(",")
 				foreach ($package in $packages) {
 					if ($package -notin $allowed_rdp_startups) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'RDPStartup'))) {
+						if ($State.IsExemptBySnapShot($_.Name, $package, 'RDPStartup')) {
 							continue
 						}
 
@@ -837,12 +828,11 @@ function Test-PATHHijacks {
 	# Can just collect from this key instead of actual PATH var
 	$State.WriteMessage("Checking PATH Hijacks")
 	$system32_path = "$($State.Drives.HomeDrive)\windows\system32"
-	$system32_bins = Get-ChildItem -File -Path $system32_path  -ErrorAction SilentlyContinue -Filter "*.exe" | Select-Object Name
+	$system32_bins = Get-ChildItem -Path $system32_path -File -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object Name
 
 	$path_reg = "Registry::$($State.Drives.Hklm)SYSTEM\$($State.Drives.CurrentControlSet)\Control\Session Manager\Environment"
 	if (Test-Path -Path $path_reg) {
-		$items = Get-ItemProperty -Path $path_reg | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		$items.PSObject.Properties | ForEach-Object {
+		Get-TrawlerItemData -Path $path_reg -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -eq "Path") {
 				$path_entries += $_.Value
 			}
@@ -854,7 +844,7 @@ function Test-PATHHijacks {
 		$path_bins = Get-ChildItem -File -Path $path -ErrorAction SilentlyContinue -Filter "*.exe"
 		foreach ($bin in $path_bins) {
 			if ($bin.Name -in $system32_bins) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($bin.FullName, $bin.Name, 'PATHHijack'))) {
+				if ($State.IsExemptBySnapShot($bin.FullName, $bin.Name, 'PATHHijack')) {
 					continue
 				}
 

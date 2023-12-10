@@ -159,7 +159,7 @@ function Test-SuspiciousCertificates {
 			}
 		}
 
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($cert.Issuer, $cert.Subject, 'Certificates'))) {
+		if ($State.IsExemptBySnapShot($cert.Issuer, $cert.Subject, 'Certificates')) {
 			continue
 		}
 

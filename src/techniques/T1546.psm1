@@ -30,7 +30,6 @@ function Test-T1546 {
 	Test-AppInitDLLs $State
 	Test-ApplicationShims $State
 	Test-IFEO $State
-	Test-RegistryChecks $State
 	Test-SilentProcessExitMonitoring $State
 	Test-PowerShellProfiles $State
 	Test-WellKnownCOM $State
@@ -75,7 +74,7 @@ function Test-AppPaths {
 				contine
 			}
 
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'AppPaths'))) {
+			if ($State.IsExemptBySnapShot($item.Name, $_.Value, 'AppPaths')) {
 				continue
 			}
 
@@ -107,7 +106,7 @@ function Test-CommandAutoRunProcessors {
 
 	if (Test-Path -Path $path) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
-			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'))) {
+			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot($_.Name, $_.Value, 'CommandAutorunProcessor')) {
 				continue
 			}
 			
@@ -128,7 +127,7 @@ function Test-CommandAutoRunProcessors {
 	$basepath = "Registry::{0}\SOFTWARE\Microsoft\Command Processor"
 	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
-			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'CommandAutorunProcessor'))) {
+			if ($_.Name -ne 'AutoRun' -or $State.IsExemptBySnapShot($_.Name, $_.Value, 'CommandAutorunProcessor')) {
 				continue
 			}
 			
@@ -168,7 +167,7 @@ function Test-ContextMenu {
 		foreach ($item in Get-TrawlerChildItem $path -AsRegistry) {
 			Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
 				if ($_.Name -eq '(Default)' -and $_.Value -match ".*\.dll.*") {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'ContextMenuHandlers'))) {
+					if ($State.IsExemptBySnapShot($item.Name, $_.Value, 'ContextMenuHandlers')) {
 						continue
 					}
 
@@ -233,41 +232,39 @@ function Test-DiskCleanupHandlers {
 
 	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\"
 
-	if (Test-Path -LiteralPath "Registry::$path") {
-		$items = Get-TrawlerChildItem "Registry::$path"
-		foreach ($item in $items) {
-			Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
-				if ($_.Name -eq '(Default)') {
-					$target_prog = ''
-					$tmp_path = "$($State.Drive.Hkcr)CLSID\$($_.Value)\InProcServer32"
-					if (Test-Path -LiteralPath "Registry::$tmp_path") {
-						$data_tmp = Get-TrawlerItemProperty "Registry::$tmp_path"
-						$data_tmp.PSObject.Properties | ForEach-Object {
-							if ($_.Name -eq '(Default)') {
-								$target_prog = $_.Value
-							}
-						}
-					}
+	if (-not (Test-Path -LiteralPath "Registry::$path")) {
+		return 
+	}
 
-					if ($target_prog -in $default_cleanup_handlers) {
-						continue
-					}
-
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $target_prog, 'DiskCleanupHandlers'))) {
-						continue
-					}
-
-					$detection = [TrawlerDetection]::new(
-						'Non-Default DiskCleanupHandler Program',
-						[TrawlerRiskPriority]::Low,
-						'Registry',
-						"T1546: Event Triggered Execution",
-						"Key: " + $item.Name + ", Program: " + $target_prog
-					)
-					$State.WriteDetection($detection)
+	foreach ($item in Get-TrawlerChildItem $path -AsRegistry) {
+		Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
+			if ($_.Name -eq '(Default)') {
+				$tmp_path = "$($State.Drive.Hkcr)CLSID\$($_.Value)\InProcServer32"
+				if (Test-Path -LiteralPath "Registry::$tmp_path") {
+					$targetPrograms = Get-TrawlerItemData -Path $tmp_path -ItemType ItemProperty -AsRegistry | Where-Object Name -ne "(Default)"
 				}
-				
+
+				if ($targetProgram -and $targetPrograms -in $default_cleanup_handlers) {
+					continue
+				}
+
+				if ($State.IsExemptBySnapShot($item.Name, $targetPrograms, 'DiskCleanupHandlers')) {
+					continue
+				}
+
+				$detection = [TrawlerDetection]::new(
+					'Non-Default DiskCleanupHandler Program',
+					[TrawlerRiskPriority]::Low,
+					'Registry',
+					"T1546: Event Triggered Execution",
+					[PSCustomObject]@{
+						Key      = $item.Name
+						Programs = ($targetPrograms -join ",")
+					}
+				)
+				$State.WriteDetection($detection)
 			}
+				
 		}
 	}
 }
@@ -304,7 +301,7 @@ function Test-DebuggerHijacks {
 		}
 
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'))) {
+			if ($State.IsExemptBySnapShot($path, $_.Value, 'Debuggers')) {
 				continue
 			}
 
@@ -351,7 +348,7 @@ function Test-DebuggerHijacks {
 	foreach ($pa in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -eq '@' -and ($_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files(x86)\Microsoft Script Debugger\msscrdbg.exe`"" -or $_.Value -ne "`"$($State.Drives.AssumedHomeDrive)\Program Files\Microsoft Script Debugger\msscrdbg.exe`"")) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $_.Value, 'Debuggers'))) {
+				if ($State.IsExemptBySnapShot($path, $_.Value, 'Debuggers')) {
 					continue
 				}
 
@@ -396,7 +393,7 @@ function Test-DisableLowILProcessIsolation {
 	foreach ($item in Get-TrawlerChildItem $path -AsRegistry) {
 		Get-TrawlerItemData -Path $item.Name -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -eq 'DisableLowILProcessIsolation' -and $_.Value -eq 1) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $item.Name, 'DisableLowIL'))) {
+				if ($State.IsExemptBySnapShot($item.Name, $item.Name, 'DisableLowIL')) {
 					continue
 				}
 					
@@ -448,16 +445,20 @@ function Test-Narrator {
 		return 
 	}
 
-	$item = Get-Item -Path $basepath -ErrorAction SilentlyContinue | Select-Object FullName, CreationTime, LastWriteTime
+	$item = Get-Item -Path $basepath -ErrorAction SilentlyContinue | Select-Object FullName, Name, CreationTime, LastWriteTime
+
+	if ($State.IsExemptBySnapShot($item.Name, $item.FullName, 'WindowsNarrator')) {
+		return
+	}
 
 	$detection = [TrawlerDetection]::new(
 		'Narrator Missing DLL is Present',
 		[TrawlerRiskPriority]::Medium,
 		'Windows Narrator',
 		"T1546: Event Triggered Execution",
-			($item | Select-Object FullName, CreationTime, LastWriteTime)
+		$item
 	)
-
+	
 	$State.WriteDetection($detection)
 }
 
@@ -478,18 +479,13 @@ function Test-NotepadPlusPlusPlugins {
 	)
 
 	$allowlisted = @(
-		".*\\Config\\nppPluginList\.dll"
-		".*\\mimeTools\\mimeTools\.dll"
-		".*\\NppConverter\\NppConverter\.dll"
-		".*\\NppExport\\NppExport\.dll"
+		".*\\Config\\nppPluginList\.dll$"
+		".*\\mimeTools\\mimeTools\.dll$"
+		".*\\NppConverter\\NppConverter\.dll$"
+		".*\\NppExport\\NppExport\.dll$"
 	)
 
-	foreach ($basepath in $basepaths) {
-		$basepath = $basepath -f $State.Drives.HomeDrive
-		if (-not (Test-Path $basepath)) {
-			continue 
-		}
-		
+	foreach ($basepath in $State.GetFormattedTargetDrivePaths($basepaths)) {
 		$dlls = Get-ChildItem -Path $basepath -File -Filter "*.dll" -Recurse -ErrorAction SilentlyContinue
 
 		foreach ($item in $dlls) {
@@ -570,7 +566,7 @@ function Test-UninstallStrings {
 		$data = Get-TrawlerItemProperty -Path $path -AsRegistry
 
 		if ($data.UninstallString -and (Test-SuspiciousTerms -Value $data.UninstallString)) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.UninstallString, 'UninstallString'))) {
+			if ($State.IsExemptBySnapShot($item.Name, $data.UninstallString, 'UninstallString')) {
 				continue
 			}
 
@@ -585,7 +581,7 @@ function Test-UninstallStrings {
 		}
 
 		if ($data.QuietUninstallString -and (Test-SuspiciousTerms -Value $data.QuietUninstallString)) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.QuietUninstallString, 'QuietUninstallString'))) {
+			if ($State.IsExemptBySnapShot($item.Name, $data.QuietUninstallString, 'QuietUninstallString')) {
 				continue
 			}
 
@@ -625,7 +621,7 @@ function Test-PolicyManager {
 
 				if ($data.PreCheckDLLPath) {
 					if ($data.PreCheckDLLPath -notin $allow_listed_values) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($subkey.Name, $data.PreCheckDLLPath, 'PolicyManagerPreCheck'))) {
+						if ($State.IsExemptBySnapShot($subkey.Name, $data.PreCheckDLLPath, 'PolicyManagerPreCheck')) {
 							continue
 						}
 
@@ -641,7 +637,7 @@ function Test-PolicyManager {
 				}
 
 				if ($data.transportDllPath) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($subkey.Name, $data.transportDllPath, 'PolicyManagerTransport'))) {
+					if ($State.IsExemptBySnapShot($subkey.Name, $data.transportDllPath, 'PolicyManagerTransport')) {
 						continue
 					}
 
@@ -676,7 +672,7 @@ function Test-WindowsLoadKey {
 	foreach ($path in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -in 'Load') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WindowsLoad'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'WindowsLoad')) {
 					continue
 				}
 
@@ -808,7 +804,7 @@ function Test-AssociationHijack {
 						}
 
 						$exe = $_.Value
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'))) {
+						if ($State.IsExemptBySnapShot($open_path, $exe, 'AssociationHijack')) {
 							continue
 						}
 
@@ -872,7 +868,7 @@ function Test-AssociationHijack {
 						#Write-Host $open_path $_.Value
 						$exe = $_.Value
 
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($open_path, $exe, 'AssociationHijack'))) {
+						if ($State.IsExemptBySnapShot($open_path, $exe, 'AssociationHijack')) {
 							continue
 						}
 
@@ -978,7 +974,7 @@ function Test-WMIConsumers {
 
 	foreach ($consumer in $consumers) {
 		if ($consumer.ScriptingEngine) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($consumer.Name, $consumer.ScriptFileName, 'WMI Consumers'))) {
+			if ($State.IsExemptBySnapShot($consumer.Name, $consumer.ScriptFileName, 'WMI Consumers')) {
 				continue
 			}
 
@@ -992,7 +988,7 @@ function Test-WMIConsumers {
 			$State.WriteDetection($detection)
 		}
 		if ($consumer.CommandLineTemplate) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($consumer.Name, $consumer.CommandLineTemplate, 'WMI Consumers'))) {
+			if ($State.IsExemptBySnapShot($consumer.Name, $consumer.CommandLineTemplate, 'WMI Consumers')) {
 				continue
 			}
 			
@@ -1055,7 +1051,7 @@ function Test-NetSHDLLs {
 				continue
 			}
 
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'NetshDLLs'))) {
+			if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'NetshDLLs')) {
 				continue
 			}
 
@@ -1172,7 +1168,7 @@ function Test-AppCertDLLs {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Value -notin $standard_appcert_dlls) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppCertDLLs'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'AppCertDLLs')) {
 					continue
 				}
 
@@ -1218,7 +1214,7 @@ function Test-AppInitDLLs {
 
 		Get-TrawlerItemData -Path $Path -ItemType ItemProperty -AsRegistry | ForEach-Object {
 			if ($_.Name -eq 'AppInit_DLLs' -and $_.Value -ne '') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppInitDLLs'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'AppInitDLLs')) {
 					continue
 				}
 
@@ -1265,7 +1261,7 @@ function Test-ApplicationShims {
 		}
 		
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty -AsRegistry | ForEach-Object {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'AppShims'))) {
+			if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'AppShims')) {
 				continue
 			}
 	
@@ -1306,7 +1302,7 @@ function Test-IFEO {
 	foreach ($item in Get-TrawlerChildItem -Path $path) {
 		$data = Get-TrawlerItemProperty -Path $item.Name -AsRegistry
 		if ($data.Debugger) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Debugger, 'IFEO'))) {
+			if ($State.IsExemptBySnapShot($item.Name, $data.Debugger, 'IFEO')) {
 				continue
 			}
 
@@ -1333,35 +1329,35 @@ function Test-RegistryChecks {
 		[object]
 		$State
 	)
+
+	return
+
 	# DEPRECATED FUNCTION
 	#TODO - Inspect File Command Extensions to hunt for anomalies
 	# https://attack.mitre.org/techniques/T1546/001/
 
 	# COM Object Hijack Scan
 	# NULL this out for now since it should be covered in following COM functionality - this function is deprecated
-	if (Test-Path -Path "Registry::HKCU\SOFTWARE\Classes\CLSIDNULL") {
-		$items = Get-ChildItem -Path "Registry::HKCU\SOFTWARE\Classes\CLSID" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			$children = Get-ChildItem -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-			foreach ($child in $children) {
-				$path = "Registry::" + $child.Name
-				$data = Get-Item -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-				if ($data.Name -match '.*InprocServer32') {
-					$datum = Get-ItemProperty $path
-					$datum.PSObject.Properties | ForEach-Object {
-						if ($_.Name -eq '(default)') {
-							$detection = [TrawlerDetection]::new(
-								'Potential COM Hijack',
-								[TrawlerRiskPriority]::High,
-								'Registry',
-								"T1546.012: Event Triggered Execution: Image File Execution Options Injection",
-								"Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
-							)
-							#$State.WriteDetection($detection)
-							# This is now handled by Test-COM-Hijacks along with HKLM and HKCR checks (which should be identical)
-						}
-					}
+	if (-not (Test-Path -Path "Registry::HKCU\SOFTWARE\Classes\CLSIDNULL")) {
+		return 
+	}
+
+	foreach ($item in Get-TrawlerChildItem -Path "Registry::HKCU\SOFTWARE\Classes\CLSID") {
+		foreach ($child in Get-TrawlerChildItem -Path $item.Name -AsRegistry) {
+			$path = "Registry::" + $child.Name
+			$data = Get-Item -Path $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
+			if ($data.Name -match '.*InprocServer32') {
+				Get-TrawlerItemData -Path $path -ItemType ItemProperty | Where-Object Name -match "(Default)" | ForEach-Object {
+					$detection = [TrawlerDetection]::new(
+						'Potential COM Hijack',
+						[TrawlerRiskPriority]::High,
+						'Registry',
+						"T1546.012: Event Triggered Execution: Image File Execution Options Injection",
+						"Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
+					)
+					
+					$State.WriteDetection($detection)
+					# This is now handled by Test-COM-Hijacks along with HKLM and HKCR checks (which should be identical)
 				}
 			}
 		}
@@ -1390,7 +1386,7 @@ function Test-SilentProcessExitMonitoring {
 				$data.ReportingMode = 'NA'
 			}
 
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.MonitorProcess, 'SilentProcessExit'))) {
+			if ($State.IsExemptBySnapShot($item.Name, $data.MonitorProcess, 'SilentProcessExit')) {
 				continue
 			}
 
@@ -1526,7 +1522,7 @@ function Test-ComHijacks {
 					continue
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
+				if ($State.IsExemptBySnapShot($data.Name, $_.Value, 'COM')) {
 					continue
 				}
 
@@ -1691,7 +1687,7 @@ function Test-COM-Hijacks {
 					$datum = Get-ItemProperty $path
 					$datum.PSObject.Properties | ForEach-Object {
 						if ($_.Name -eq '(Default)') {
-							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
+							if ($State.IsExemptBySnapShot($data.Name, $_.Value, 'COM')) {
 								continue
 							}
 
@@ -1764,7 +1760,7 @@ function Test-COM-Hijacks {
 					$datum = Get-ItemProperty $path
 					$datum.PSObject.Properties | ForEach-Object {
 						if ($_.Name -eq '(Default)') {
-							if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Name, $_.Value, 'COM'))) {
+							if ($State.IsExemptBySnapShot($data.Name, $_.Value, 'COM')) {
 								continue
 							}
 
@@ -1827,7 +1823,7 @@ function Test-FolderOpen {
 	foreach ($p in $State.GetFormattedUserPaths($basepath)) {
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 			if ($_.Name -eq 'DelegateExecute') {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'FolderOpen'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'FolderOpen')) {
 					continue
 				}
 

@@ -55,7 +55,7 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'))) {
+						if ($State.IsExemptBySnapShot($_.Name, $package, 'LSASecurity')) {
 							continue
 						}
 
@@ -78,7 +78,7 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'))) {
+						if ($State.IsExemptBySnapShot($_.Name, $package, 'LSASecurity')) {
 							continue
 						}
 
@@ -107,7 +107,7 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'))) {
+						if ($State.IsExemptBySnapShot($_.Name, $package, 'LSASecurity')) {
 							continue
 						}
 
@@ -136,7 +136,7 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $common_ssp_dlls) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'))) {
+						if ($State.IsExemptBySnapShot($_.Name, $package, 'LSASecurity')) {
 							continue
 						}
 
@@ -172,7 +172,7 @@ function Test-LSA {
 				$packages = $_.Value.Split([System.Environment]::NewLine)
 				foreach ($package in $packages) {
 					if ($package -notin $standard_lsa_notification_packages) {
-						if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $package, 'LSASecurity'))) {
+						if ($State.IsExemptBySnapShot($_.Name, $package, 'LSASecurity')) {
 							continue
 						}
 
@@ -221,7 +221,7 @@ function Test-TimeProviderDLLs {
 			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.DllName) {
 				if ($standard_timeprovider_dll -notcontains $data.DllName) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.DllName, 'TimeProviders'))) {
+					if ($State.IsExemptBySnapShot($item.Name, $data.DllName, 'TimeProviders')) {
 						continue
 					}
 
@@ -263,7 +263,7 @@ function Test-WinlogonHelperDLLs {
 		$items = Get-TrawlerItemProperty -Path $path
 		$items.PSObject.Properties | ForEach-Object {
 			if ($_.Name -in 'Userinit', 'Shell', 'ShellInfrastructure', 'ShellAppRuntime', 'MPNotify' -and $_.Value -notin $standard_winlogon_helper_dlls) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'WinlogonHelpers'))) {
+				if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'WinlogonHelpers')) {
 					continue
 				}
 
@@ -386,7 +386,7 @@ function Test-PrintProcessorDLLs {
 			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.Driver) {
 				if ($standard_print_processors -notcontains $data.Driver) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintProcessors'))) {
+					if ($State.IsExemptBySnapShot($item.Name, $data.Driver, 'PrintProcessors')) {
 						continue
 					}
 
@@ -413,7 +413,7 @@ function Test-PrintProcessorDLLs {
 			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.Driver) {
 				if ($standard_print_processors -notcontains $data.Driver) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintProcessors'))) {
+					if ($State.IsExemptBySnapShot($item.Name, $data.Driver, 'PrintProcessors')) {
 						continue
 					}
 
@@ -473,7 +473,7 @@ function Test-ActiveSetup {
 			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.StubPath) {
 				if ($standard_stubpaths -notcontains $data.StubPath -and $data.StubPath -notmatch ".*(\\Program Files\\Google\\Chrome\\Application\\.*chrmstp.exe|Microsoft\\Edge\\Application\\.*\\Installer\\setup.exe).*") {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.StubPath, 'ActiveSetup'))) {
+					if ($State.IsExemptBySnapShot($item.Name, $data.StubPath, 'ActiveSetup')) {
 						continue
 					}
 

@@ -29,7 +29,7 @@ function Test-OfficeGlobalDotName {
 		foreach ($p in $State.GetFormattedUserPaths($basepath)) {
 			Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 				if ($_.Name -eq "GlobalDotName") {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'GlobalDotName'))) {
+					if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'GlobalDotName')) {
 						continue
 					}
 
@@ -114,7 +114,7 @@ function Test-OutlookStartup {
 		return 
 	}
 
-	if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($path, $item.FullName, 'Outlook'))) {
+	if ($State.IsExemptBySnapShot($path, $item.FullName, 'Outlook')) {
 		return
 	}
 
@@ -184,7 +184,7 @@ function Test-OfficeTrustedLocations {
 					"C:\Users\$actual_current_user\AppData\Roaming\Microsoft\Word\Startup"
 				)
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($data.Path, $data.Path, 'OfficeTrustedLocations'))) {
+				if ($State.IsExemptBySnapShot($data.Path, $data.Path, 'OfficeTrustedLocations')) {
 					continue
 				}
 
@@ -216,7 +216,7 @@ function Test-OfficeTrustedLocations {
 					continue
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.FullName, $item.FullName, 'OfficeAddins'))) {
+				if ($State.IsExemptBySnapShot($item.FullName, $item.FullName, 'OfficeAddins')) {
 					continue
 				}
 

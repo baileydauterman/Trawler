@@ -169,7 +169,7 @@ function Test-RATS {
 		"TeamViewer (Log 6)"                = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\TeamViewer\TeamViewer*_Logfile.log"
 		"TeamViewer (Reg 1)"                = "Registry::$($State.Drives.Hklm)SOFTWARE\TeamViewer"
 		"TeamViewer (Reg 2)"                = "Registry::$($State.Drives.Hklm)SYSTEM\*\Services\TeamViewer"
-		#"TeamViewer (Reg 3)" = "Registry::{0}SYSTEM\ControlSet001\Services\TeamViewer" -f $($State.Drives.Hklm)
+		# "TeamViewer (Reg 3)" = "Registry::{0}SYSTEM\ControlSet001\Services\TeamViewer" -f $($State.Drives.Hklm)
 		"UltraVNC (Log 1)"                  = "$($State.Drives.ProgramData)\uvnc bvba\WinVNC.log"
 		"UltraVNC (Log 2)"                  = "$($State.Drives.ProgramData)\uvnc bvba\mslogon.log"
 		"UltraViewer (Dir 1)"               = "$($State.Drives.HomeDrive)\Users\USER_REPLACE\AppData\Roaming\UltraViewer"
@@ -230,7 +230,7 @@ function Test-RATS {
 
 		foreach ($tmppath in $paths) {
 			if (Test-Path $tmppath) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($rat_name, $tmppath, 'RATS'))) {
+				if ($State.IsExemptBySnapShot($rat_name, $tmppath, 'RATS')) {
 					continue
 				}
 
@@ -244,7 +244,7 @@ function Test-RATS {
 						Location = $tmppath
 					}
 				)
-				
+
 				$State.WriteDetection($detection)
 			}
 		}

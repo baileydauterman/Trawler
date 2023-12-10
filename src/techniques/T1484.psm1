@@ -50,31 +50,33 @@ function Test-GPOExtensions {
 		"wlgpclnt.dll"
 	)
 
-	$path = "$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GPExtensions"
-	if (Test-Path -Path "Registry::$path") {
-		$items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider
-		foreach ($item in $items) {
-			$path = "Registry::" + $item.Name
-			Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
-				if ($_.Name -eq 'DllName' -and $_.Value -notin $gpo_dll_allowlist) {
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $_.Value, 'GPOExtensions'))) {
-						continue
-					}
+	$path = "Registry::$($State.Drives.Hklm)SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GPExtensions"
+	if (-not (Test-Path -Path $path)) {
+		return 
+	}
 
-					$detection = [TrawlerDetection]::new(
-						'Review: Non-Standard GPO Extension DLL',
-						[TrawlerRiskPriority]::Medium,
-						'Windows GPO Extensions',
-						"T1484.001: Domain Policy Modification: Group Policy Modification",
-						[PSCustomObject]@{
-							Key = $item.Name
-							DLL = $_.Value
-						}
-					)
-
-					$State.WriteDetection($detection)
-				}
+	foreach ($item in Get-TrawlerChildItem -Path $path) {
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
+			if ($_.Value -in $gpo_dll_allowlist -or $_.Name -ne "DllName") {
+				continue
 			}
+
+			if ($State.IsExemptBySnapShot($item.Name, $_.Value, 'GPOExtensions')) {
+				continue
+			}
+
+			$detection = [TrawlerDetection]::new(
+				'Review: Non-Standard GPO Extension DLL',
+				[TrawlerRiskPriority]::Medium,
+				'Windows GPO Extensions',
+				"T1484.001: Domain Policy Modification: Group Policy Modification",
+				[PSCustomObject]@{
+					Key = $item.Name
+					DLL = $_.Value
+				}
+			)
+
+			$State.WriteDetection($detection)
 		}
 	}
 }

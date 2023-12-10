@@ -262,7 +262,7 @@ class TrawlerState {
 
         if ([TrawlerTechniques]::All -in $this.TechniqueOptions) {
             # will skip none and all because they are not cases in the switch statement
-            $this.TechniqueOptions = [TrawlerTechniques].GetEnumValues()
+            $this.TechniqueOptions = [TrawlerTechniques].GetEnumValues() | Select-Object -Skip 2
         }
 
         foreach ($option in $this.TechniqueOptions) {
@@ -309,7 +309,7 @@ class TrawlerState {
 
         if ($this.ValidatePath($this.SnapShotPath)) {
             $this.WriteMessage("SnapShot Output Path: $($this.OutputPath)")
-            $this.OutputWritable = $true
+            $this.SnapShotWritable = $true
         }
         else {
             $this.WriteMessage("Unable to write to provided SnapShot path: $($this.OutputPath)")
@@ -434,16 +434,39 @@ class TrawlerState {
     # Takes in a path that takes a formatted string. Formats the path with the found users in the $this.Drives.CurrentUsers variables.
     # Checks all output paths and only returns the paths that exist.
     #>
-    [string[]] GetFormattedUserPaths([string]$formatPath, [bool]$checkExists = $true) {
+    [string[]] GetFormattedUserPaths([string]$formatPath) {
         $returnValues = [System.Collections.ArrayList]::new()
 
         foreach ($user in $this.Drives.CurrentUsers) {
             $tempPath = $formatPath -f $user
 
-            if (-not $checkExists) {
+            if (Test-Path $tempPath) {
                 $returnValues.Add($tempPath) | Out-Null
-                continue
             }
+        }
+
+        return $returnValues
+    }
+
+    [string[]] GetFormattedTargetDrivePaths([string[]]$paths) {
+        $returnValues = [System.Collections.ArrayList]::new()
+
+        foreach ($path in $paths) {
+            $tempPath = $path -f $this.Drives.HomeDrive
+
+            if (Test-Path $tempPath) {
+                $returnValues.Add($tempPath) | Out-Null
+            }
+        }
+
+        return $returnValues
+    }
+
+    [string[]] GetFormattedHklmControlSetPath([string[]]$paths) {
+        $returnValues = [System.Collections.ArrayList]::new()
+
+        foreach ($path in $paths) {
+            $tempPath = $path -f $this.Drives.Hklm, $this.Drives.CurrentControlSet
 
             if (Test-Path $tempPath) {
                 $returnValues.Add($tempPath) | Out-Null
@@ -475,16 +498,27 @@ class TrawlerState {
     # Check is a given snapshot exemption table contains the key value pair for the given snapshot.
     # Returns true if the key and value exist in the table, otherwise, returns false
     #>
-    [bool] IsExemptBySnapShot([TrawlerSnapShotData]$data, [switch]$writeSnapShot) {
+    [bool] IsExemptBySnapShot([object]$key, [object]$value, [object]$source) {
+        $key = ($key | Out-String).Trim()
+        $value = ($value | Out-String).Trim()
+        $source = ($source | Out-String).Trim()
+
+        $snapShot = [TrawlerSnapShotData]::new($key, $value, $source)
+        return $this.IsExemptBySnapShot($snapShot)
+    }
+
+    <#
+    # Check is a given snapshot exemption table contains the key value pair for the given snapshot.
+    # Returns true if the key and value exist in the table, otherwise, returns false
+    #>
+    [bool] IsExemptBySnapShot([TrawlerSnapShotData]$data) {
         if (-not $this.SnapShotPath -or -not $this.AllowedVulns) {
             return $false
         }
 
-        if ($writeSnapShot) {
-            $this.WriteSnapShotMessage($data)
-        }
+        $this.WriteSnapShotMessage($data)
 
-        return ($this.AllowedVulns | Where-Object Source -eq $data.Source | Where-Object Key -eq $data.Key |Where-Object Value -eq $data.Value).Count -gt 0
+        return ($this.AllowedVulns | Where-Object Source -eq $data.Source | Where-Object Key -eq $data.Key | Where-Object Value -eq $data.Value).Count -gt 0
     }
 
     <#
@@ -620,8 +654,8 @@ class TrawlerState {
     }
 
     $Detections = [System.Collections.ArrayList]::new()
-    $OutputWritable
-    $SnapShotWritable
+    [bool]$OutputWritable
+    [bool]$SnapShotWritable
     $AllowedVulns
     $Drives = [PSCustomObject]@{
         HomeDrive         = ""
@@ -632,7 +666,7 @@ class TrawlerState {
             "SYSTEM"
         )
         UserHives         = @()
-        CurrentUsers          = @()
+        CurrentUsers      = @()
         HkcuClassList     = @()
         Hklm              = ""
         Hkcu              = ""

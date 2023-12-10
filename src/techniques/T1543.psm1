@@ -43,7 +43,7 @@ function Test-Services {
 	}
 
 	foreach ($service in $service_list) {
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($service.Name, $service.PathName, "Services"))) {
+		if ($State.IsExemptBySnapShot($service.Name, $service.PathName, "Services")) {
 			continue
 		}
 
@@ -169,7 +169,7 @@ function Test-ServicesByRegex {
 				continue 
 			}
 
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($service.Name, $item.Value, 'Services_REG'))) {
+			if ($State.IsExemptBySnapShot($service.Name, $item.Value, 'Services_REG')) {
 				continue
 			}
 
@@ -196,7 +196,7 @@ function Test-ServicesByRegex {
 					continue 
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($child_key.Name, $item.Value, 'Services_REG'))) {
+				if ($State.IsExemptBySnapShot($child_key.Name, $item.Value, 'Services_REG')) {
 					continue
 				}
 

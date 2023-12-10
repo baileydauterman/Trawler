@@ -130,7 +130,7 @@ function Test-NaturalLanguageDevelopmentDLLs {
 					$dll = $data.WBDLLPathOverride
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $dll, 'NLPDlls'))) {
+				if ($State.IsExemptBySnapShot($item.Name, $dll, 'NLPDlls')) {
 					continue
 				}
 
@@ -176,7 +176,7 @@ function Test-PrintMonitorDLLs {
 			$path = "Registry::" + $item.Name
 			$data = Get-TrawlerItemProperty -Path $path
 			if ($data.Driver) {
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Driver, 'PrintMonitors'))) {
+				if ($State.IsExemptBySnapShot($item.Name, $data.Driver, 'PrintMonitors')) {
 					continue
 				}
 
@@ -228,7 +228,7 @@ function Test-MicrosoftTelemetryCommands {
 		$data = Get-TrawlerItemProperty -Path $path
 
 		if ($data.Command -and $data.Command -notin $allowed_telemetry_commands) {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.Name, $data.Command, 'TelemetryCommands'))) {
+			if ($State.IsExemptBySnapShot($item.Name, $data.Command, 'TelemetryCommands')) {
 				continue
 			}
 
@@ -263,7 +263,7 @@ function Test-RemoteUACSetting {
 	
 	Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
 		if ($_.Name -eq 'LocalAccountTokenFilterPolicy') {
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'RemoteUAC'))) {
+			if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'RemoteUAC')) {
 				continue
 			}
 

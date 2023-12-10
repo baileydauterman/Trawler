@@ -16,8 +16,7 @@ function Test-Processes {
 		[object]
 		$State
 	)
-	# Supports Dynamic Snapshotting
-	# Does not support drive retargeting
+
 	# TODO - Check for processes spawned from netsh.dll
 	if ($drivechange) {
 		$State.WriteMessage("Skipping Process Analysis - No Drive Retargeting")
@@ -26,8 +25,9 @@ function Test-Processes {
 
 	$State.WriteMessage("Checking Running Processes")
 	$processes = Get-CimInstance -ClassName Win32_Process | Select-Object ProcessName, CreationDate, CommandLine, ExecutablePath, ParentProcessId, ProcessId
+
 	foreach ($process in $processes) {
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($process.ProcessName, $process.ExecutablePath, "Processes"))) {
+		if ($State.IsExemptBySnapShot($process.ProcessName, $process.ExecutablePath, "Processes")) {
 			continue
 		}
 

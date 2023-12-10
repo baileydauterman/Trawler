@@ -2,7 +2,6 @@ function Test-T1053 {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [TrawlerState]
         $State
     )
 
@@ -13,29 +12,23 @@ function Test-ScheduledTasks {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [TrawlerState]
         $State
     )
 
-    begin {
-        $State.WriteMessage("Checking Scheduled Tasks")
-        $task_base_path = "$($State.Drives.HomeDrive)\Windows\System32\Tasks"
-        $tasks = New-Object -TypeName "System.Collections.ArrayList"
+    $State.WriteMessage("Checking Scheduled Tasks")
+    $task_base_path = "$($State.Drives.HomeDrive)\Windows\System32\Tasks"
+    $tasks = New-Object -TypeName "System.Collections.ArrayList"
         
+    if (-not (Test-Path $task_base_path)) {
+        $State.WriteMessage("Could not find Scheduled Task Path: $task_base_path")
+        return
     }
 
-    process {
-        if (-not (Test-Path $task_base_path)) {
-            $State.WriteMessage("Could not find Scheduled Task Path: $task_base_path")
-            return
-        }
+    foreach ($item in Get-ChildItem -Path $task_base_path -Recurse -ErrorAction SilentlyContinue) {
+        $task = Assert-TaskMatchesRegex -Item $item
 
-        foreach ($item in Get-ChildItem -Path $task_base_path -Recurse -ErrorAction SilentlyContinue) {
-            $task = Assert-TaskMatchesRegex -Item $item
-
-            if ($task.Matches) {
-                $tasks.Add($task.Task) | Out-Null
-            }
+        if ($task.Matches) {
+            $tasks.Add($task.Task) | Out-Null
         }
     }
 }
@@ -264,7 +257,7 @@ function Test-ScheduledTasks {
 
     foreach ($task in $tasks) {
         # Allowlist Logic
-        if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($task.TaskName, $task.Execute, "Scheduled Tasks"))) {
+        if ($State.IsExemptBySnapShot($task.TaskName, $task.Execute, "Scheduled Tasks")) {
             continue
         }
 

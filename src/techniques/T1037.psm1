@@ -53,7 +53,7 @@ function Test-Startups {
 		}
 
 		Get-TrawlerItemData -Path $path -ItemType ItemProperty | ForEach-Object {
-			if ($_.Name -eq "(Default)" -or $State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'Startup'))) {
+			if ($_.Name -eq "(Default)" -or $State.IsExemptBySnapShot($_.Name, $_.Value, 'Startup')) {
 				continue
 			}
 			
@@ -97,6 +97,8 @@ function Test-GPOScripts {
 		Logon    = $State.ToTargetDrivePath(@("Windows", "System32", "GroupPolicy", "User", "Scripts", "Logon"))
 	}
 
+	$script_type = "{0} {1} Script"
+
 	foreach ($path in $paths) {
 		# Skip non-existent files
 		if (-not (Test-Path $path)) {
@@ -104,17 +106,28 @@ function Test-GPOScripts {
 		}
 
 		$content = Get-Content $path
-		$script_type = ""
 		foreach ($line in $content) {
 			if ($line.Trim() -eq "") {
 				continue
 			}
 
 			switch ($line) {
-				"[Shutdown]" { $script_type = "Shutdown" }
-				"[Startup]" { $script_type = "Startup" }
-				"[Logon]" { $script_type = "Logon" }
-				"[Logoff]" { $script_type = "Logoff" }
+				"[Shutdown]" { 
+					$script_type = "Shutdown"
+					$desc = $script_type -f "Machine", "Shutdown"
+				}
+				"[Startup]" { 
+					$script_type = "Startup"
+					$desc = $script_type -f "Machine", "Startup"
+				}
+				"[Logon]" {
+					$script_type = "Logon"
+					$desc = $script_type -f "User", "Logon"
+				}
+				"[Logoff]" {
+					$script_type = "Logoff"
+					$desc = $script_type -f "User", "Logoff"
+				}
 				Default {}
 			}
 
@@ -124,20 +137,12 @@ function Test-GPOScripts {
 			}
 
 			if ($params) {
-				# Last line in each script descriptor is the Parameters
-				if ($script_type -eq "Shutdown" -or $script_type -eq "Startup") {
-					$desc = "Machine $script_type Script"
-				}
-				elseif ($script_type -eq "Logon" -or $script_type -eq "Logoff") {
-					$desc = "User $script_type Script"
-				}
-
 				$script_location = $cmdline
 				if ($cmdline -notmatch "[A-Za-z]{1}:\\.*") {
 					$script_location = $path_lookup[$script_type] + $cmdline
 				}
 
-				if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($script_location, $script_location, 'GPOScripts'))) {
+				if ($State.IsExemptBySnapShot($script_location, $script_location, 'GPOScripts')) {
 					$cmdline = $null
 					$params = $null
 					continue
@@ -229,7 +234,7 @@ function Test-TerminalProfiles {
 
 					$userTerminalSettings = "$dir\LocalState\settings.json"
 
-					if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($userTerminalSettings, $exe, "TerminalUserProfile"))) {
+					if ($State.IsExemptBySnapShot($userTerminalSettings, $exe, "TerminalUserProfile")) {
 						continue
 					}
 
@@ -272,7 +277,7 @@ function Test-UserInitMPRScripts {
 				continue 
 			}
 				
-			if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($_.Name, $_.Value, 'UserInitMPR'))) {
+			if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'UserInitMPR')) {
 				continue
 			}
 

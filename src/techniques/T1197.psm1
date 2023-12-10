@@ -34,7 +34,7 @@ function Test-BITS {
 			$cmd = ''
 		}
         
-		if ($State.IsExemptBySnapShot([TrawlerSnapShotData]::new($item.DisplayName, $cmd, 'BITS'))) {
+		if ($State.IsExemptBySnapShot($item.DisplayName, $cmd, 'BITS')) {
 			continue
 		}
 

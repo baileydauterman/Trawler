@@ -1,11 +1,20 @@
-Pop-Location
+Remove-Module Trawler -Force
+Import-Module .\src\Trawler.psd1 -Force
 
-Import-Module ..\src\Trawler.psd1 -Force
-$state = [TrawlerState]::new()
+function New-TestState {
+    $state = [TrawlerState]::new()
 
-$state.OutputPath = "..\detections.csv"
-$state.SnapShotPath = "..\snapshot.csv"
+    $state.OutputPath = "C:\Users\bailey\source\repos\Trawler\detections.csv"
+    $state.SnapShotPath = "C:\Users\bailey\source\repos\Trawler\snapshot.csv"
 
-$state.TryReadSnapShot()
+    if (-not($state.TryReadSnapShot())) {
+        throw "Unable to read snapshot"
+    }
 
-$state
+    $state.RetargetDrives()
+    $state.ValidatePaths()
+
+    return $state
+}
+
+$state = New-TestState
