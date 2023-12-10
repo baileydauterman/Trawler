@@ -1509,36 +1509,12 @@ function Test-ComHijacks {
 	$rootItems = Get-TrawlerChildItem -Path $Path
 
 	foreach ($item in $rootItems) {
-		foreach ($childItem in Get-TrawlerChildItem -Path "Registry::$($item.Name)") {
-			$dataPath = "Registry::$($childItem.Name)"
-			$data = Get-TrawlerItem -Path $dataPath
+		foreach ($childItem in Get-TrawlerChildItem -Path $($item.Name) -AsRegistry) {
+			$data = Get-TrawlerItem -Path $childItem.Name -AsRegistry | Where-Object Name -match '.*InprocServer32'
 
-			if (-not ($data.Name -match '.*InprocServer32')) {
-				continue
-			}
-
-			foreach ($property in Get-ItemProperty $dataPath) {
-				if (-not ($_.Name -eq '(Default)')) {
-					continue
-				}
-
+			foreach ($property in Get-ItemProperty $dataPath | Where-Object Name -eq "(Default)") {
 				if ($State.IsExemptBySnapShot($data.Name, $_.Value, 'COM')) {
 					continue
-				}
-
-				if ($TrawlerState.LoadSnapshot) {
-					$detection = [TrawlerDetection]::new(
-						'Allowlist Mismatch: COM Hijack',
-						[TrawlerRiskPriority]::Medium,
-						'Registry',
-						"T1546.015: Event Triggered Execution: Component Object Model Hijacking",
-						"Registry Path: " + $data.Name + ", DLL Path: " + $_.Value
-					)
-
-					$result = Assert-IsAllowed $allowtable_com $data.Name $_.Value $detection
-					if ($result) {
-						continue
-					}
 				}
 
 				$verified_match = Find-IfValueExistsInComTables -ComTables $ComTables -Key $data.Name -Value $_.Value

@@ -31,10 +31,6 @@ function Test-Processes {
 			continue
 		}
 
-		if ($loadsnapshot -and (Assert-IsAllowed $allowlist_process_exes $process.ProcessName $process.ExecutablePath)) {
-			continue
-		}
-
 		if (Test-RemoteAccessTrojanTerms -Value $process.CommandLine) {
 			$detection = [TrawlerDetection]::new(
 				'Running Process has known-RAT Keyword',

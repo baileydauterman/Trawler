@@ -37,10 +37,6 @@ function Test-Users {
 			continue
 		}
 
-		if ($loadsnapshot -and (Assert-IsAllowed $allowlist_users $admin.nam $admin.name)) {
-			continue
-		}
-
 		$detection = [TrawlerDetection]::new(
 			'Local Administrator Account',
 			[TrawlerRiskPriority]::Medium,
