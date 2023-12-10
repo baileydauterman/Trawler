@@ -12,6 +12,10 @@
     # ID used to uniquely identify this module
     GUID             = 'abed6242-683e-45be-8c86-3ddaf780d1a2'
 
+    ScriptsToProcess = @(
+        './TrawlerState.ps1' # adds necessary classes to memory
+    )
+
     # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
     NestedModules    = @(
         "./Trawler.psm1"
@@ -37,9 +41,5 @@
         "./techniques/T1547.psm1"
         "./techniques/T1553.psm1"
         "./techniques/T1574.psm1"
-    )
-
-    ScriptsToProcess = @(
-        './TrawlerState.ps1' # adds necessary classes to memory
     )
 }

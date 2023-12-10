@@ -16,5 +16,3 @@ function New-TestState {
 
     return $state
 }
-
-$state = New-TestState

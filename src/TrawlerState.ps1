@@ -476,6 +476,10 @@ class TrawlerState {
         return $returnValues
     }
 
+    [string] GetFormattedHklmControlSetPath([string]$path) {
+        return $path -f $this.Drives.Hklm, $this.Drives.CurrentControlSet
+    }
+
     [void] LoadHive([string]$hiveName, [string]$hivePath, [string]$hiveRoot) {
         $this.WriteMessage("Loading Registry Hive File: $hivePath at location: $hiveRoot\$hiveName")
         New-PSDrive -PSProvider Registry -Name $hiveName -Root $hiveRoot | Out-Null

@@ -23,29 +23,31 @@ function Test-DNSServerLevelPluginDLL {
 
 	$State.WriteMessage("Checking DNSServerLevelPlugin DLL")
 
-	$path = "Registry::{0}SYSTEM\{1}\Services\DNS\Parameters"
-	$path = $State.GetFormattedHklmControlSetPath($path)
-	if (-not (Test-Path -Path $path)) {
-		return 
-	}
+	$paths = "Registry::{0}SYSTEM\{1}\Services\DNS\Parameters"
 
-	Get-TrawlerItemData -Path $path -ItemType ItemProperty | Where-Object Name -eq "ServerLevelPluginDll" | Where-Object Value -ne '""' | ForEach-Object {
-		if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'DNSPlugin')) {
-			continue
+	foreach ($path in $state.GetFormattedHklmControlSetPath($paths)) {
+		if (-not (Test-Path -Path $path)) {
+			return 
 		}
-
-		$detection = [TrawlerDetection]::new(
-			'Review: DNS ServerLevelPluginDLL is active',
-			[TrawlerRiskPriority]::Medium,
-			'Registry',
-			"T1055.001: Process Injection: Dynamic-link Library Injection",
-			[PSCustomObject]@{
-				KeyLocation = $path
-				EntryName   = $_.Name
-				DLL         = $_.Value
+	
+		Get-TrawlerItemData -Path $path -ItemType ItemProperty | Where-Object Name -eq "ServerLevelPluginDll" | Where-Object Value -ne '""' | ForEach-Object {
+			if ($State.IsExemptBySnapShot($_.Name, $_.Value, 'DNSPlugin')) {
+				continue
 			}
-		)
-
-		$State.WriteDetection($detection)
+	
+			$detection = [TrawlerDetection]::new(
+				'Review: DNS ServerLevelPluginDLL is active',
+				[TrawlerRiskPriority]::Medium,
+				'Registry',
+				"T1055.001: Process Injection: Dynamic-link Library Injection",
+				[PSCustomObject]@{
+					KeyLocation = $path
+					EntryName   = $_.Name
+					DLL         = $_.Value
+				}
+			)
+	
+			$State.WriteDetection($detection)
+		}
 	}
 }

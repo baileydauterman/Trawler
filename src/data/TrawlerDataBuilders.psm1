@@ -8976,7 +8976,7 @@ function Build-ScheduledTaskDefaults {
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory)]
-		[TrawlerState]
+		[object]
 		$State
 	)
 
@@ -9067,7 +9067,7 @@ function Build-ServicesRegexes {
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory)]
-		[TrawlerState]
+		[object]
 		$State
 	)
 
@@ -10071,7 +10071,7 @@ function Build-ServiceExePaths {
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory)]
-		[TrawlerState]
+		[object]
 		$State
 	)
 	
