@@ -60,8 +60,7 @@ function Check-Startups {
         #Write-Host $path
         $path = "Registry::$path_"
         if (Test-Path -Path $path) {
-            $item = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath,PSParentPath,PSChildName,PSProvider
-            $item.PSObject.Properties | ForEach-Object {
+            Get-TrawlerItemPropertyProperties -LiteralPath $path | ForEach-Object {
                 if ($_.Name -ne "(Default)"){
                     $detection = [PSCustomObject]@{
                         Name = 'Startup Item Review'
@@ -250,8 +249,7 @@ function Check-UserInitMPRScripts {
     foreach ($p in $regtarget_hkcu_list){
         $path = $basepath.Replace("HKEY_CURRENT_USER", $p)
         if (Test-Path -Path $path) {
-            $items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath,PSParentPath,PSChildName,PSProvider
-            $items.PSObject.Properties | ForEach-Object {
+            Get-TrawlerItemPropertyProperties -LiteralPath $path | ForEach-Object {
                 if ($_.Name -eq 'UserInitMprLogonScript'){
                     $detection = [PSCustomObject]@{
                         Name = 'Potential Persistence via Logon Initialization Script'

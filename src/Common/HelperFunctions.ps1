@@ -195,4 +195,18 @@ function Format-DateTime($datetime, $utc_convert) {
     }
 }
 
+function Get-TrawlerItemPropertyProperties {
+    param(
+        [Parameter(Mandatory)]
+        [string]
+        $LiteralPath
+    )
+
+    if (-not (Test-Path $LiteralPath)) {
+        return $null
+    }
+
+    (Get-ItemProperty -LiteralPath $path | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSProvider).PSObject.Properties
+}
+
 #endregion

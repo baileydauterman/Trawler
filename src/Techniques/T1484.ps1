@@ -34,25 +34,23 @@ function Check-GPOExtensions {
 
     $path = "$regtarget_hklm`SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GPExtensions"
     if (Test-Path -Path "Registry::$path") {
-        $items = Get-ChildItem -Path "Registry::$path" | Select-Object * -ExcludeProperty PSPath,PSParentPath,PSChildName,PSProvider
+        $items = Get-ChildItem -Path "Registry::$path" | Select-Object Name
         foreach ($item in $items) {
-            $path = "Registry::"+$item.Name
-            $data = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath,PSParentPath,PSChildName,PSProvider
-            $data.PSObject.Properties | ForEach-Object {
-                if ($_.Name -eq 'DllName' -and $_.Value -notin $gpo_dll_allowlist) {
-                    $detection = [PSCustomObject]@{
-                        Name = 'Review: Non-Standard GPO Extension DLL'
-                        Risk = 'Medium'
-                        Source = 'Windows GPO Extensions'
-                        Technique = "T1484.001: Domain Policy Modification: Group Policy Modification"
-                        Meta = [PSCustomObject]@{
-                            Location = $item.Name
-                            EntryValue = $_.Value
-                            Hash = Get-File-Hash $_.Value
-                        }
+            $path = "Registry::" + $item.Name
+
+            Get-TrawlerItemPropertyProperties $path | Where-Object Name -eq "DllName" | Where-Object Value -notin $gpo_dll_allowlist | ForEach-Object {
+                $detection = [PSCustomObject]@{
+                    Name      = 'Review: Non-Standard GPO Extension DLL'
+                    Risk      = 'Medium'
+                    Source    = 'Windows GPO Extensions'
+                    Technique = "T1484.001: Domain Policy Modification: Group Policy Modification"
+                    Meta      = [PSCustomObject]@{
+                        Location   = $item.Name
+                        EntryValue = $_.Value
+                        Hash       = Get-File-Hash $_.Value
                     }
-                    Write-Detection $detection
                 }
+                Write-Detection $detection
             }
         }
     }

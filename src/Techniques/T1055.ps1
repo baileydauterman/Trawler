@@ -3,8 +3,7 @@ function Check-DNSServerLevelPluginDLL {
     Write-Message "Checking DNSServerLevelPlugin DLL"
     $path = "Registry::$regtarget_hklm`SYSTEM\$currentcontrolset\Services\DNS\Parameters"
     if (Test-Path -Path $path) {
-        $items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath,PSParentPath,PSChildName,PSProvider
-        $items.PSObject.Properties | ForEach-Object {
+        Get-TrawlerItemPropertyProperties -LiteralPath $path | ForEach-Object {
             if ($_.Name -eq 'ServerLevelPluginDll' -and $_.Value -ne '""') {
                 $detection = [PSCustomObject]@{
                     Name = 'DNS ServerLevelPluginDLL is active'

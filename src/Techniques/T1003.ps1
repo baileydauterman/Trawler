@@ -3,8 +3,8 @@ function Check-DirectoryServicesRestoreMode {
     Write-Message "Checking DirectoryServicesRestoreMode"
     $path = "$regtarget_hklm`System\CurrentControlSet\Control\Lsa"
     $path = "Registry::"+$path
-    $data = Get-ItemProperty -LiteralPath $path | Select-Object * -ExcludeProperty PSPath,PSParentPath,PSChildName,PSProvider
-    $data.PSObject.Properties | ForEach-Object {
+
+    Get-TrawlerItemPropertyProperties -LiteralPath $path | ForEach-Object {
         if ($_.Name -eq 'DsrmAdminLogonBehavior' -and $_.Value -eq 2) {
             $detection = [PSCustomObject]@{
                 Name = 'DirectoryServicesRestoreMode LocalAdmin Backdoor Enabled'
@@ -18,6 +18,7 @@ function Check-DirectoryServicesRestoreMode {
                 }
                 Reference = "https://adsecurity.org/?p=1785"
             }
+            
             Write-Detection $detection
         }
     }

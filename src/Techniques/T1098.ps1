@@ -3,8 +3,7 @@ function Check-RDPShadowConsent {
     Write-Message "Checking RDP Shadow Consent"
     $path = "Registry::$regtarget_hklm`SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
     if (Test-Path -Path $path) {
-        $items = Get-ItemProperty -Path $path | Select-Object * -ExcludeProperty PSPath,PSParentPath,PSChildName,PSProvider
-        $items.PSObject.Properties | ForEach-Object {
+        Get-TrawlerItemPropertyProperties -LiteralPath $path | ForEach-Object {
             if ($_.Name -eq 'Shadow' -and ($_.Value -eq 4 -or $_.Value -eq 2)) {
                 $detection = [PSCustomObject]@{
                     Name = 'RDP Shadowing without Consent is Enabled'
